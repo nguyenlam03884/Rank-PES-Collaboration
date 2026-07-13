@@ -34,7 +34,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.1"
+APP_VERSION = "V1.10.2"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2456,12 +2456,18 @@ def enrich_room(room):
 
     room["match_mode_label"] = "Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()
     room["battle_label"] = "Trận đấu xếp hạng" if room.get("match_mode") != MATCH_MODE_FRIENDLY else "Trận đấu giao hữu"
-    room["start_countdown_seconds"] = 300
+    room["start_countdown_seconds"] = 0
+    room["match_elapsed_seconds"] = 0
     if room.get("guest_user_id"):
-        start_source = room.get("updated_at") or room.get("created_at")
-        start_dt = parse_dt(start_source) if start_source else None
-        if start_dt:
-            room["start_countdown_seconds"] = max(0, 300 - int((now_dt() - start_dt).total_seconds()))
+        time_source = room.get("updated_at") or room.get("created_at")
+        event_dt = parse_dt(time_source) if time_source else None
+        if event_dt:
+            elapsed = max(0, int((now_dt() - event_dt).total_seconds()))
+            if room.get("status") == "waiting_ready":
+                room["start_countdown_seconds"] = max(0, 300 - elapsed)
+            elif room.get("status") in {"playing", "friendly_playing", "waiting_result_confirm"}:
+                room["match_elapsed_seconds"] = elapsed
+    room["guest_ready_label"] = "Đã sẵn sàng" if room.get("guest_ready") else "Chưa sẵn sàng"
     return room
 
 
@@ -4281,8 +4287,8 @@ def respond_invite(invite_id):
             db.table("match_rooms").update({
                 "invite_id": invite_id,
                 "guest_user_id": invite["to_user_id"],
-                "guest_ready": True,
-                "note": "Đối thủ đã vào phòng. Đang chờ Chủ Phòng quay đội.",
+                "guest_ready": False,
+                "note": "Đối thủ đã vào phòng. Khách chưa sẵn sàng.",
                 "state_expires_at": None,
                 "updated_at": now_iso(),
             }).eq("id", inviter_room["id"]).eq("status", "waiting_ready"),
@@ -4295,15 +4301,15 @@ def respond_invite(invite_id):
             "guest_user_id": invite["to_user_id"],
             "team_tier": SMART_RANDOM_MODE,
             "status": "waiting_ready",
-            "guest_ready": True,
-            "note": "Đối thủ đã vào phòng. Đang chờ Chủ Phòng quay đội.",
+            "guest_ready": False,
+            "note": "Đối thủ đã vào phòng. Khách chưa sẵn sàng.",
             "state_expires_at": None,
             "updated_at": now_iso(),
         }).execute().data[0]
 
     db.table("match_invites").update({"status": "accepted", "updated_at": now_iso()}).eq("id", invite_id).execute()
 
-    flash("Đã chấp nhận lời mời. Đang chờ Chủ Phòng quay đội.", "success")
+    flash("Đã chấp nhận lời mời. Hãy bấm Sẵn sàng khi bạn đã chuẩn bị xong.", "success")
     return redirect(url_for("room_detail", room_id=room["id"]))
 
 
@@ -4681,6 +4687,9 @@ def room_random_teams(room_id):
     if not room.get("guest_user_id"):
         flash("Phòng chưa có đối thủ. Hãy mời một người chơi vào phòng.", "warning")
         return redirect(url_for("room_detail", room_id=room_id))
+    if not room.get("guest_ready"):
+        flash("Đội khách chưa sẵn sàng. Hãy chờ khách bấm Sẵn sàng.", "warning")
+        return redirect(url_for("room_detail", room_id=room_id))
     if room.get("match_id") or room.get("host_team") or room.get("guest_team"):
         flash("Phòng đã được quay đội hoặc đã tạo trận.", "warning")
         return redirect(url_for("room_detail", room_id=room_id))
@@ -4871,28 +4880,48 @@ def room_finish_friendly(room_id):
 @app.route("/room/<room_id>/guest-unready", methods=["POST"])
 @login_required
 def room_guest_unready(room_id):
-    # Giữ endpoint để tương thích với trang cũ/cache cũ. V1.10.0 đã bỏ bước Sẵn sàng.
-    flash("V1.10.0 đã bỏ nút Sẵn sàng. Phòng đang chờ Chủ Phòng quay đội.", "warning")
+    user = current_user()
+    room = get_room(room_id)
+    if not room or user.get("id") != room.get("guest_user_id"):
+        flash("Bạn không thuộc phòng đấu này.", "danger")
+        return redirect(url_for("dashboard"))
+    if room.get("status") != "waiting_ready":
+        flash("Không thể hủy sẵn sàng ở trạng thái hiện tại.", "warning")
+        return redirect(url_for("room_detail", room_id=room_id))
+    execute_query(
+        db.table("match_rooms").update({
+            "guest_ready": False,
+            "note": "Khách đã hủy sẵn sàng.",
+        }).eq("id", room_id).eq("status", "waiting_ready"),
+        "room_guest_unready",
+    )
+    cache_delete("_rz_rooms_all")
+    ttl_cache_delete("rooms_raw")
+    flash("Đã hủy trạng thái sẵn sàng.", "success")
     return redirect(url_for("room_detail", room_id=room_id))
 
 
 @app.route("/room/<room_id>/guest-ready", methods=["POST"])
 @login_required
 def room_guest_ready(room_id):
-    # Giữ endpoint để tương thích với trang cũ/cache cũ. Khách được coi là đã vào phòng ngay khi chấp nhận lời mời.
     user = current_user()
     room = get_room(room_id)
-    if room and user.get("id") == room.get("guest_user_id") and room.get("status") == "waiting_ready" and not room.get("guest_ready"):
-        execute_query(
-            db.table("match_rooms").update({
-                "guest_ready": True,
-                "state_expires_at": None,
-                "note": "Đang chờ Chủ Phòng quay đội.",
-                "updated_at": now_iso(),
-            }).eq("id", room_id).eq("status", "waiting_ready"),
-            "legacy_room_guest_ready_update",
-        )
-    flash("Không cần bấm Sẵn sàng nữa. Đang chờ Chủ Phòng quay đội.", "success")
+    if not room or user.get("id") != room.get("guest_user_id"):
+        flash("Bạn không thuộc phòng đấu này.", "danger")
+        return redirect(url_for("dashboard"))
+    if room.get("status") != "waiting_ready":
+        flash("Không thể đổi trạng thái sẵn sàng lúc này.", "warning")
+        return redirect(url_for("room_detail", room_id=room_id))
+    execute_query(
+        db.table("match_rooms").update({
+            "guest_ready": True,
+            "note": "Khách đã sẵn sàng. Chủ phòng có thể quay đội.",
+        }).eq("id", room_id).eq("status", "waiting_ready"),
+        "room_guest_ready",
+    )
+    cache_delete("_rz_rooms_all")
+    ttl_cache_delete("rooms_raw")
+    flash("Bạn đã sẵn sàng.", "success")
     return redirect(url_for("room_detail", room_id=room_id))
 
 
