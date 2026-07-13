@@ -1197,24 +1197,48 @@ def set_device_cookie(response):
 # =========================
 
 def get_user_by_username(username):
-    """Find a user by username without distinguishing uppercase/lowercase."""
+    """Find a user by username using a NEW Supabase client after network failure.
+
+    Reusing the same PostgREST query/client for all retry attempts can keep using a
+    broken httpx connection pool on Vercel and repeatedly raise Errno 16.
+    """
     require_db()
     normalized = str(username or "").strip()
     if not normalized:
         return None
 
-    result = execute_query(
-        db.table("users").select("*").ilike("username", normalized).limit(20),
-        "get_user_by_username",
-    )
-    target = normalized.casefold()
-    return next(
-        (
-            row for row in (result.data or [])
-            if str(row.get("username") or "").strip().casefold() == target
-        ),
-        None,
-    )
+    last_error = None
+    for attempt in range(4):
+        try:
+            # First attempt uses the warm client. Every retry creates a completely
+            # fresh HTTP client/connection pool instead of reusing the failed one.
+            client = db if attempt == 0 else create_client(supabase_url, supabase_key)
+            result = client.table("users").select(
+                "id,username,password_hash,display_name,avatar_url,role,account_status,"
+                "admin_level,must_change_password,device_id,rank_points,is_online,"
+                "matchmaking_cooldown_until"
+            ).ilike("username", normalized).limit(20).execute()
+            target = normalized.casefold()
+            return next(
+                (
+                    row for row in (result.data or [])
+                    if str(row.get("username") or "").strip().casefold() == target
+                ),
+                None,
+            )
+        except Exception as exc:
+            last_error = exc
+            message = f"{type(exc).__name__}: {exc}".lower()
+            transient = any(token in message for token in (
+                "connecterror", "connection", "timeout", "device or resource busy",
+                "resource busy", "errno 16", "eagain", "server disconnected",
+            ))
+            if not transient or attempt == 3:
+                print(f"get_user_by_username failed after {attempt + 1} attempt(s): {exc}")
+                raise
+            time.sleep(0.35 * (attempt + 1))
+
+    raise last_error
 
 
 
@@ -2967,7 +2991,13 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
 
-        user = get_user_by_username(username)
+        try:
+            user = get_user_by_username(username)
+        except Exception as exc:
+            # A temporary Supabase/Vercel socket failure must not become a raw 500.
+            print(f"Login database warning: {exc}")
+            flash("Máy chủ dữ liệu đang bận. Vui lòng đăng nhập lại sau vài giây.", "warning")
+            return redirect(url_for("login"))
 
         if not user or user["password_hash"] != hash_password(password):
             flash("Sai tên tài khoản hoặc mật khẩu.", "danger")

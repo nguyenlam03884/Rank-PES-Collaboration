@@ -676,12 +676,12 @@ function sendAdminAnnouncement() {
 postHeartbeat();
 checkAnnouncement();
 
-setInterval(postHeartbeat, 30000);
-setInterval(checkPendingInvites, 7000);
-setInterval(checkActiveRoom, 5000);
-setInterval(loadBottomChatSmart, 12000);
-setInterval(checkLobbyChatUnread, 15000);
-setInterval(checkAnnouncementSmart, 20000);
+setInterval(postHeartbeat, 60000);
+setInterval(checkPendingInvites, 15000);
+setInterval(checkActiveRoom, 15000);
+setInterval(loadBottomChatSmart, 30000);
+setInterval(checkLobbyChatUnread, 30000);
+setInterval(checkAnnouncementSmart, 60000);
 setTimeout(checkPendingInvites, 1500);
 setTimeout(checkActiveRoom, 2500);
 setTimeout(checkLobbyChatUnread, 2000);
@@ -709,7 +709,7 @@ function updateOnlineFloatingCount() {
 }
 
 updateOnlineFloatingCount();
-setInterval(updateOnlineFloatingCountSmart, 30000);
+setInterval(updateOnlineFloatingCountSmart, 60000);
 </script>
 {% endif %}
 
