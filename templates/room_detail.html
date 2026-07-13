@@ -48,14 +48,14 @@
                     <form class="room-center-random-form" method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
                         <input type="hidden" name="match_mode" value="ranked">
                         <button class="room-center-random-trigger" type="submit">
-                            <img class="room-center-random-image" src="{{ url_for('static', filename='dice-clean.svg') }}" alt="Xúc xắc quay random đội" loading="eager">
+                            <img class="room-center-random-image" src="{{ url_for('static', filename='xucxac.png') }}" alt="Xúc xắc quay random đội" loading="eager">
                             <span class="room-center-random-title room-random-button-label">QUAY RANDOM ĐỘI</span>
                             <span class="room-center-random-sub">Nhấn để đổi đội ngẫu nhiên cho cả hai bên</span>
                         </button>
                     </form>
                     {% else %}
                     <div class="room-center-random-trigger disabled">
-                        <img class="room-center-random-image" src="{{ url_for('static', filename='dice-clean.svg') }}" alt="Xúc xắc quay random đội" loading="eager">
+                        <img class="room-center-random-image" src="{{ url_for('static', filename='xucxac.png') }}" alt="Xúc xắc quay random đội" loading="eager">
                         <span class="room-center-random-title room-random-button-label">QUAY RANDOM ĐỘI</span>
                         <span class="room-center-random-sub">{{ "Khách chưa sẵn sàng" if not room.guest_ready else "Đang chờ chủ phòng quay đội" }}</span>
                     </div>

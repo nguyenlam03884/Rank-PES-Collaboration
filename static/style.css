@@ -3419,3 +3419,75 @@ html[data-theme="light"] .admin-switch-track{background:#cbd5df;border-color:#b9
   .room-random-button-label{font-size:16px!important;padding:9px 10px!important}
   .room-center-random-sub{font-size:11px!important;max-width:185px!important}
 }
+
+/* ===== V1.10.7: VS lớn + xúc xắc không khung ===== */
+.room-center-vs-image{
+    width: 230px !important;
+    height: 230px !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 18px 34px rgba(0,0,0,.46)) !important;
+}
+
+.room-center-random-form{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.room-center-random-trigger,
+.room-center-random-trigger:not(.disabled),
+.room-center-random-trigger.disabled{
+    max-width: 250px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.room-center-random-trigger:not(.disabled):hover,
+.room-center-random-trigger:not(.disabled):active{
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.room-center-random-image{
+    width: 126px !important;
+    height: 126px !important;
+    object-fit: contain !important;
+    opacity: 1 !important;
+    filter: drop-shadow(0 14px 24px rgba(0,0,0,.38)) !important;
+}
+
+.room-center-random-trigger:not(.disabled):hover .room-center-random-image{
+    transform: translateY(-2px) scale(1.04) !important;
+}
+
+.room-random-button-label{
+    margin-top: 8px !important;
+}
+
+@media (max-width: 760px){
+    .room-center-vs-image{
+        width: 170px !important;
+        height: 170px !important;
+    }
+    .room-center-random-image{
+        width: 98px !important;
+        height: 98px !important;
+    }
+}
+
+@media (max-width: 520px){
+    .room-center-vs-image{
+        width: 138px !important;
+        height: 138px !important;
+    }
+    .room-center-random-image{
+        width: 84px !important;
+        height: 84px !important;
+    }
+}
