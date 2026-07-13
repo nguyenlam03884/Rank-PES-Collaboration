@@ -34,7 +34,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.9.9"
+APP_VERSION = "V1.10.0"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2456,8 +2456,8 @@ def enrich_room(room):
 
     room["match_mode_label"] = "Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()
     room["battle_label"] = "Trận đấu xếp hạng" if room.get("match_mode") != MATCH_MODE_FRIENDLY else "Trận đấu giao hữu"
-    room["start_countdown_seconds"] = 0
-    if room.get("status") in {"playing", "friendly_playing"} and room.get("host_team") and room.get("guest_team"):
+    room["start_countdown_seconds"] = 300
+    if room.get("guest_user_id"):
         start_source = room.get("updated_at") or room.get("created_at")
         start_dt = parse_dt(start_source) if start_source else None
         if start_dt:
@@ -4845,8 +4845,8 @@ def room_finish_friendly(room_id):
 @app.route("/room/<room_id>/guest-unready", methods=["POST"])
 @login_required
 def room_guest_unready(room_id):
-    # Giữ endpoint để tương thích với trang cũ/cache cũ. V1.9.9 đã bỏ bước Sẵn sàng.
-    flash("V1.9.9 đã bỏ nút Sẵn sàng. Phòng đang chờ Chủ Phòng quay đội.", "warning")
+    # Giữ endpoint để tương thích với trang cũ/cache cũ. V1.10.0 đã bỏ bước Sẵn sàng.
+    flash("V1.10.0 đã bỏ nút Sẵn sàng. Phòng đang chờ Chủ Phòng quay đội.", "warning")
     return redirect(url_for("room_detail", room_id=room_id))
 
 
@@ -4874,7 +4874,7 @@ def room_guest_ready(room_id):
 @login_required
 def room_start(room_id):
     # Giữ endpoint để tương thích với trang cũ đang được cache.
-    flash("V1.9.9 đã bỏ nút Sẵn sàng và Bắt đầu trận. Chủ phòng chỉ cần quay đội.", "warning")
+    flash("V1.10.0 đã bỏ nút Sẵn sàng và Bắt đầu trận. Chủ phòng chỉ cần quay đội.", "warning")
     return redirect(url_for("room_detail", room_id=room_id))
 
 

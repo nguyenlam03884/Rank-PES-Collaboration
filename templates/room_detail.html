@@ -9,111 +9,124 @@
                 <p class="room-stage-subtitle">{{ room.match_mode_label }} • 1 vs 1</p>
             </div>
         </div>
-        <div class="room-stage-top-actions">
-            <a class="btn room-invite-btn" href="{{ url_for('players') }}">Mời đấu</a>
-        </div>
     </div>
 
-    {% if room.timeout_label and room.timeout_seconds > 0 %}
-    <div class="room-timeout-banner room-stage-timeout">
-        ⏳ {{ room.timeout_label }} <strong id="roomCountdown" data-seconds="{{ room.timeout_seconds }}">--:--</strong>
-    </div>
-    {% endif %}
-
-    <div class="room-battle-grid">
-        <section class="room-showcase-card room-showcase-home">
-            <div class="room-showcase-head">
-                <span class="room-corner-label">Đội chủ nhà</span>
-                <div class="room-player-minihead">
-                    {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm') }}
-                    <div class="room-player-meta">
-                        <strong>{{ room.host_name }}</strong>
-                        <div class="room-rank-chip">
-                            <img src="{{ url_for('static', filename='ranks/' ~ room.host_rank_info.slug ~ '.png') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
-                            <span>{{ room.host_rank_info.name }}</span>
-                        </div>
-                    </div>
+    <div class="room-match-shell">
+        <section class="room-side-card room-team-card home">
+            <div class="room-player-rankframe">
+                {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm') }}
+                <div class="room-player-name">{{ room.host_name }}</div>
+                <div class="room-player-rankline">
+                    <img src="{{ url_for('static', filename='ranks/' ~ room.host_rank_info.slug ~ '.png') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
+                    <span>{{ room.host_rank_info.name }}</span>
                 </div>
             </div>
-            <div class="room-team-body">
+            <div class="room-card-club-area">
                 {% if room.host_team_logo_url %}<img class="room-club-logo-large" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
                 <div class="room-team-name-lg">{{ room.host_team or 'CHƯA CHỌN ĐỘI' }}</div>
                 <div class="room-team-points-block">
-                    <div class="room-team-points-value">{{ room.host_team_overall or '---' }}</div>
-                    <div class="room-team-points-label">Điểm đội</div>
+                    <div class="room-team-points-value">{{ room.host_team_total_stats or '---' }}</div>
+                    <div class="room-team-points-label">TOTAL STATS</div>
                 </div>
                 <div class="room-team-league-text">{{ room.host_team_league or 'Chưa có giải' }}</div>
             </div>
         </section>
 
-        <section class="room-battle-center panel">
-            <div class="room-battle-mode">{{ room.battle_label }}</div>
-
-            {% if room.status == 'waiting_ready' and room.has_guest %}
-            <div class="room-random-center-wrap">
-                <div class="room-random-center-icon" aria-hidden="true">🎲</div>
-                <div class="room-random-center-title">QUAY RANDOM ĐỘI</div>
-                <div class="room-random-center-copy">Chủ phòng bấm quay để random đội cho cả hai bên</div>
-            </div>
-            {% elif room.status in ['playing', 'friendly_playing'] and room.start_countdown_seconds > 0 %}
-            <div class="room-battle-timer-label">Thời gian còn lại để bắt đầu</div>
-            <div class="room-battle-timer" id="roomStartCountdown" data-seconds="{{ room.start_countdown_seconds }}">05:00</div>
-            <div class="room-battle-vs-wrap">
-                <div class="room-battle-vs">VS</div>
-            </div>
-            {% elif room.status == 'waiting_result_confirm' %}
-            <div class="room-battle-timer-label">Kết quả chờ xác nhận</div>
-            <div class="room-battle-scoreline">{{ room.host_score }} - {{ room.guest_score }}</div>
-            <div class="room-battle-vs-wrap">
-                <div class="room-battle-vs room-battle-vs-score">VS</div>
-            </div>
+        <section class="room-center-stage-plain">
+            {% if room.has_guest %}
+                <div class="room-center-countdown-label">Thời gian còn lại để bắt đầu</div>
+                <div class="room-center-countdown" id="roomStartCountdown" data-seconds="{{ room.start_countdown_seconds }}">05:00</div>
+                <div class="room-center-vs-big">VS</div>
+                {% if room.status == 'waiting_ready' %}
+                    {% if current_user.id == room.host_user_id or current_user.role == 'admin' %}
+                    <form class="room-center-random-form" method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
+                        <input type="hidden" name="match_mode" value="ranked">
+                        <button class="room-center-random-trigger" type="submit">
+                            <span class="room-center-random-glow"></span>
+                            <span class="room-center-random-icon">🎲</span>
+                            <span class="room-center-random-title">QUAY RANDOM ĐỘI</span>
+                            <span class="room-center-random-sub">Bấm vào xúc xắc để quay random đội luôn</span>
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="room-center-random-trigger disabled">
+                        <span class="room-center-random-glow"></span>
+                        <span class="room-center-random-icon">🎲</span>
+                        <span class="room-center-random-title">QUAY RANDOM ĐỘI</span>
+                        <span class="room-center-random-sub">Đang chờ chủ phòng quay đội</span>
+                    </div>
+                    {% endif %}
+                {% elif room.status == 'waiting_result_confirm' %}
+                    <div class="room-battle-scoreline room-center-scoreline">{{ room.host_score }} - {{ room.guest_score }}</div>
+                {% else %}
+                    <div class="room-center-state-pill">{{ room.status|replace('_',' ')|title }}</div>
+                {% endif %}
             {% else %}
-            <div class="room-battle-timer-label">Trạng thái</div>
-            <div class="room-battle-state-highlight">{{ room.status|replace('_', ' ')|title }}</div>
-            <div class="room-battle-vs-wrap">
-                <div class="room-battle-vs">VS</div>
-            </div>
+                <div class="room-center-vs-big">VS</div>
+                <div class="room-center-empty-note">Đang chờ đủ 2 người trong phòng</div>
             {% endif %}
-
-            <div class="room-battle-facts">
-                <div><span>Loại trận</span><strong>{{ room.match_mode_label }}</strong></div>
-                <div><span>Trạng thái phòng</span><strong>{{ room.status|replace('_', ' ')|title }}</strong></div>
-                <div><span>Điều kiện thắng</span><strong>Bàn thắng</strong></div>
-            </div>
         </section>
 
-        <section class="room-showcase-card room-showcase-away">
-            <div class="room-showcase-head">
-                <span class="room-corner-label">Đội khách</span>
-                <div class="room-player-minihead">
-                    {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm') }}
-                    <div class="room-player-meta">
-                        <strong>{{ room.guest_name }}</strong>
-                        {% if room.has_guest and room.guest_rank_info %}
-                        <div class="room-rank-chip">
-                            <img src="{{ url_for('static', filename='ranks/' ~ room.guest_rank_info.slug ~ '.png') }}" alt="{{ room.guest_rank_info.name }}" loading="lazy">
-                            <span>{{ room.guest_rank_info.name }}</span>
-                        </div>
-                        {% else %}
-                        <div class="room-rank-chip empty"><span>Đang chờ người chơi</span></div>
-                        {% endif %}
-                    </div>
+        <section class="room-side-card room-team-card away">
+            <div class="room-player-rankframe">
+                {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm') }}
+                <div class="room-player-name">{{ room.guest_name }}</div>
+                {% if room.has_guest and room.guest_rank_info %}
+                <div class="room-player-rankline">
+                    <img src="{{ url_for('static', filename='ranks/' ~ room.guest_rank_info.slug ~ '.png') }}" alt="{{ room.guest_rank_info.name }}" loading="lazy">
+                    <span>{{ room.guest_rank_info.name }}</span>
                 </div>
+                {% else %}
+                <div class="room-player-rankline empty"><span>Đang chờ người chơi</span></div>
+                {% endif %}
             </div>
-            <div class="room-team-body">
+            <div class="room-card-club-area">
                 {% if room.guest_team_logo_url %}<img class="room-club-logo-large" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
                 <div class="room-team-name-lg">{{ room.guest_team or 'CHƯA CHỌN ĐỘI' }}</div>
                 <div class="room-team-points-block">
-                    <div class="room-team-points-value">{{ room.guest_team_overall or '---' }}</div>
-                    <div class="room-team-points-label">Điểm đội</div>
+                    <div class="room-team-points-value">{{ room.guest_team_total_stats or '---' }}</div>
+                    <div class="room-team-points-label">TOTAL STATS</div>
                 </div>
                 <div class="room-team-league-text">{{ room.guest_team_league or 'Chưa có giải' }}</div>
             </div>
+            {% if current_user.id == room.guest_user_id and room.status == 'waiting_ready' %}
+            <div class="room-guest-action-bar">
+                {% if not room.guest_ready %}
+                <form method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
+                    <button class="btn green" type="submit">Sẵn sàng</button>
+                </form>
+                {% else %}
+                <button class="btn green" type="button" disabled>Đã sẵn sàng</button>
+                {% endif %}
+                <form method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}" onsubmit="return confirm('Thoát phòng lúc này được tính là Bỏ Cuộc và bị trừ 20 RP. Tiếp tục?');">
+                    <button class="btn red" type="submit">Thoát phòng</button>
+                </form>
+            </div>
+            {% endif %}
         </section>
+
+        <aside class="room-side-rail">
+            <section class="panel room-side-info-panel">
+                <h3>Thông tin phòng đấu</h3>
+                <div class="room-side-info-list">
+                    <div><span>Mã phòng</span><strong>#{{ room.room_code }}</strong></div>
+                    <div><span>Loại trận</span><strong>{{ room.match_mode_label }}</strong></div>
+                    <div><span>Trạng thái phòng</span><strong>{{ room.status|replace('_',' ')|title }}</strong></div>
+                </div>
+            </section>
+            <section class="panel room-chat-side">
+                <h2>Chat phòng</h2>
+                <div id="roomChatBox" class="chat-box"></div>
+                <form method="post" action="{{ url_for('send_room_chat', room_id=room.id) }}" class="chat-form">
+                    <input name="message" maxlength="200" placeholder="Nhắn với đối thủ trong phòng..." required autocomplete="off">
+                    <button class="btn green" type="submit">Gửi</button>
+                </form>
+                <div class="chat-note">Chat phòng chỉ dành cho 2 người trong phòng. Chống spam: 1 tin nhắn / 5 giây.</div>
+            </section>
+        </aside>
     </div>
 
-    <div class="room-bottom-grid">
-        <div class="panel room-action-panel">
+    <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
 
     {% if room.status == "waiting_ready" %}
@@ -344,17 +357,6 @@
     {% endif %}
         </div>
 
-        <aside class="panel room-chat-side">
-    <h2>💬 Chat phòng</h2>
-    <div id="roomChatBox" class="chat-box"></div>
-
-    <form method="post" action="{{ url_for('send_room_chat', room_id=room.id) }}" class="chat-form">
-        <input name="message" maxlength="200" placeholder="Nhắn với đối thủ trong phòng..." required autocomplete="off">
-        <button class="btn green" type="submit">Gửi</button>
-    </form>
-
-    <div class="chat-note">Chat phòng chỉ dành cho 2 người trong phòng. Chống spam: 1 tin nhắn / 5 giây.</div>
-        </aside>
     </div>
 </div>
 
