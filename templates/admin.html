@@ -135,7 +135,10 @@
                                     </label>
                                 </div>
                                 <div class="admin-permission-actions">
-                                    <button class="btn green admin-save-permissions" type="submit">✓ Lưu quyền</button>
+                                    <button class="btn green admin-save-permissions" type="submit" aria-label="Lưu quyền Admin phụ">
+                                        <span class="admin-save-icon" aria-hidden="true">✓</span>
+                                        <span class="admin-save-label">Lưu quyền</span>
+                                    </button>
                                 </div>
                             </form>
                             <form method="post" action="{{ url_for('admin_demote_user', user_id=a.id) }}" class="admin-demote-form" onsubmit="return confirm('Gỡ quyền Admin phụ?')">
@@ -690,6 +693,17 @@
     document.querySelectorAll('.temporary-password-input').forEach(function (input) {
         input.addEventListener('focus', function () { input.type = 'text'; });
         input.addEventListener('blur', function () { input.type = 'password'; });
+    });
+
+    document.querySelectorAll('.admin-permission-form').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            const button = form.querySelector('.admin-save-permissions');
+            if (!button || button.disabled) return;
+            button.disabled = true;
+            button.classList.add('is-saving');
+            const label = button.querySelector('.admin-save-label');
+            if (label) label.textContent = 'Đang lưu...';
+        });
     });
 })();
 </script>

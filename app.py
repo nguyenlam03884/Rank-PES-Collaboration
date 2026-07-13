@@ -44,7 +44,7 @@ from teams_data import (
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.9.0"
+APP_VERSION = "V1.9.3"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -148,7 +148,7 @@ ACTIVITY_PRIORITY = {
 
 app = Flask(__name__)
 
-# Tên biến chính thức giữ giống bản Production v1.9.0.
+# Tên biến chính thức giữ giống bản Production v1.9.3.
 # Các tên dự phòng chỉ giúp app tương thích nếu Vercel từng được cấu hình theo tên cũ.
 app.secret_key = (
     os.getenv("FLASK_SECRET_KEY")
