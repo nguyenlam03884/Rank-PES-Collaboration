@@ -3273,3 +3273,13 @@ html[data-theme="light"] .admin-switch-track{background:#cbd5df;border-color:#b9
   .room-side-info-panel h3,.room-chat-side h2{font-size:18px}
   .room-guest-action-bar{grid-template-columns:1fr}
 }
+
+/* V1.10.1 - dice image without purple layer */
+.room-center-random-trigger{max-width:240px;padding-top:4px}
+.room-center-random-glow,.room-center-random-icon{display:none!important}
+.room-center-random-image{display:block;width:150px;height:150px;object-fit:contain;background:transparent;border:0;filter:drop-shadow(0 16px 26px rgba(0,0,0,.34));transition:transform .18s ease,filter .18s ease}
+.room-center-random-trigger:not(.disabled):hover .room-center-random-image{transform:translateY(-3px) rotate(-3deg) scale(1.035);filter:drop-shadow(0 20px 32px rgba(0,0,0,.42))}
+.room-center-random-trigger:not(.disabled):active .room-center-random-image{transform:translateY(0) scale(.98)}
+.room-center-random-title{margin-top:2px}
+.room-team-points-block{margin-top:14px}
+@media(max-width:640px){.room-center-random-image{width:118px;height:118px}}

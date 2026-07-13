@@ -34,7 +34,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.0"
+APP_VERSION = "V1.10.1"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3063,22 +3063,46 @@ def heartbeat():
 @app.route("/api/invites/pending")
 @login_required
 def api_pending_invites():
-    invites = current_pending_invites()
-    data = []
-    for invite in invites:
-        data.append({
-            "id": invite["id"],
-            "from_name": invite["from_name"],
-            "from_avatar_url": invite.get("from_avatar_url"),
-            "from_achievement": invite.get("from_achievement"),
-            "from_rank": invite["from_rank"],
-            "from_points": invite["from_points"],
-            "tier": invite["tier"],
-            "expires_in_seconds": int(invite.get("expires_in_seconds") or 0),
-            "accept_url": url_for("respond_invite", invite_id=invite["id"]),
-            "reject_url": url_for("respond_invite", invite_id=invite["id"]),
-        })
-    return jsonify({"invites": data})
+    """Truy vấn trực tiếp lời mời của người hiện tại để giảm độ trễ popup."""
+    user = current_user()
+    if not user or user.get("role") == "admin":
+        return jsonify({"invites": []})
+
+    try:
+        result = execute_query(
+            db.table("match_invites")
+              .select("id,from_user_id,to_user_id,tier,status,expires_at,created_at")
+              .eq("to_user_id", user["id"])
+              .eq("status", "pending")
+              .order("created_at", desc=True)
+              .limit(3),
+            "api_pending_invites_direct",
+            attempts=2,
+        )
+        rows = result.data or []
+        data = []
+        for row in rows:
+            invite = expire_invite_if_needed(dict(row))
+            if invite.get("status") != "pending":
+                continue
+            sender = get_user(invite.get("from_user_id")) or {}
+            decorate_player_achievements(sender)
+            data.append({
+                "id": invite["id"],
+                "from_name": sender.get("display_name", "Unknown"),
+                "from_avatar_url": sender.get("avatar_url"),
+                "from_achievement": sender.get("featured_achievement"),
+                "from_rank": get_rank_display(sender.get("rank_points", 0)),
+                "from_points": sender.get("rank_points", 0),
+                "tier": invite.get("tier") or SMART_RANDOM_MODE,
+                "expires_in_seconds": int(invite.get("expires_in_seconds") or 0),
+                "accept_url": url_for("respond_invite", invite_id=invite["id"]),
+                "reject_url": url_for("respond_invite", invite_id=invite["id"]),
+            })
+        return jsonify({"invites": data})
+    except Exception as exc:
+        print(f"api_pending_invites ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
+        return jsonify({"invites": []})
 
 
 
@@ -4140,6 +4164,8 @@ def send_invite():
         "send_match_invite",
     )
     invite = invite_result.data[0] if invite_result.data else None
+    ttl_cache_delete("invites_raw")
+    cache_delete("_rz_invites_all")
     if not invite:
         flash("Không thể gửi lời mời lúc này. Vui lòng thử lại.", "danger")
         return redirect(url_for("players"))

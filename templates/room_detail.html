@@ -24,10 +24,11 @@
             <div class="room-card-club-area">
                 {% if room.host_team_logo_url %}<img class="room-club-logo-large" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
                 <div class="room-team-name-lg">{{ room.host_team or 'CHƯA CHỌN ĐỘI' }}</div>
+                {% if room.host_team_total_stats %}
                 <div class="room-team-points-block">
-                    <div class="room-team-points-value">{{ room.host_team_total_stats or '---' }}</div>
-                    <div class="room-team-points-label">TOTAL STATS</div>
+                    <div class="room-team-points-value">{{ room.host_team_total_stats }}</div>
                 </div>
+                {% endif %}
                 <div class="room-team-league-text">{{ room.host_team_league or 'Chưa có giải' }}</div>
             </div>
         </section>
@@ -42,16 +43,14 @@
                     <form class="room-center-random-form" method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
                         <input type="hidden" name="match_mode" value="ranked">
                         <button class="room-center-random-trigger" type="submit">
-                            <span class="room-center-random-glow"></span>
-                            <span class="room-center-random-icon">🎲</span>
+                            <img class="room-center-random-image" src="{{ url_for('static', filename='dice-random.png') }}" alt="Xúc xắc quay random đội" loading="eager">
                             <span class="room-center-random-title">QUAY RANDOM ĐỘI</span>
-                            <span class="room-center-random-sub">Bấm vào xúc xắc để quay random đội luôn</span>
+                            <span class="room-center-random-sub">Nhấn để đổi đội ngẫu nhiên cho cả hai bên</span>
                         </button>
                     </form>
                     {% else %}
                     <div class="room-center-random-trigger disabled">
-                        <span class="room-center-random-glow"></span>
-                        <span class="room-center-random-icon">🎲</span>
+                        <img class="room-center-random-image" src="{{ url_for('static', filename='dice-random.png') }}" alt="Xúc xắc quay random đội" loading="eager">
                         <span class="room-center-random-title">QUAY RANDOM ĐỘI</span>
                         <span class="room-center-random-sub">Đang chờ chủ phòng quay đội</span>
                     </div>
@@ -83,10 +82,11 @@
             <div class="room-card-club-area">
                 {% if room.guest_team_logo_url %}<img class="room-club-logo-large" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
                 <div class="room-team-name-lg">{{ room.guest_team or 'CHƯA CHỌN ĐỘI' }}</div>
+                {% if room.guest_team_total_stats %}
                 <div class="room-team-points-block">
-                    <div class="room-team-points-value">{{ room.guest_team_total_stats or '---' }}</div>
-                    <div class="room-team-points-label">TOTAL STATS</div>
+                    <div class="room-team-points-value">{{ room.guest_team_total_stats }}</div>
                 </div>
+                {% endif %}
                 <div class="room-team-league-text">{{ room.guest_team_league or 'Chưa có giải' }}</div>
             </div>
             {% if current_user.id == room.guest_user_id and room.status == 'waiting_ready' %}

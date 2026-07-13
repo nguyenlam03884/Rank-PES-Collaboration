@@ -1,15 +1,12 @@
 # Log
 
-## V1.10.0
+## V1.10.1
 
-- Thiết kế lại giao diện phòng đấu theo bố cục mới: Chủ nhà - VS - Đội khách - cột thông tin/chát bên phải.
-- Căn giữa tên hiển thị trong khung rank, đưa tên rank xuống bên dưới.
-- Khu giữa bỏ khung, hiển thị chữ VS lớn.
-- Thêm xúc xắc lớn trên nền trong suốt; chủ phòng có thể bấm trực tiếp vào xúc xắc để quay random đội.
-- Bộ đếm ngược 5 phút bắt đầu tính khi phòng có đủ 2 người.
-- Bên phải chia thành 2 nửa: Thông tin phòng đấu và Chat phòng.
-- Khối thông tin phòng chỉ hiển thị: Mã phòng, Loại trận, Trạng thái phòng.
-- Bổ sung nút Sẵn sàng và Thoát phòng ở khu vực Đội khách khi phù hợp.
-- Dưới logo CLB hiển thị `total_stats` thay cho điểm đội/overall.
-- Tối ưu hiển thị trên điện thoại.
-- Cập nhật phiên bản ứng dụng thành `V1.10.0`.
+- Thay emoji xúc xắc bằng ảnh xúc xắc thật do người dùng cung cấp.
+- Loại bỏ hoàn toàn vòng tròn/layer màu tím phía sau xúc xắc.
+- Giữ hai dòng chữ dưới xúc xắc: `QUAY RANDOM ĐỘI` và `Nhấn để đổi đội ngẫu nhiên cho cả hai bên`.
+- Chỉ hiển thị số `total_stats` khi đội đã có dữ liệu; không còn hiện chữ `TOTAL STATS` hoặc dấu `---` khi chưa có đội.
+- Tăng tốc nhận lời mời: popup kiểm tra mỗi 3 giây thay vì 18 giây.
+- API lời mời chuyển sang truy vấn trực tiếp lời mời của người nhận, không tải toàn bộ danh sách lời mời.
+- Xóa cache lời mời ngay sau khi gửi thành công để người nhận thấy lời mời nhanh hơn.
+- Cập nhật phiên bản ứng dụng thành `V1.10.1`.

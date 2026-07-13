@@ -678,7 +678,8 @@ postHeartbeat();
 checkAnnouncement();
 
 setInterval(postHeartbeat, 60000);
-setInterval(checkPendingInvites, 18000);
+checkPendingInvites();
+setInterval(checkPendingInvites, 3000);
 setInterval(checkActiveRoom, 18000);
 setInterval(loadBottomChatSmart, 45000);
 setInterval(checkLobbyChatUnread, 45000);
