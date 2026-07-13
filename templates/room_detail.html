@@ -42,20 +42,20 @@
                 <div class="room-center-countdown-label">Thời gian thi đấu</div>
                 <div class="room-center-countdown" id="roomStartCountdown" data-seconds="{{ room.match_elapsed_seconds }}" data-mode="up">00:00</div>
                 {% endif %}
-                <div class="room-center-vs-big">VS</div>
+                <img class="room-center-vs-image" src="{{ url_for('static', filename='vs.png') }}" alt="VS" loading="eager">
                 {% if room.status == 'waiting_ready' %}
                     {% if (current_user.id == room.host_user_id or current_user.role == 'admin') and room.guest_ready %}
                     <form class="room-center-random-form" method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
                         <input type="hidden" name="match_mode" value="ranked">
                         <button class="room-center-random-trigger" type="submit">
-                            <img class="room-center-random-image" src="{{ url_for('static', filename='dice-random.png') }}" alt="Xúc xắc quay random đội" loading="eager">
+                            <img class="room-center-random-image" src="{{ url_for('static', filename='Xucxac.png') }}" alt="Xúc xắc quay random đội" loading="eager">
                             <span class="room-center-random-title room-random-button-label">QUAY RANDOM ĐỘI</span>
                             <span class="room-center-random-sub">Nhấn để đổi đội ngẫu nhiên cho cả hai bên</span>
                         </button>
                     </form>
                     {% else %}
                     <div class="room-center-random-trigger disabled">
-                        <img class="room-center-random-image" src="{{ url_for('static', filename='dice-random.png') }}" alt="Xúc xắc quay random đội" loading="eager">
+                        <img class="room-center-random-image" src="{{ url_for('static', filename='Xucxac.png') }}" alt="Xúc xắc quay random đội" loading="eager">
                         <span class="room-center-random-title room-random-button-label">QUAY RANDOM ĐỘI</span>
                         <span class="room-center-random-sub">{{ "Khách chưa sẵn sàng" if not room.guest_ready else "Đang chờ chủ phòng quay đội" }}</span>
                     </div>
@@ -66,7 +66,7 @@
                     <div class="room-center-state-pill">{{ room.status|replace('_',' ')|title }}</div>
                 {% endif %}
             {% else %}
-                <div class="room-center-vs-big">VS</div>
+                <img class="room-center-vs-image" src="{{ url_for('static', filename='vs.png') }}" alt="VS" loading="eager">
                 <div class="room-center-empty-note">Đang chờ đủ 2 người trong phòng</div>
             {% endif %}
         </section>

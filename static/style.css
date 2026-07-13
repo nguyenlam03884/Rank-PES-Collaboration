@@ -3308,3 +3308,13 @@ html[data-theme="light"] .admin-switch-track{background:#cbd5df;border-color:#b9
   .room-guest-control-actions .btn{width:100%;min-width:0}
   .room-random-button-label{font-size:16px!important;min-height:38px;padding:7px 12px}
 }
+
+/* V1.10.3 - custom VS/dice assets and larger league name */
+.room-center-vs-image{display:block;width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 12px 26px rgba(0,0,0,.38));}
+.room-center-random-image{display:block;width:138px;height:138px;object-fit:contain;filter:contrast(1.16) saturate(1.08) drop-shadow(0 12px 24px rgba(0,0,0,.30));}
+.room-team-league-text{font-size:20px!important;font-weight:800!important;}
+@media(max-width:640px){
+  .room-center-vs-image{width:112px;height:112px}
+  .room-center-random-image{width:112px;height:112px}
+  .room-team-league-text{font-size:17px!important}
+}
