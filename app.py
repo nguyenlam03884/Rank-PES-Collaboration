@@ -29,22 +29,12 @@ from flask import (
     url_for,
 )
 from supabase import create_client
-from teams_data import (
-    TEAMS,
-    TEAM_COUNT,
-    TEAM_TIERS,
-    TEAM_TIER_META,
-    get_team_info,
-    get_team_overall,
-    get_team_tier,
-)
-
 
 
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.9.3"
+APP_VERSION = "V1.9.4"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -664,23 +654,15 @@ def get_rank_display(points:int)->str:
 
 
 def get_team_power_score(team_name):
-    """Resolve power_score from Supabase or fallback team data."""
+    """Đọc power_score của CLB trực tiếp từ bảng teams trên Supabase."""
     info = get_db_team_info(team_name) if team_name else None
     if info and info.get("power_score") is not None:
         try:
             return float(info.get("power_score"))
         except (TypeError, ValueError):
             pass
-    for team in TEAMS:
-        if str(team.get("display") or team.get("team") or "").casefold() == str(team_name or "").casefold():
-            try:
-                return float(team.get("power_score"))
-            except (TypeError, ValueError):
-                try:
-                    return round(73.33 + (int(team.get("overall", 73)) - 73) * 0.75, 2)
-                except (TypeError, ValueError):
-                    break
     return 73.33
+
 
 def get_tier_strength(tier):
     """Return numeric club strength: D=1 ... S+=7."""
@@ -775,10 +757,6 @@ def calculate_deltas(player_a, player_b, score_a: int, score_b: int, team_a=None
         return win_points, BASE_LOSS_POINTS
     return BASE_LOSS_POINTS, win_points
 
-TEAM_POOLS_BY_OVR = {}
-for _team in TEAMS:
-    TEAM_POOLS_BY_OVR.setdefault(int(_team["overall"]), []).append(_team)
-
 TEAM_LOGO_BUCKET = "team-logos"
 SMART_RANDOM_MODE = "Smart Rank"
 
@@ -826,7 +804,7 @@ def power_score_to_tier(power_score):
 
 
 def _normalize_team_row(row):
-    """Convert a Supabase teams row to the format used by Smart Random."""
+    """Chuẩn hóa một dòng CLB lấy trực tiếp từ bảng teams trên Supabase."""
     if not row:
         return None
     name = row.get("team") or row.get("display")
@@ -844,7 +822,7 @@ def _normalize_team_row(row):
         "team": str(name),
         "league": row.get("league") or "",
         "overall": overall,
-        "tier": power_score_to_tier(row.get("power_score")),
+        "tier": str(row.get("tier") or power_score_to_tier(row.get("power_score"))).strip().upper(),
         "logo_file": row.get("logo_file") or "",
         "logo_url": row.get("logo_url") or "",
         "defence": row.get("defence"),
@@ -857,44 +835,77 @@ def _normalize_team_row(row):
     }
 
 
-def get_random_team_pools():
-    """Load active clubs from Supabase; keep teams_data.py as a safe fallback."""
+_TEAM_CACHE = {"loaded_at": 0.0, "rows": [], "by_name": {}, "pools": {}}
+_TEAM_CACHE_TTL_SECONDS = 30
+TEAM_COUNT = 0
+
+
+def _load_teams_from_supabase(force=False):
+    """Chỉ đọc CLB từ Supabase; không còn CSV hoặc teams_data.py dự phòng."""
+    global TEAM_COUNT
+    now = time.monotonic()
+    if not force and _TEAM_CACHE["rows"] and now - _TEAM_CACHE["loaded_at"] < _TEAM_CACHE_TTL_SECONDS:
+        return _TEAM_CACHE["rows"]
+    if db is None:
+        raise RuntimeError("Chưa cấu hình kết nối Supabase để đọc bảng teams.")
+    result = execute_query(
+        db.table("teams")
+        .select("id,league,team,overall,defence,midfield,attack,speed,strength,total_stats,power_score,tier,logo_file,logo_url,is_active")
+        .eq("is_active", True),
+        "load_teams_from_supabase",
+        attempts=3,
+    )
+    rows = []
+    by_name = {}
     pools = {}
-    if db is not None:
-        try:
-            result = execute_query(
-                db.table("teams")
-                .select("id,league,team,overall,defence,midfield,attack,speed,strength,total_stats,power_score,tier,logo_file,logo_url")
-                .eq("is_active", True),
-                "load_random_teams",
-                attempts=2,
-            )
-            for row in result.data or []:
-                team = _normalize_team_row(row)
-                if team:
-                    pools.setdefault(team["overall"], []).append(team)
-        except Exception as exc:
-            print(f"load_random_teams fallback warning: {exc}")
-    return pools or TEAM_POOLS_BY_OVR
+    for raw in result.data or []:
+        team = _normalize_team_row(raw)
+        if not team:
+            continue
+        rows.append(team)
+        by_name[team["team"].casefold()] = team
+        pools.setdefault(team["overall"], []).append(team)
+    if not rows:
+        raise RuntimeError("Bảng teams trên Supabase không có CLB hoạt động.")
+    _TEAM_CACHE.update({"loaded_at": now, "rows": rows, "by_name": by_name, "pools": pools})
+    TEAM_COUNT = len(rows)
+    return rows
+
+
+def get_random_team_pools():
+    """Trả nhóm CLB theo overall, chỉ từ Supabase."""
+    _load_teams_from_supabase()
+    return _TEAM_CACHE["pools"]
 
 
 def get_db_team_info(team_name):
-    """Fetch one active team by display name; returns None when the table is unavailable."""
-    if not team_name or db is None:
+    """Tìm CLB theo tên trong dữ liệu Supabase đã cache ngắn hạn."""
+    if not team_name:
         return None
     try:
-        result = execute_query(
-            db.table("teams")
-            .select("id,league,team,overall,total_stats,power_score,tier,logo_file,logo_url")
-            .eq("team", str(team_name))
-            .limit(1),
-            "get_db_team_info",
-            attempts=2,
-        )
-        return _normalize_team_row(result.data[0]) if result.data else None
+        _load_teams_from_supabase()
+        return _TEAM_CACHE["by_name"].get(str(team_name).casefold())
     except Exception as exc:
-        print(f"get_db_team_info fallback warning: {exc}")
+        print(f"get_db_team_info error: {exc}")
         return None
+
+
+def get_team_info(team_name):
+    return get_db_team_info(team_name)
+
+
+def get_team_overall(team_name):
+    info = get_db_team_info(team_name)
+    try:
+        return int(info.get("overall")) if info else 0
+    except (TypeError, ValueError):
+        return 0
+
+
+def get_team_tier(team_name):
+    info = get_db_team_info(team_name)
+    return str(info.get("tier") or "") if info else ""
+
 
 SMART_RANDOM_MODE = "Smart Tier Random"
 RECENT_TEAM_EXCLUSION_COUNT = 5
