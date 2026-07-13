@@ -3069,3 +3069,107 @@ html[data-theme="light"] .admin-switch-track{background:#cbd5df;border-color:#b9
 .room-waiting-host-box{margin:0 0 14px;padding:12px 14px;border:1px solid rgba(245,190,60,.35);border-radius:12px;background:rgba(245,190,60,.08)}
 .room-waiting-host-box strong{display:block;color:#f7cf66;margin-bottom:3px}
 .room-waiting-host-box p{margin:0}
+
+/* ===== Room detail refresh v1.9.7 ===== */
+.room-view-shell{display:flex;flex-direction:column;gap:16px}
+.room-stage-topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(7,18,33,.92),rgba(5,13,24,.82))}
+.room-stage-title{margin:0;font-size:38px;letter-spacing:.02em;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.room-code-badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:12px;background:rgba(101,81,255,.14);border:1px solid rgba(118,95,255,.28);font-size:18px;color:#8d85ff}
+.room-stage-subtitle{margin:6px 0 0;color:#d3dae6;font-weight:700}
+.room-stage-top-actions{display:flex;align-items:center;gap:10px}
+.room-invite-btn{min-width:128px;min-height:46px;font-weight:800}
+.room-stage-timeout{margin-top:-4px}
+
+.room-battle-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,.85fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.room-showcase-card{position:relative;display:flex;flex-direction:column;min-height:540px;border-radius:22px;overflow:hidden;border:1px solid rgba(234,187,84,.28);background:radial-gradient(circle at top, rgba(255,203,97,.09), transparent 42%),linear-gradient(180deg,rgba(10,20,38,.97),rgba(5,11,22,.97));box-shadow:0 18px 40px rgba(0,0,0,.34),inset 0 0 0 1px rgba(255,255,255,.03)}
+.room-showcase-home:before,.room-showcase-away:before{content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none;background:linear-gradient(180deg,rgba(255,208,102,.08),transparent 26%,transparent 70%,rgba(255,208,102,.05));}
+.room-showcase-head{padding:18px 18px 8px}
+.room-corner-label{display:inline-flex;align-items:center;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;background:rgba(45,90,170,.25);color:#cfe0ff}
+.room-showcase-away .room-corner-label{background:rgba(150,44,73,.28);color:#ffd6df}
+.room-player-minihead{display:flex;align-items:center;gap:12px;margin-top:14px}
+.room-player-meta{min-width:0;display:flex;flex-direction:column;gap:6px}
+.room-player-meta strong{font-size:28px;line-height:1.1;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-rank-chip{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:6px 10px;border-radius:999px;background:rgba(141,95,255,.13);border:1px solid rgba(141,95,255,.22);font-size:12px;font-weight:800;color:#e9defe}
+.room-rank-chip img{width:22px;height:22px;object-fit:contain}
+.room-rank-chip.empty{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08);color:#bcc5d4}
+.room-team-body{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:10px 24px 28px;text-align:center}
+.room-club-logo-large{width:172px;height:172px;object-fit:contain;filter:drop-shadow(0 10px 26px rgba(0,0,0,.28));margin:8px auto 16px}
+.room-team-placeholder-shield{display:flex;align-items:center;justify-content:center;width:172px;height:172px;border-radius:28px;border:2px dashed rgba(255,255,255,.14);font-size:64px;color:rgba(255,255,255,.3);margin:8px auto 16px}
+.room-team-name-lg{font-size:32px;font-weight:900;line-height:1.12;color:#fff;text-transform:uppercase}
+.room-team-points-block{display:flex;flex-direction:column;align-items:center;justify-content:center;margin-top:18px;gap:2px}
+.room-team-points-value{font-size:40px;font-weight:900;line-height:1;color:#ffd777}
+.room-team-points-label{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#d5b976}
+.room-team-league-text{margin-top:14px;font-size:17px;font-weight:700;color:#c7d1df}
+
+.room-battle-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 22px;border:1px solid rgba(239,195,88,.18);background:radial-gradient(circle at center, rgba(255,191,64,.08), transparent 45%),linear-gradient(180deg,rgba(9,18,31,.96),rgba(5,12,23,.96));text-align:center}
+.room-battle-mode{font-size:18px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#f7d476}
+.room-battle-timer-label{font-size:14px;font-weight:700;color:#d9e0ea}
+.room-battle-timer{font-size:56px;font-weight:900;line-height:1;color:#ffd666;text-shadow:0 8px 24px rgba(0,0,0,.35)}
+.room-battle-state-highlight{padding:8px 16px;border-radius:999px;background:rgba(71,122,255,.14);border:1px solid rgba(71,122,255,.25);font-size:14px;font-weight:800;color:#dfe8ff}
+.room-battle-scoreline{font-size:54px;font-weight:900;line-height:1;color:#fff}
+.room-battle-vs-wrap{display:flex;align-items:center;justify-content:center;width:100%}
+.room-battle-vs{display:flex;align-items:center;justify-content:center;width:148px;height:148px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #ffeab1, #d4a640 58%, #8f691d 100%);box-shadow:0 16px 34px rgba(0,0,0,.35),inset 0 2px 10px rgba(255,255,255,.28);font-size:56px;font-weight:900;color:#251808;letter-spacing:.04em}
+.room-battle-facts{display:grid;gap:10px;width:100%;max-width:280px;margin-top:4px}
+.room-battle-facts div{display:flex;flex-direction:column;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+.room-battle-facts span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#aeb9c9}
+.room-battle-facts strong{margin-top:4px;font-size:15px;color:#fff}
+
+.room-bottom-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,.85fr);gap:16px;align-items:start}
+.room-action-panel{min-height:260px}
+.room-chat-side{padding:16px 16px 12px;position:sticky;top:88px}
+.room-chat-side h2{margin-top:0;margin-bottom:12px;font-size:22px}
+.room-chat-side .chat-box{min-height:360px;max-height:520px;background:rgba(7,17,29,.62);border:1px solid rgba(255,255,255,.08)}
+.room-chat-side .chat-form{margin-top:12px}
+.room-chat-side .chat-form input{height:46px}
+.room-chat-side .chat-note{margin-top:10px;font-size:12px;line-height:1.45;color:#aab4c5}
+.room-action-panel .room-control-title{margin-top:0}
+
+@media (max-width: 1240px){
+  .room-battle-grid{grid-template-columns:1fr 320px 1fr}
+  .room-player-meta strong{font-size:24px}
+  .room-team-name-lg{font-size:28px}
+}
+@media (max-width: 1080px){
+  .room-battle-grid{grid-template-columns:1fr;}
+  .room-showcase-card,.room-battle-center{min-height:unset}
+  .room-bottom-grid{grid-template-columns:1fr}
+  .room-chat-side{position:static}
+}
+@media (max-width: 760px){
+  .room-stage-topbar{padding:14px 14px 15px;align-items:flex-start;flex-direction:column}
+  .room-stage-title{font-size:30px;gap:8px}
+  .room-code-badge{font-size:15px;padding:6px 10px}
+  .room-stage-subtitle{font-size:14px}
+  .room-stage-top-actions{width:100%}
+  .room-invite-btn{width:100%}
+  .room-battle-grid{gap:12px}
+  .room-showcase-card{min-height:420px;border-radius:18px}
+  .room-showcase-head{padding:14px 14px 6px}
+  .room-player-minihead{gap:10px;margin-top:10px}
+  .room-player-meta strong{font-size:20px}
+  .room-rank-chip{padding:5px 8px;font-size:11px}
+  .room-club-logo-large,.room-team-placeholder-shield{width:122px;height:122px}
+  .room-team-placeholder-shield{font-size:48px}
+  .room-team-name-lg{font-size:22px}
+  .room-team-points-value{font-size:32px}
+  .room-team-league-text{font-size:14px}
+  .room-battle-center{padding:20px 14px}
+  .room-battle-mode{font-size:15px}
+  .room-battle-timer{font-size:44px}
+  .room-battle-scoreline{font-size:44px}
+  .room-battle-vs{width:116px;height:116px;font-size:42px}
+  .room-battle-facts{max-width:none}
+  .room-chat-side .chat-box{min-height:280px;max-height:360px}
+}
+@media (max-width: 520px){
+  .room-stage-title{font-size:26px}
+  .room-showcase-card{min-height:380px}
+  .room-player-meta strong{font-size:18px}
+  .room-team-body{padding:10px 14px 20px}
+  .room-club-logo-large,.room-team-placeholder-shield{width:102px;height:102px}
+  .room-team-placeholder-shield{font-size:40px}
+  .room-team-name-lg{font-size:19px}
+  .room-team-points-value{font-size:28px}
+  .room-battle-vs{width:96px;height:96px;font-size:34px}
+  .room-battle-timer,.room-battle-scoreline{font-size:38px}
+}

@@ -34,7 +34,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.9.6"
+APP_VERSION = "V1.9.7"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2381,16 +2381,23 @@ def enrich_room(room):
     users = users_map()
     host = users.get(room.get("host_user_id"), {})
     guest = users.get(room.get("guest_user_id"), {})
+
+    raw_room_id = str(room.get("id") or "")
+    compact_room_id = "".join(ch for ch in raw_room_id.upper() if ch.isalnum())
+    room["room_code"] = (compact_room_id[:6] or "ROOM00")
+
     room["host_name"] = host.get("display_name", "Unknown")
     room["host_avatar_url"] = host.get("avatar_url")
     room["host_achievement"] = host.get("featured_achievement")
     room["host_points"] = host.get("rank_points", 0)
+    room["host_rank_info"] = get_rank_info(host.get("rank_points", 0))
     room["host_rank"] = get_rank_display(host.get("rank_points", 0))
     room["has_guest"] = bool(room.get("guest_user_id"))
     room["guest_name"] = guest.get("display_name", "Đang chờ đối thủ") if room["has_guest"] else "Đang chờ đối thủ"
     room["guest_avatar_url"] = guest.get("avatar_url") if room["has_guest"] else None
     room["guest_achievement"] = guest.get("featured_achievement") if room["has_guest"] else None
     room["guest_points"] = guest.get("rank_points", 0) if room["has_guest"] else 0
+    room["guest_rank_info"] = get_rank_info(guest.get("rank_points", 0)) if room["has_guest"] else None
     room["guest_rank"] = get_rank_display(guest.get("rank_points", 0)) if room["has_guest"] else "Chưa có người chơi"
     if room.get("host_team"):
         info = get_db_team_info(room.get("host_team")) or {}
@@ -2446,6 +2453,15 @@ def enrich_room(room):
         room["timeout_label"] = "Yêu cầu đá tiếp sẽ hết hạn trong"
     else:
         room["timeout_label"] = ""
+
+    room["match_mode_label"] = "Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()
+    room["battle_label"] = "Trận đấu xếp hạng" if room.get("match_mode") != MATCH_MODE_FRIENDLY else "Trận đấu giao hữu"
+    room["start_countdown_seconds"] = 0
+    if room.get("status") in {"playing", "friendly_playing"} and room.get("host_team") and room.get("guest_team"):
+        start_source = room.get("updated_at") or room.get("created_at")
+        start_dt = parse_iso(start_source) if start_source else None
+        if start_dt:
+            room["start_countdown_seconds"] = max(0, 300 - int((now_dt() - start_dt).total_seconds()))
     return room
 
 
@@ -4829,8 +4845,8 @@ def room_finish_friendly(room_id):
 @app.route("/room/<room_id>/guest-unready", methods=["POST"])
 @login_required
 def room_guest_unready(room_id):
-    # Giữ endpoint để tương thích với trang cũ/cache cũ. V1.9.6 đã bỏ bước Sẵn sàng.
-    flash("V1.9.6 đã bỏ nút Sẵn sàng. Phòng đang chờ Chủ Phòng quay đội.", "warning")
+    # Giữ endpoint để tương thích với trang cũ/cache cũ. V1.9.7 đã bỏ bước Sẵn sàng.
+    flash("V1.9.7 đã bỏ nút Sẵn sàng. Phòng đang chờ Chủ Phòng quay đội.", "warning")
     return redirect(url_for("room_detail", room_id=room_id))
 
 
@@ -4858,7 +4874,7 @@ def room_guest_ready(room_id):
 @login_required
 def room_start(room_id):
     # Giữ endpoint để tương thích với trang cũ đang được cache.
-    flash("V1.9.6 đã bỏ nút Sẵn sàng và Bắt đầu trận. Chủ phòng chỉ cần quay đội.", "warning")
+    flash("V1.9.7 đã bỏ nút Sẵn sàng và Bắt đầu trận. Chủ phòng chỉ cần quay đội.", "warning")
     return redirect(url_for("room_detail", room_id=room_id))
 
 
