@@ -146,10 +146,23 @@ ACTIVITY_PRIORITY = {
 
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "rankzone-fc-dev-secret-change-me")
 
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+# Tên biến chính thức giữ giống bản Production v1.9.0.
+# Các tên dự phòng chỉ giúp app tương thích nếu Vercel từng được cấu hình theo tên cũ.
+app.secret_key = (
+    os.getenv("FLASK_SECRET_KEY")
+    or os.getenv("SECRET_KEY")
+    or "rankzone-fc-dev-secret-change-me"
+).strip()
+
+APP_ENV = (os.getenv("APP_ENV") or os.getenv("VERCEL_ENV") or "production").strip().lower()
+supabase_url = (os.getenv("SUPABASE_URL") or "").strip().rstrip("/")
+supabase_key = (
+    os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    or os.getenv("SUPABASE_KEY")
+    or ""
+).strip()
+
 db = create_client(supabase_url, supabase_key) if supabase_url and supabase_key else None
 
 
