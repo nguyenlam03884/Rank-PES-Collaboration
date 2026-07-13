@@ -1,9 +1,8 @@
 # Log
 
-## V1.10.3
+## V1.10.5
 
-- Thay chữ VS bằng ảnh `static/vs.png`.
-- Thay ảnh xúc xắc cũ bằng `static/Xucxac.png`.
-- Thêm logo Bayern Munich tại `static/bayern-munich.png`.
-- Tăng cỡ chữ tên giải từ 16px lên 20px trên desktop và 17px trên mobile.
-- Cập nhật phiên bản ứng dụng thành `V1.10.3`.
+- Bỏ hoàn toàn wrapper dạng khung quanh avatar, tên người chơi và Rank trong Phòng đấu.
+- Thay class cũ bằng vùng hiển thị phẳng, không nền, không viền, không bo góc, không đổ bóng.
+- Giữ tên người chơi căn giữa và Rank nằm ngay bên dưới.
+- Cập nhật phiên bản thành `V1.10.5`.
