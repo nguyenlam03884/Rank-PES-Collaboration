@@ -44,7 +44,7 @@
             <div class="room-team-placeholder">⚽</div>
             {% endif %}
         </div>
-        {% if room.has_guest and room.status == "waiting_ready" %}<p class="room-ready-state">{{ "✅ Đã sẵn sàng" if room.guest_ready else "⏳ Chưa sẵn sàng" }}</p>{% endif %}
+        {% if room.has_guest and room.status == "waiting_ready" %}<p class="room-ready-state">⏳ Trạng thái: Chờ Chủ Phòng Quay</p>{% endif %}
     </div>
 </div>
 
@@ -52,35 +52,23 @@
     <h2 class="room-control-title">Điều khiển phòng</h2>
 
     {% if room.status == "waiting_ready" %}
-        {% if room.guest_ready %}
-        <p><strong>✅ Khách đã sẵn sàng. Chủ phòng có thể Smart Random đội.</strong></p>
-        {% endif %}
-
-        {% if current_user.id == room.guest_user_id %}
-            {% if not room.guest_ready %}
-            <form class="inline-form" method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
-                <button class="btn green" type="submit">✅ Tôi sẵn sàng</button>
-            </form>
-            <p class="small">Bạn vẫn có thể rời phòng trước khi bấm sẵn sàng.</p>
-            {% else %}
-            <span class="btn green">✅ Đã sẵn sàng</span>
-            <form class="inline-form" method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
-                <button class="btn gray" type="submit">↩ Hủy sẵn sàng</button>
-            </form>
-            <p class="small">Bạn có thể hủy sẵn sàng hoặc rời phòng trước khi chủ phòng random đội.</p>
-            {% endif %}
+        {% if room.has_guest %}
+        <div class="room-waiting-host-box">
+            <strong>⏳ Trạng thái: Chờ Chủ Phòng Quay</strong>
+            <p class="small">Đối thủ đã vào phòng. Không cần bấm Sẵn sàng.</p>
+        </div>
         {% endif %}
 
         {% if current_user.id == room.host_user_id or current_user.role == "admin" %}
-            {% if room.guest_ready %}
+            {% if room.has_guest %}
             <div class="room-mode-grid">
-                <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="this.querySelector('button').disabled=true;">
+                <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Đang quay đội...';">
                     <input type="hidden" name="match_mode" value="ranked">
                     <h3>🏆 Xếp hạng</h3>
                     <p class="small">Smart Random theo Rank và Power Score. Có lưu lịch sử, có tính RP.</p>
                     <button class="btn gold" type="submit">⚖️ Quay đội Xếp hạng</button>
                 </form>
-                <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="this.querySelector('button').disabled=true;">
+                <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Đang quay đội...';">
                     <input type="hidden" name="match_mode" value="friendly">
                     <h3>🤝 Giao hữu</h3>
                     <label>Chọn Tier CLB</label>
@@ -94,33 +82,21 @@
                 </form>
             </div>
             {% else %}
-            {% if room.has_guest %}
-            <span class="btn gray">⏳ Chờ khách sẵn sàng</span>
-            <p class="small">Khách cần bấm sẵn sàng trước khi bạn có thể random đội.</p>
-            {% else %}
             <a class="btn gold" href="{{ url_for('players') }}">👤 Mời đối thủ</a>
             <p class="small">Phòng đang mở. Hãy chọn một người chơi trong tab Players để gửi lời mời.</p>
-            {% endif %}
             {% endif %}
         {% endif %}
 
         {% if current_user.id == room.guest_user_id %}
-            {% if room.guest_ready %}
-            <form class="inline-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}" onsubmit="return confirm('Bạn xác nhận Bỏ Cuộc và - 20 RP?');">
-                <button class="btn red" type="submit">🚪 Thoát Phòng</button>
-            </form>
-            <p class="small danger-text">Bạn đã sẵn sàng. Thoát lúc này được tính là bỏ cuộc và bị trừ 20 RP.</p>
-            {% else %}
-            <form class="inline-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
-                <button class="btn red" type="submit">🚪 Rời phòng</button>
-            </form>
-            <p class="small">Bạn chưa sẵn sàng nên có thể rời phòng mà không bị trừ RP.</p>
-            {% endif %}
+        <form class="inline-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}" onsubmit="return confirm('Bạn đã chấp nhận vào phòng. Thoát lúc này được tính là Bỏ Cuộc và bị trừ 20 RP. Tiếp tục?');">
+            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small danger-text">Sau khi chấp nhận lời mời, thoát phòng được tính là bỏ cuộc và bị trừ 20 RP.</p>
         {% elif current_user.id == room.host_user_id %}
         <form class="inline-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
             <button class="btn red" type="submit">🚪 Thoát phòng</button>
         </form>
-        <p class="small">Chủ phòng có thể đóng phòng bất cứ lúc nào trước khi random đội.</p>
+        <p class="small">Chủ phòng có thể đóng phòng trước khi quay đội.</p>
         {% endif %}
     {% endif %}
 

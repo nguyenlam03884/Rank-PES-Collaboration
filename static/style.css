@@ -3064,3 +3064,8 @@ html[data-theme="light"] .admin-switch-track{background:#cbd5df;border-color:#b9
   .admin-permission-list{grid-template-columns:1fr}
   .admin-permission-copy small{white-space:normal}
 }
+
+/* V1.9.6 - Bỏ bước Sẵn sàng */
+.room-waiting-host-box{margin:0 0 14px;padding:12px 14px;border:1px solid rgba(245,190,60,.35);border-radius:12px;background:rgba(245,190,60,.08)}
+.room-waiting-host-box strong{display:block;color:#f7cf66;margin-bottom:3px}
+.room-waiting-host-box p{margin:0}
