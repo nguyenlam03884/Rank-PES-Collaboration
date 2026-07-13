@@ -48,23 +48,32 @@
 
         <section class="room-battle-center panel">
             <div class="room-battle-mode">{{ room.battle_label }}</div>
-            {% if room.status in ['playing', 'friendly_playing'] and room.start_countdown_seconds > 0 %}
+
+            {% if room.status == 'waiting_ready' and room.has_guest %}
+            <div class="room-random-center-wrap">
+                <div class="room-random-center-icon" aria-hidden="true">🎲</div>
+                <div class="room-random-center-title">QUAY RANDOM ĐỘI</div>
+                <div class="room-random-center-copy">Chủ phòng bấm quay để random đội cho cả hai bên</div>
+            </div>
+            {% elif room.status in ['playing', 'friendly_playing'] and room.start_countdown_seconds > 0 %}
             <div class="room-battle-timer-label">Thời gian còn lại để bắt đầu</div>
             <div class="room-battle-timer" id="roomStartCountdown" data-seconds="{{ room.start_countdown_seconds }}">05:00</div>
-            {% elif room.status == 'waiting_ready' and room.has_guest %}
-            <div class="room-battle-timer-label">Trạng thái</div>
-            <div class="room-battle-state-highlight">Chờ Chủ Phòng Quay</div>
-            {% elif room.status == 'waiting_result_confirm' %}
-            <div class="room-battle-timer-label">Kết quả chờ xác nhận</div>
-            <div class="room-battle-scoreline">{{ room.host_score }} - {{ room.guest_score }}</div>
-            {% else %}
-            <div class="room-battle-timer-label">Trạng thái</div>
-            <div class="room-battle-state-highlight">{{ room.status|replace('_', ' ')|title }}</div>
-            {% endif %}
-
             <div class="room-battle-vs-wrap">
                 <div class="room-battle-vs">VS</div>
             </div>
+            {% elif room.status == 'waiting_result_confirm' %}
+            <div class="room-battle-timer-label">Kết quả chờ xác nhận</div>
+            <div class="room-battle-scoreline">{{ room.host_score }} - {{ room.guest_score }}</div>
+            <div class="room-battle-vs-wrap">
+                <div class="room-battle-vs room-battle-vs-score">VS</div>
+            </div>
+            {% else %}
+            <div class="room-battle-timer-label">Trạng thái</div>
+            <div class="room-battle-state-highlight">{{ room.status|replace('_', ' ')|title }}</div>
+            <div class="room-battle-vs-wrap">
+                <div class="room-battle-vs">VS</div>
+            </div>
+            {% endif %}
 
             <div class="room-battle-facts">
                 <div><span>Loại trận</span><strong>{{ room.match_mode_label }}</strong></div>

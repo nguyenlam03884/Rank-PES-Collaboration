@@ -3173,3 +3173,19 @@ html[data-theme="light"] .admin-switch-track{background:#cbd5df;border-color:#b9
   .room-battle-vs{width:96px;height:96px;font-size:34px}
   .room-battle-timer,.room-battle-scoreline{font-size:38px}
 }
+
+/* V1.9.8 - room random center icon */
+.room-random-center-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100%;padding:10px 0 4px}
+.room-random-center-icon{display:flex;align-items:center;justify-content:center;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #c779ff 0%, #8d43de 46%, #58209d 75%, #2a0f53 100%);box-shadow:0 0 0 3px rgba(209,120,255,.18),0 18px 40px rgba(115,38,186,.38),inset 0 8px 28px rgba(255,255,255,.15);font-size:84px;line-height:1;color:#fff;text-shadow:0 8px 26px rgba(0,0,0,.35)}
+.room-random-center-title{font-size:34px;font-weight:900;letter-spacing:.03em;color:#ffffff;text-align:center}
+.room-random-center-copy{max-width:260px;font-size:15px;line-height:1.5;color:#c6d0df;text-align:center}
+.room-battle-vs-score{width:114px;height:114px;font-size:40px}
+@media (max-width:760px){
+  .room-random-center-icon{width:132px;height:132px;font-size:64px}
+  .room-random-center-title{font-size:24px}
+  .room-random-center-copy{font-size:13px;max-width:220px}
+}
+@media (max-width:520px){
+  .room-random-center-icon{width:116px;height:116px;font-size:56px}
+  .room-random-center-title{font-size:21px}
+}
