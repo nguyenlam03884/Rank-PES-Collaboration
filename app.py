@@ -34,7 +34,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.9.4"
+APP_VERSION = "V1.9.5"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -105,7 +105,7 @@ SMART_RANDOM_STRONGER_WEIGHT = 0.15
 SMART_RANDOM_WEAKER_WEIGHT = 0.15
 WIN_STREAK_BONUSES = {3: 5, 5: 10, 8: 15, 10: 20}
 
-RANKS = [
+DEFAULT_RANKS = [
     {"min": 0, "max": 499, "name": "Gà", "short_name": "Gà", "abbr": "G", "code": "CHICKEN", "icon": "🐔", "slug": "ga"},
     {"min": 500, "max": 699, "name": "Non", "short_name": "Non", "abbr": "N", "code": "NOVICE", "icon": "🌱", "slug": "non"},
     {"min": 700, "max": 899, "name": "Báo Thủ", "short_name": "Báo", "abbr": "BT", "code": "LIABILITY", "icon": "⚠️", "slug": "bao-thu"},
@@ -628,11 +628,93 @@ def generate_invite_code_value(length: int = 10) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
+RANK_RANGE_SETTING_KEY = "rank_ranges"
+_rank_range_cache = {"value": None, "expires_at": 0.0}
+
+
+def _validate_rank_ranges(raw_ranges):
+    """Validate the 10 rank definitions stored in system_settings."""
+    if isinstance(raw_ranges, dict):
+        raw_ranges = raw_ranges.get("ranks") or raw_ranges.get("value") or raw_ranges
+    if not isinstance(raw_ranges, list) or len(raw_ranges) != 10:
+        raise ValueError("Cấu hình khoảng điểm Rank phải có đúng 10 Rank.")
+
+    normalized = []
+    previous_max = -1
+    required_text_fields = ("name", "short_name", "abbr", "code", "icon", "slug")
+    for index, item in enumerate(raw_ranges):
+        if not isinstance(item, dict):
+            raise ValueError(f"Rank {index + 1} không đúng định dạng.")
+        row = dict(item)
+        minimum = int(row.get("min"))
+        maximum_raw = row.get("max")
+        maximum = None if maximum_raw in (None, "", "null") else int(maximum_raw)
+        if index == 0 and minimum != 0:
+            raise ValueError("Rank đầu tiên phải bắt đầu từ 0 RP.")
+        if index > 0 and minimum != previous_max + 1:
+            raise ValueError(f"Rank {index + 1} phải bắt đầu từ {previous_max + 1} RP.")
+        if index < 9 and maximum is None:
+            raise ValueError(f"Rank {index + 1} phải có điểm kết thúc.")
+        if maximum is not None and maximum < minimum:
+            raise ValueError(f"Khoảng điểm Rank {index + 1} không hợp lệ.")
+        if index == 9 and maximum is not None:
+            raise ValueError("Rank cuối cùng phải để max = null.")
+        for field in required_text_fields:
+            row[field] = str(row.get(field) or "").strip()
+            if not row[field]:
+                raise ValueError(f"Rank {index + 1} thiếu trường {field}.")
+        row["min"] = minimum
+        row["max"] = maximum
+        normalized.append(row)
+        previous_max = maximum if maximum is not None else previous_max
+    return normalized
+
+
+def load_rank_ranges(force=False):
+    """Always load active Rank ranges from Supabase system_settings."""
+    now = time.time()
+    if not force and _rank_range_cache["value"] is not None and now < _rank_range_cache["expires_at"]:
+        return _rank_range_cache["value"]
+    if db is None:
+        raise RuntimeError("Chưa cấu hình kết nối Supabase để đọc khoảng điểm Rank.")
+
+    result = execute_query(
+        db.table("system_settings").select("setting_value").eq("setting_key", RANK_RANGE_SETTING_KEY).limit(1),
+        "load_rank_ranges",
+        attempts=3,
+    )
+    if not result.data:
+        # Tự tạo cấu hình lần đầu để không cần chạy hoặc lưu file SQL trên GitHub.
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": RANK_RANGE_SETTING_KEY,
+                "setting_value": DEFAULT_RANKS,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "seed_rank_ranges",
+            attempts=3,
+        )
+        configured = _validate_rank_ranges(DEFAULT_RANKS)
+    else:
+        stored = result.data[0].get("setting_value")
+        if isinstance(stored, str):
+            stored = json.loads(stored)
+        configured = _validate_rank_ranges(stored)
+
+    _rank_range_cache.update({"value": configured, "expires_at": now + 30})
+    return configured
+
+
+def get_rank_ranges():
+    return load_rank_ranges()
+
+
 def get_rank_info(points: int):
-    safe=max(0,int(points or 0)); selected=RANKS[0]
-    for rank in RANKS:
+    ranks = load_rank_ranges()
+    safe=max(0,int(points or 0)); selected=ranks[0]
+    for rank in ranks:
         if safe>=rank["min"]: selected=rank
-    result=dict(selected); nxt=next((r for r in RANKS if r["min"]>safe),None)
+    result=dict(selected); nxt=next((r for r in ranks if r["min"]>safe),None)
     result["points"]=safe; result["next_rank"]=nxt
     result["points_to_next"]=max(0,nxt["min"]-safe) if nxt else 0
     if nxt:
@@ -918,7 +1000,7 @@ def get_rank_level(points: int) -> int:
     """Return rank level from 0 (lowest) to 9 (highest)."""
     safe_points = max(0, int(points or 0))
     level = 0
-    for index, rank in enumerate(RANKS):
+    for index, rank in enumerate(load_rank_ranges()):
         if safe_points >= rank["min"]:
             level = index
     return level
@@ -934,7 +1016,7 @@ def _validate_rank_tier_weights(raw_weights):
         raise ValueError("RANK_CLUB_TIER_WEIGHTS phải là một dictionary.")
 
     normalized = {}
-    for rank_number in range(1, len(RANKS) + 1):
+    for rank_number in range(1, len(load_rank_ranges()) + 1):
         row = raw_weights.get(rank_number)
         if row is None:
             row = raw_weights.get(str(rank_number))
@@ -989,7 +1071,7 @@ def load_rank_tier_weights(force=False):
 
 def get_rank_tier_weights(level: int):
     """Return the active Admin-configured Tier percentages for one rank level."""
-    safe_level = max(0, min(len(RANKS) - 1, int(level or 0)))
+    safe_level = max(0, min(len(load_rank_ranges()) - 1, int(level or 0)))
     return load_rank_tier_weights().get(safe_level, RANK_CLUB_TIER_WEIGHTS[safe_level])
 
 
@@ -1086,7 +1168,7 @@ def _pick_rank_team(player, all_teams, extra_excluded=None):
             if candidates:
                 break
     if not candidates:
-        raise ValueError(f"Không có CLB phù hợp cho rank {RANKS[level]['name']}.")
+        raise ValueError(f"Không có CLB phù hợp cho rank {load_rank_ranges()[level]['name']}.")
     return random.choice(candidates), selected_tier, tier_weights, recent
 
 
@@ -2894,6 +2976,7 @@ def inject_globals():
             "get_team_tier": get_team_tier,
             "TEAM_COUNT": TEAM_COUNT,
             "APP_VERSION": APP_VERSION,
+            "RANKS": load_rank_ranges(),
             "format_vn_datetime": format_vn_datetime,
             "pending_invite_count": 0,
             "incoming_invites": [],
@@ -2926,6 +3009,7 @@ def inject_globals():
         "get_team_tier": get_team_tier,
         "TEAM_COUNT": TEAM_COUNT,
         "APP_VERSION": APP_VERSION,
+        "RANKS": load_rank_ranges(),
         "format_vn_datetime": format_vn_datetime,
         "pending_invite_count": pending_count,
         "incoming_invites": incoming,
