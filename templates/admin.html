@@ -110,14 +110,38 @@
                     <td>{{ 'Chủ hệ thống' if a.admin_level == 'owner' else 'Admin phụ' }}</td>
                     <td>
                         {% if current_user.admin_level == 'owner' and a.admin_level == 'admin' %}
-                        <form method="post" action="{{ url_for('admin_update_permissions', user_id=a.id) }}" class="admin-permission-form">
-                            <label class="small"><input type="checkbox" name="can_create_test_account" value="1" {% if a.admin_can_create_test_account %}checked{% endif %}> Tạo tài khoản test</label>
-                            <label class="small"><input type="checkbox" name="can_import_accounts_csv" value="1" {% if a.admin_can_import_accounts_csv %}checked{% endif %}> Import tài khoản CSV</label>
-                            <button class="btn green" type="submit">Lưu quyền</button>
-                        </form>
-                        <form method="post" action="{{ url_for('admin_demote_user', user_id=a.id) }}" onsubmit="return confirm('Gỡ quyền Admin phụ?')">
-                            <button class="btn red" type="submit">Gỡ quyền Admin</button>
-                        </form>
+                        <div class="admin-permission-card">
+                            <form method="post" action="{{ url_for('admin_update_permissions', user_id=a.id) }}" class="admin-permission-form">
+                                <div class="admin-permission-list">
+                                    <label class="admin-permission-option">
+                                        <span class="admin-permission-copy">
+                                            <strong>Tạo tài khoản test</strong>
+                                            <small>Cho phép tạo nhanh tài khoản thử nghiệm</small>
+                                        </span>
+                                        <span class="admin-switch">
+                                            <input type="checkbox" name="can_create_test_account" value="1" {% if a.admin_can_create_test_account %}checked{% endif %}>
+                                            <span class="admin-switch-track" aria-hidden="true"></span>
+                                        </span>
+                                    </label>
+                                    <label class="admin-permission-option">
+                                        <span class="admin-permission-copy">
+                                            <strong>Import tài khoản CSV</strong>
+                                            <small>Cho phép nhập nhiều tài khoản từ file CSV</small>
+                                        </span>
+                                        <span class="admin-switch">
+                                            <input type="checkbox" name="can_import_accounts_csv" value="1" {% if a.admin_can_import_accounts_csv %}checked{% endif %}>
+                                            <span class="admin-switch-track" aria-hidden="true"></span>
+                                        </span>
+                                    </label>
+                                </div>
+                                <div class="admin-permission-actions">
+                                    <button class="btn green admin-save-permissions" type="submit">✓ Lưu quyền</button>
+                                </div>
+                            </form>
+                            <form method="post" action="{{ url_for('admin_demote_user', user_id=a.id) }}" class="admin-demote-form" onsubmit="return confirm('Gỡ quyền Admin phụ?')">
+                                <button class="btn red admin-demote-btn" type="submit">Gỡ quyền Admin</button>
+                            </form>
+                        </div>
                         {% else %}
                         <span class="small">Toàn quyền</span>
                         {% endif %}
