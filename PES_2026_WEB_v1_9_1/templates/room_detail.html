@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Phòng đấu</h1>
+<p class="page-subtitle">Trạng thái: <span class="badge {{ room.status }}">{{ room.status }}</span></p>
+
+{% if room.timeout_label and room.timeout_seconds > 0 %}
+<div class="room-timeout-banner">
+    ⏳ {{ room.timeout_label }} <strong id="roomCountdown" data-seconds="{{ room.timeout_seconds }}">--:--</strong>
+</div>
+{% endif %}
+
+<div class="room-grid room-matchup-grid">
+    <div class="room-player room-side-card">
+        <div class="room-side-heading">
+            <h2>🏠 Sân Nhà</h2>
+            <strong>{{ room.host_name }}</strong>
+            <span class="room-rank-only">{{ room.host_rank }}</span>
+        </div>
+        <div class="room-club-showcase">
+            <div class="big-team">{{ room.host_team or "Chưa random đội" }}</div>
+            {% if room.host_team %}
+            <div class="team-league">{{ room.host_team_league or "Chưa xác định giải" }}</div>
+            {% if room.host_team_logo_url %}<img class="room-team-logo" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team }}" loading="lazy">{% endif %}
+            <div class="team-total" title="Điểm tổng CLB">{{ room.host_team_total_stats or 0 }}</div>
+            {% else %}
+            <div class="room-team-placeholder">⚽</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="room-player room-side-card">
+        <div class="room-side-heading">
+            <h2>✈️ Sân Khách</h2>
+            <strong>{{ room.guest_name or "Chưa có đối thủ" }}</strong>
+            <span class="room-rank-only">{% if room.has_guest %}{{ room.guest_rank }}{% else %}Đang chờ người chơi{% endif %}</span>
+        </div>
+        <div class="room-club-showcase">
+            <div class="big-team">{{ room.guest_team or "Chưa random đội" }}</div>
+            {% if room.guest_team %}
+            <div class="team-league">{{ room.guest_team_league or "Chưa xác định giải" }}</div>
+            {% if room.guest_team_logo_url %}<img class="room-team-logo" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team }}" loading="lazy">{% endif %}
+            <div class="team-total" title="Điểm tổng CLB">{{ room.guest_team_total_stats or 0 }}</div>
+            {% else %}
+            <div class="room-team-placeholder">⚽</div>
+            {% endif %}
+        </div>
+        {% if room.has_guest and room.status == "waiting_ready" %}<p class="room-ready-state">{{ "✅ Đã sẵn sàng" if room.guest_ready else "⏳ Chưa sẵn sàng" }}</p>{% endif %}
+    </div>
+</div>
+
+<div class="panel">
+    <h2 class="room-control-title">Điều khiển phòng</h2>
+
+    {% if room.status == "waiting_ready" %}
+        {% if room.guest_ready %}
+        <p><strong>✅ Khách đã sẵn sàng. Chủ phòng có thể Smart Random đội.</strong></p>
+        {% endif %}
+
+        {% if current_user.id == room.guest_user_id %}
+            {% if not room.guest_ready %}
+            <form class="inline-form" method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
+                <button class="btn green" type="submit">✅ Tôi sẵn sàng</button>
+            </form>
+            <p class="small">Bạn vẫn có thể rời phòng trước khi bấm sẵn sàng.</p>
+            {% else %}
+            <span class="btn green">✅ Đã sẵn sàng</span>
+            <form class="inline-form" method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
+                <button class="btn gray" type="submit">↩ Hủy sẵn sàng</button>
+            </form>
+            <p class="small">Bạn có thể hủy sẵn sàng hoặc rời phòng trước khi chủ phòng random đội.</p>
+            {% endif %}
+        {% endif %}
+
+        {% if current_user.id == room.host_user_id or current_user.role == "admin" %}
+            {% if room.guest_ready %}
+            <div class="room-mode-grid">
+                <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="this.querySelector('button').disabled=true;">
+                    <input type="hidden" name="match_mode" value="ranked">
+                    <h3>🏆 Xếp hạng</h3>
+                    <p class="small">Smart Random theo Rank và Power Score. Có lưu lịch sử, có tính RP.</p>
+                    <button class="btn gold" type="submit">⚖️ Quay đội Xếp hạng</button>
+                </form>
+                <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="this.querySelector('button').disabled=true;">
+                    <input type="hidden" name="match_mode" value="friendly">
+                    <h3>🤝 Giao hữu</h3>
+                    <label>Chọn Tier CLB</label>
+                    <select name="friendly_tier" required>
+                        {% for tier in friendly_tiers %}
+                        <option value="{{ tier }}" {% if room.friendly_tier == tier %}selected{% endif %}>Tier {{ tier }}</option>
+                        {% endfor %}
+                    </select>
+                    <p class="small">Hai CLB khác nhau trong cùng Tier. Không lưu lịch sử, không tính RP.</p>
+                    <button class="btn gold" type="submit">🎲 Quay đội Giao hữu</button>
+                </form>
+            </div>
+            {% else %}
+            {% if room.has_guest %}
+            <span class="btn gray">⏳ Chờ khách sẵn sàng</span>
+            <p class="small">Khách cần bấm sẵn sàng trước khi bạn có thể random đội.</p>
+            {% else %}
+            <a class="btn gold" href="{{ url_for('players') }}">👤 Mời đối thủ</a>
+            <p class="small">Phòng đang mở. Hãy chọn một người chơi trong tab Players để gửi lời mời.</p>
+            {% endif %}
+            {% endif %}
+        {% endif %}
+
+        {% if current_user.id == room.guest_user_id %}
+            {% if room.guest_ready %}
+            <form class="inline-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}" onsubmit="return confirm('Bạn xác nhận Bỏ Cuộc và - 20 RP?');">
+                <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+            </form>
+            <p class="small danger-text">Bạn đã sẵn sàng. Thoát lúc này được tính là bỏ cuộc và bị trừ 20 RP.</p>
+            {% else %}
+            <form class="inline-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
+                <button class="btn red" type="submit">🚪 Rời phòng</button>
+            </form>
+            <p class="small">Bạn chưa sẵn sàng nên có thể rời phòng mà không bị trừ RP.</p>
+            {% endif %}
+        {% elif current_user.id == room.host_user_id %}
+        <form class="inline-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
+            <button class="btn red" type="submit">🚪 Thoát phòng</button>
+        </form>
+        <p class="small">Chủ phòng có thể đóng phòng bất cứ lúc nào trước khi random đội.</p>
+        {% endif %}
+    {% endif %}
+
+    {% if room.status == "friendly_playing" %}
+    <div class="friendly-match-banner">
+        <h3>🤝 Trận giao hữu Tier {{ room.friendly_tier }}</h3>
+        <p>Không lưu lịch sử • Không cộng/trừ RP • Hai đội không trùng nhau.</p>
+        {% if current_user.id == room.host_user_id or current_user.role == "admin" %}
+        <form class="inline-form" method="post" action="{{ url_for('room_reroll_friendly', room_id=room.id) }}">
+            <button class="btn gold" type="submit">🎲 Tự Random Tiếp</button>
+        </form>
+        <form class="inline-form" method="post" action="{{ url_for('room_finish_friendly', room_id=room.id) }}">
+            <button class="btn gray" type="submit">✅ Kết thúc giao hữu</button>
+        </form>
+        {% else %}
+        <p class="small">Chờ chủ phòng kết thúc giao hữu để quay trận tiếp theo.</p>
+        {% endif %}
+        {% if current_user.id == room.guest_user_id %}
+        <form class="inline-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}" onsubmit="return confirm('Bạn xác nhận Bỏ Cuộc và - 20 RP?');">
+            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small danger-text">Đã quay đội. Thoát phòng lúc này bị tính là bỏ cuộc và trừ 20 RP.</p>
+        {% elif current_user.id == room.host_user_id %}
+        <form class="inline-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
+            <button class="btn red" type="submit">🚪 Thoát phòng</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if room.status == "playing" and current_user.id == room.guest_user_id %}
+    <div class="guest-forfeit-box">
+        <form class="inline-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}" onsubmit="return confirm('Bạn xác nhận Bỏ Cuộc và - 20 RP?');">
+            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small danger-text">Thoát phòng sau khi đã quay đội được tính là bỏ cuộc và bị trừ 20 RP.</p>
+    </div>
+    {% endif %}
+
+    {% if room.status == "playing" and room.match_mode != "friendly" and (current_user.id == room.host_user_id or current_user.role == "admin") %}
+    <h3 class="room-score-title">Kết quả trận đấu</h3>
+    <form method="post" action="{{ url_for('room_submit_result', room_id=room.id) }}" class="grid-form room-score-form">
+        <div class="two-col">
+            <div>
+                <label>Sân Nhà</label>
+                <input type="number" min="0" name="host_score" value="0">
+            </div>
+            <div>
+                <label>Sân Khách</label>
+                <input type="number" min="0" name="guest_score" value="0">
+            </div>
+        </div>
+        <button class="btn green" type="submit">Gửi Kết Quả</button>
+    </form>
+    {% endif %}
+
+    {% if room.status == "waiting_result_confirm" %}
+    <h3>Kết quả đang chờ xác nhận</h3>
+    <p>{{ room.host_name }} {{ room.host_score }} - {{ room.guest_score }} {{ room.guest_name }}</p>
+
+    {% if current_user.id == room.guest_user_id or current_user.role == "admin" %}
+    <form class="inline-form" method="post" action="{{ url_for('room_confirm_result', room_id=room.id) }}">
+        <button class="btn green" type="submit">Xác nhận kết quả</button>
+    </form>
+    <details class="dispute-open-box">
+        <summary class="btn red">Không đồng ý / Tranh chấp</summary>
+        <form class="dispute-form" method="post" action="{{ url_for('room_dispute_result', room_id=room.id) }}" enctype="multipart/form-data" onsubmit="return confirm('Gửi tranh chấp cho Admin? Trận sẽ chưa được tính điểm.');">
+            <label>Lý do tranh chấp</label>
+            <select name="reason_code" required>
+                <option value="">-- Chọn lý do --</option>
+                <option value="wrong_score">Sai tỷ số</option>
+                <option value="wrong_winner">Sai người thắng</option>
+                <option value="interrupted">Trận bị gián đoạn</option>
+                <option value="unilateral_entry">Kết quả nhập không đúng thỏa thuận</option>
+                <option value="other">Lý do khác</option>
+            </select>
+            <label>Ghi chú cho Admin</label>
+            <textarea name="details" maxlength="500" rows="3" placeholder="Mô tả ngắn vấn đề để Admin xử lý chính xác..."></textarea>
+            <label>Ảnh bằng chứng <span class="small">(không bắt buộc)</span></label>
+            <input class="evidence-file-input" type="file" name="evidence" accept="image/jpeg,image/png,image/webp">
+            <p class="small">Có thể tải ảnh tỷ số cuối trận hoặc ảnh lỗi kết nối. JPG, PNG, WEBP • Tối đa 4 MB.</p>
+            <button class="btn red" type="submit">Gửi tranh chấp</button>
+        </form>
+    </details>
+    {% else %}
+    <p class="small">Đang chờ người được mời xác nhận.</p>
+    {% endif %}
+
+    {% if current_user.id == room.guest_user_id %}
+    <div class="guest-forfeit-box waiting-result-forfeit-box">
+        <form class="inline-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}" onsubmit="return confirm('Bạn xác nhận Bỏ Cuộc và - 20 RP?');">
+            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small danger-text">Thoát phòng lúc đang chờ xác nhận được tính là bỏ cuộc và bị trừ 20 RP.</p>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if room.status == "confirmed" %}
+    <h3>✅ Trận đấu đã hoàn tất</h3>
+    <p>{{ room.host_name }} {{ room.host_score }} - {{ room.guest_score }} {{ room.guest_name }}</p>
+
+    {% if current_user.id in [room.host_user_id, room.guest_user_id] %}
+        {% set current_has_rematch_ready = (current_user.id == room.host_user_id and room.rematch_host_ready) or (current_user.id == room.guest_user_id and room.rematch_guest_ready) %}
+        {% set opponent_has_rematch_ready = (current_user.id == room.host_user_id and room.rematch_guest_ready) or (current_user.id == room.guest_user_id and room.rematch_host_ready) %}
+
+        {% if room.rematch_expired %}
+        <p><strong>⌛ Yêu cầu đá tiếp đã hết hạn.</strong></p>
+        <p class="small">Không đủ hai người đồng ý trong 60 giây. Cả hai trở về sảnh chính.</p>
+        {% elif room.rematch_declined %}
+        <p><strong>❌ Một người đã chọn không đá tiếp.</strong></p>
+        <p class="small">Phiên đá tiếp đã kết thúc. Cả hai sẽ trở về sảnh chính.</p>
+        {% elif current_has_rematch_ready %}
+        <span class="btn gray">✅ Đã chọn đá tiếp</span>
+        <form class="inline-form" method="post" action="{{ url_for('room_rematch_decline', room_id=room.id) }}">
+            <button class="btn red" type="submit">🚪 Rời phòng</button>
+        </form>
+        <p class="small">Đang chờ đối thủ chọn Đá tiếp hoặc Không đá tiếp.</p>
+        {% else %}
+        <form class="inline-form" method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
+            <button class="btn gold" type="submit">🔁 Đá tiếp</button>
+        </form>
+        {% if opponent_has_rematch_ready %}
+        <form class="inline-form" method="post" action="{{ url_for('room_rematch_decline', room_id=room.id) }}">
+            <button class="btn red" type="submit">🚪 Rời phòng</button>
+        </form>
+        <p class="small">Đối thủ đã chọn đá tiếp. Bạn có thể đồng ý hoặc từ chối; người kia sẽ được thông báo ngay.</p>
+        {% else %}
+        <p class="small">Bấm Đá tiếp để xác nhận sẵn sàng cho trận mới. Khi cả hai đồng ý, chủ phòng có thể Smart Random đội ngay.</p>
+        {% endif %}
+        {% endif %}
+        {% if not current_has_rematch_ready %}
+        <form class="inline-form" method="post" action="{{ url_for('room_rematch_decline', room_id=room.id) }}">
+            <button class="btn red" type="submit">🚪 Rời phòng</button>
+        </form>
+        {% endif %}
+    {% else %}
+        <a class="btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+    {% endif %}
+    {% endif %}
+
+    {% if room.status == "cancelled" %}
+    <p>{{ room.note or "Phòng đã bị hủy." }}</p>
+    <a class="btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+    {% endif %}
+
+    {% if room.status == "disputed" %}
+    <div class="dispute-status-card">
+        <div class="dispute-status-heading">
+            <h3>⚠️ Đang chờ Admin xử lý</h3>
+            <span class="badge disputed">Chưa tính điểm</span>
+        </div>
+        <p class="dispute-score"><strong>{{ room.host_name }} {{ room.host_score }} - {{ room.guest_score }} {{ room.guest_name }}</strong></p>
+        {% if room.dispute %}
+        <div class="dispute-detail-grid">
+            <div><span>Người gửi</span><strong>{{ room.dispute.raised_by_name }}</strong></div>
+            <div><span>Lý do</span><strong>{{ room.dispute.reason_label }}</strong></div>
+            <div><span>Thời gian</span><strong>{{ format_vn_datetime(room.dispute.created_at) }}</strong></div>
+            <div><span>Trạng thái</span><strong>Đang chờ Admin</strong></div>
+        </div>
+        {% if room.dispute.details %}<div class="dispute-note"><strong>Ghi chú:</strong> {{ room.dispute.details }}</div>{% endif %}
+        {% if room.dispute.evidence_url %}
+        <div class="dispute-evidence-block">
+            <strong>Ảnh bằng chứng</strong>
+            <a href="{{ room.dispute.evidence_url }}" target="_blank" rel="noopener">
+                <img src="{{ room.dispute.evidence_url }}" alt="Ảnh bằng chứng tranh chấp" loading="lazy">
+                <span>Mở ảnh kích thước đầy đủ</span>
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+        <p class="small">Hai người có thể về sảnh và tiếp tục sử dụng app. Trận này chỉ được tính điểm sau khi Admin xử lý.</p>
+        {% if room.dispute and current_user.id == room.dispute.raised_by_id %}
+        <form class="inline-form" method="post" action="{{ url_for('room_withdraw_dispute', room_id=room.id) }}" onsubmit="return confirm('Rút tranh chấp và chấp nhận tỷ số ban đầu? Điểm rank sẽ được cập nhật ngay.');">
+            <button class="btn green" type="submit">↩️ Rút tranh chấp và chấp nhận kết quả</button>
+        </form>
+        {% endif %}
+        <a class="btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+let currentRoomStateKey = "{{ room.status }}|{{ room.host_team }}|{{ room.guest_team }}|{{ room.guest_ready }}|{{ room.host_score }}|{{ room.guest_score }}|{{ room.rematch_host_ready }}|{{ room.rematch_guest_ready }}|{{ room.rematch_host_declined }}|{{ room.rematch_guest_declined }}|{{ room.rematch_expired }}|{{ room.state_expires_at }}|{{ room.dispute.status if room.dispute else '' }}|{{ room.dispute.updated_at if room.dispute else '' }}";
+
+function renderRoomCountdown(seconds) {
+    const countdown = document.getElementById("roomCountdown");
+    if (!countdown) return;
+    const safeSeconds = Math.max(0, Number(seconds) || 0);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remain = Math.floor(safeSeconds % 60);
+    countdown.textContent = String(minutes).padStart(2, "0") + ":" + String(remain).padStart(2, "0");
+}
+
+let roomCountdownSeconds = Number(document.getElementById("roomCountdown")?.dataset.seconds || 0);
+renderRoomCountdown(roomCountdownSeconds);
+setInterval(function () {
+    if (roomCountdownSeconds > 0) roomCountdownSeconds -= 1;
+    renderRoomCountdown(roomCountdownSeconds);
+}, 1000);
+
+function roomHasActiveInput() {
+    const active = document.activeElement;
+    if (!active) return false;
+    return active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT";
+}
+
+function checkRoomState() {
+    fetch("{{ url_for('api_room_state', room_id=room.id) }}", {
+        method: "GET",
+        credentials: "same-origin"
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+        if (!data.ok) return;
+        if (data.status === "cancelled") {
+            window.location.href = "{{ url_for('dashboard') }}";
+            return;
+        }
+        if (data.rematch_expired) {
+            window.alert("Yêu cầu đá tiếp đã hết hạn sau 60 giây. Bạn sẽ được đưa về sảnh chính.");
+            window.location.href = "{{ url_for('dashboard') }}";
+            return;
+        }
+        if (typeof data.timeout_seconds !== "undefined") {
+            roomCountdownSeconds = Number(data.timeout_seconds) || 0;
+            renderRoomCountdown(roomCountdownSeconds);
+        }
+        if (data.rematch_declined) {
+            if (!data.rematch_declined_by_me) {
+                window.alert("Đối thủ không muốn đá tiếp. Bạn sẽ được đưa về sảnh chính.");
+            }
+            window.location.href = "{{ url_for('dashboard') }}";
+            return;
+        }
+        if (data.state_key !== currentRoomStateKey && !roomHasActiveInput()) {
+            window.location.reload();
+        }
+    })
+    .catch(function () {});
+}
+
+setInterval(checkRoomState, 4000);
+</script>
+
+
+<div class="panel">
+    <h2>💬 Chat phòng</h2>
+    <div id="roomChatBox" class="chat-box"></div>
+
+    <form method="post" action="{{ url_for('send_room_chat', room_id=room.id) }}" class="chat-form">
+        <input name="message" maxlength="200" placeholder="Nhắn với đối thủ trong phòng..." required autocomplete="off">
+        <button class="btn green" type="submit">Gửi</button>
+    </form>
+
+    <div class="chat-note">Chat phòng chỉ dành cho 2 người trong phòng. Chống spam: 1 tin nhắn / 5 giây.</div>
+</div>
+
+<script>
+function escapeRoomHtml(text) {
+    const div = document.createElement("div");
+    div.innerText = text || "";
+    return div.innerHTML;
+}
+
+function renderRoomAvatar(url, name, achievement) {
+    const safeName = escapeRoomHtml(name || "?");
+    const initial = escapeRoomHtml((name || "?").trim().charAt(0).toUpperCase() || "?");
+    const badge = achievement && achievement.icon
+        ? `<span class="avatar-achievement" title="${escapeRoomHtml(achievement.name || 'Huy hiệu')}">${escapeRoomHtml(achievement.icon)}</span>`
+        : "";
+    if (url) return `<span class="player-avatar avatar-xs"><img src="${escapeRoomHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">${badge}</span>`;
+    return `<span class="player-avatar avatar-xs"><span>${initial}</span>${badge}</span>`;
+}
+
+function renderRoomChat(messages) {
+    const box = document.getElementById("roomChatBox");
+    if (!box) return;
+
+    box.innerHTML = messages.map(function (msg) {
+        const adminBadge = msg.user_role === "admin" ? '<span class="badge gold">ADMIN</span>' : '';
+        const adminClass = msg.user_role === "admin" ? 'admin' : '';
+        return `
+            <div class="chat-message">
+                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span></div>
+                ${adminBadge}
+                <span class="chat-time">${escapeRoomHtml(msg.created_at_display || msg.created_at)}</span>
+                <div class="chat-text">${escapeRoomHtml(msg.message)}</div>
+            </div>
+        `;
+    }).join("");
+
+    box.scrollTop = box.scrollHeight;
+}
+
+function loadRoomChat() {
+    fetch("{{ url_for('api_room_chat', room_id=room.id) }}", { credentials: "same-origin" })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (data.ok) renderRoomChat(data.messages);
+        })
+        .catch(function () {});
+}
+
+loadRoomChat();
+setInterval(loadRoomChat, 5000);
+</script>
+
+{% endblock %}
