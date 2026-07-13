@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from collections import Counter
+from threading import Lock
 
 from dotenv import load_dotenv
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -181,6 +182,37 @@ def cache_set(key, value):
 def cache_delete(key):
     if has_request_context() and hasattr(g, key):
         delattr(g, key)
+
+
+# Cache RAM rất ngắn cho Vercel warm instance. Mục tiêu là gộp các API polling
+# cùng lúc, không thay thế Supabase và không giữ dữ liệu lâu.
+_ttl_cache = {}
+_ttl_cache_lock = Lock()
+
+
+def ttl_cache_get(key):
+    now = time.monotonic()
+    with _ttl_cache_lock:
+        item = _ttl_cache.get(key)
+        if not item:
+            return None
+        expires_at, value = item
+        if expires_at <= now:
+            _ttl_cache.pop(key, None)
+            return None
+        return value
+
+
+def ttl_cache_set(key, value, ttl_seconds):
+    with _ttl_cache_lock:
+        _ttl_cache[key] = (time.monotonic() + max(0.1, float(ttl_seconds)), value)
+    return value
+
+
+def ttl_cache_delete(*keys):
+    with _ttl_cache_lock:
+        for key in keys:
+            _ttl_cache.pop(key, None)
 
 
 def execute_query(query, label="Supabase", attempts=4, delay=0.25):
@@ -451,6 +483,9 @@ def list_user_achievement_map():
     cached = cache_get("_rz_user_achievement_map")
     if cached is not None:
         return cached
+    shared = ttl_cache_get("achievement_map")
+    if shared is not None:
+        return cache_set("_rz_user_achievement_map", shared)
     mapped = {}
     try:
         result = execute_query(
@@ -462,6 +497,7 @@ def list_user_achievement_map():
             mapped.setdefault(str(row.get("user_id")), {})[row.get("achievement_code")] = row
     except Exception as exc:
         print(f"list_user_achievement_map warning: {exc}")
+    ttl_cache_set("achievement_map", mapped, 30)
     return cache_set("_rz_user_achievement_map", mapped)
 
 
@@ -1259,11 +1295,15 @@ def list_players(include_admin=False):
     require_db()
     cached = cache_get("_rz_players_all")
     if cached is None:
-        result = execute_query(
-            db.table("users").select("*").order("rank_points", desc=True),
-            "list_players",
-        )
-        cached = result.data or []
+        shared = ttl_cache_get("players_raw")
+        if shared is None:
+            result = execute_query(
+                db.table("users").select("*").order("rank_points", desc=True),
+                "list_players",
+            )
+            shared = result.data or []
+            ttl_cache_set("players_raw", shared, 8)
+        cached = [dict(row) for row in shared]
         cache_set("_rz_players_all", cached)
 
     players = cached if include_admin else [p for p in cached if p.get("role") == "player"]
@@ -1986,9 +2026,13 @@ def get_invite(invite_id):
 def list_invites(status=None):
     cached = cache_get("_rz_invites_all")
     if cached is None:
-        query = db.table("match_invites").select("*").order("created_at", desc=True)
-        result = execute_query(query, "list_invites")
-        cached = result.data or []
+        shared = ttl_cache_get("invites_raw")
+        if shared is None:
+            query = db.table("match_invites").select("*").order("created_at", desc=True)
+            result = execute_query(query, "list_invites")
+            shared = result.data or []
+            ttl_cache_set("invites_raw", shared, 3)
+        cached = [dict(row) for row in shared]
         cache_set("_rz_invites_all", cached)
 
     processed = []
@@ -2315,9 +2359,13 @@ def enrich_room(room):
 def list_rooms(status=None):
     cached = cache_get("_rz_rooms_all")
     if cached is None:
-        query = db.table("match_rooms").select("*").order("created_at", desc=True)
-        result = execute_query(query, "list_rooms")
-        cached = result.data or []
+        shared = ttl_cache_get("rooms_raw")
+        if shared is None:
+            query = db.table("match_rooms").select("*").order("created_at", desc=True)
+            result = execute_query(query, "list_rooms")
+            shared = result.data or []
+            ttl_cache_set("rooms_raw", shared, 3)
+        cached = [dict(row) for row in shared]
         cache_set("_rz_rooms_all", cached)
 
     rooms = []
@@ -2337,6 +2385,9 @@ def get_active_announcement():
         if cached is not None:
             return cached
 
+        shared = ttl_cache_get("active_announcement")
+        if shared is not None:
+            return cache_set("_rz_active_announcement", None if shared is False else shared)
         result = execute_query(
             db.table("admin_announcements")
             .select("*")
@@ -2346,6 +2397,7 @@ def get_active_announcement():
             "get_active_announcement",
         )
         announcement = result.data[0] if result.data else None
+        ttl_cache_set("active_announcement", announcement if announcement is not None else False, 15)
         return cache_set("_rz_active_announcement", announcement)
     except Exception:
         return None
@@ -2455,9 +2507,11 @@ def current_user():
         return None
 
     try:
-        user = get_user(user_id)
+        shared_user = ttl_cache_get(f"user:{user_id}")
+        user = dict(shared_user) if shared_user is not None else get_user(user_id)
         if user:
             decorate_player_achievements(user)
+            ttl_cache_set(f"user:{user_id}", dict(user), 8)
             session["username"] = user.get("username", "")
             session["display_name"] = user.get("display_name", "")
             session["avatar_url"] = user.get("avatar_url")
@@ -2500,12 +2554,15 @@ def cooldown_text(user):
 
 
 def current_pending_invites():
+    cached = cache_get("_rz_current_pending_invites")
+    if cached is not None:
+        return cached
     try:
         user = current_user()
         if not user or user.get("role") == "admin":
-            return []
+            return cache_set("_rz_current_pending_invites", [])
         invites = list_invites("pending")
-        return [invite for invite in invites if invite["to_user_id"] == user["id"]]
+        return cache_set("_rz_current_pending_invites", [invite for invite in invites if invite["to_user_id"] == user["id"]])
     except Exception as exc:
         print(f"current_pending_invites warning: {exc}")
         return []
@@ -2589,6 +2646,64 @@ def has_pending_invite_between(user_a, user_b):
         if same_pair:
             return True
     return False
+
+
+def matchmaking_snapshot(user_a, user_b=None):
+    """Fetch only the small raw state needed by invite actions.
+
+    This avoids loading/enriching every room, match, achievement and team merely
+    to decide whether two users are available.
+    """
+    ids = {str(user_a)}
+    if user_b:
+        ids.add(str(user_b))
+    rooms_result = execute_query(
+        db.table("match_rooms")
+        .select("id,host_user_id,guest_user_id,status,invite_id")
+        .in_("status", ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"]),
+        "matchmaking_active_rooms",
+        attempts=3,
+    )
+    matches_result = execute_query(
+        db.table("matches")
+        .select("id,player1_id,player2_id,status")
+        .in_("status", ["playing", "waiting_confirm", "processing_result"]),
+        "matchmaking_active_matches",
+        attempts=3,
+    )
+    invites_result = execute_query(
+        db.table("match_invites")
+        .select("id,from_user_id,to_user_id,status")
+        .eq("status", "pending"),
+        "matchmaking_pending_invites",
+        attempts=3,
+    )
+    rooms = [dict(x) for x in (rooms_result.data or [])]
+    matches = [dict(x) for x in (matches_result.data or [])]
+    invites = [dict(x) for x in (invites_result.data or [])]
+
+    def room_for(uid):
+        uid = str(uid)
+        return next((r for r in rooms if uid in {str(r.get("host_user_id")), str(r.get("guest_user_id"))}), None)
+
+    def match_for(uid):
+        uid = str(uid)
+        return next((m for m in matches if uid in {str(m.get("player1_id")), str(m.get("player2_id"))}), None)
+
+    pair_pending = False
+    if user_b:
+        target = {str(user_a), str(user_b)}
+        pair_pending = any({str(i.get("from_user_id")), str(i.get("to_user_id"))} == target for i in invites)
+    return {
+        "rooms": rooms,
+        "matches": matches,
+        "invites": invites,
+        "room_a": room_for(user_a),
+        "room_b": room_for(user_b) if user_b else None,
+        "match_a": match_for(user_a),
+        "match_b": match_for(user_b) if user_b else None,
+        "pair_pending": pair_pending,
+    }
 
 
 def mark_current_user_active():
@@ -2777,32 +2892,14 @@ def inject_globals():
             "unread_notifications": [],
         }
 
-    try:
-        pending_count = current_pending_invite_count()
-    except Exception:
-        pending_count = 0
-
-    try:
-        incoming = current_pending_invites()[:3]
-    except Exception:
-        incoming = []
-
-    try:
-        active_room = active_room_for_user(user["id"]) if user else None
-    except Exception as exc:
-        print(f"inject active_room warning: {exc}")
-        active_room = None
-
-    try:
-        cooldown = cooldown_text(user) if user else ""
-    except Exception:
-        cooldown = ""
-
-    try:
-        announcement = get_active_announcement()
-    except Exception:
-        announcement = None
-
+    # Tối ưu phản hồi HTML: không chặn render để chờ phòng, lời mời và thông báo
+    # hệ thống. Các dữ liệu này đã có API nền trong base.html và sẽ xuất hiện ngay
+    # sau khi trang hiển thị. Chỉ giữ thông báo cá nhân vì chưa có API riêng.
+    pending_count = 0
+    incoming = []
+    active_room = None
+    cooldown = cooldown_text(user) if user else ""
+    announcement = None
     try:
         unread_notifications = list_unread_notifications(user.get("id"), 5) if user else []
     except Exception:
@@ -3873,18 +3970,6 @@ def send_invite():
         flash(f"Bạn đang trong thời gian chờ {cooldown_text(user)}.", "warning")
         return redirect(url_for("players"))
 
-    sender_room = active_room_for_user(user["id"])
-    if active_match_for_user(user["id"]):
-        flash("Bạn đang có trận chưa hoàn tất.", "warning")
-        return redirect(url_for("dashboard"))
-    if sender_room and not (
-        sender_room.get("host_user_id") == user["id"]
-        and sender_room.get("status") == "waiting_ready"
-        and not sender_room.get("guest_user_id")
-    ):
-        flash("Bạn đang có phòng chưa hoàn tất.", "warning")
-        return redirect(url_for("dashboard"))
-
     to_user_id = request.form.get("to_user_id")
     tier = SMART_RANDOM_MODE
 
@@ -3897,7 +3982,25 @@ def send_invite():
         flash("Không tìm thấy đối thủ.", "danger")
         return redirect(url_for("players"))
 
-    if active_room_for_user(to_user_id) or active_match_for_user(to_user_id):
+    try:
+        state = matchmaking_snapshot(user["id"], to_user_id)
+    except Exception as exc:
+        print(f"send_invite state ERROR from={user.get('id')} to={to_user_id}: {type(exc).__name__}: {exc}")
+        flash("Không thể kiểm tra trạng thái phòng lúc này. Vui lòng thử lại sau vài giây.", "danger")
+        return redirect(url_for("players"))
+
+    sender_room = state.get("room_a")
+    if state.get("match_a"):
+        flash("Bạn đang có trận chưa hoàn tất.", "warning")
+        return redirect(url_for("dashboard"))
+    if sender_room and not (
+        sender_room.get("host_user_id") == user["id"]
+        and sender_room.get("status") == "waiting_ready"
+        and not sender_room.get("guest_user_id")
+    ):
+        flash("Bạn đang có phòng chưa hoàn tất.", "warning")
+        return redirect(url_for("dashboard"))
+    if state.get("room_b") or state.get("match_b"):
         flash("Người chơi này đang ở trong phòng đấu hoặc đang thi đấu. Bạn hãy mời lại sau khi trận của họ kết thúc nhé.", "warning")
         return redirect(url_for("players"))
 
@@ -3909,12 +4012,8 @@ def send_invite():
         flash("Người chơi này vừa offline. Bạn hãy chọn một đối thủ đang online khác nhé.", "danger")
         return redirect(url_for("players"))
 
-    if has_pending_invite_between(user["id"], to_user_id):
+    if state.get("pair_pending"):
         flash("Hai người đang có lời mời chờ xử lý.", "warning")
-        return redirect(url_for("players"))
-
-    if has_active_room_between(user["id"], to_user_id) or has_active_match_between(user["id"], to_user_id):
-        flash("Hai người đang có trận/phòng chưa hoàn tất.", "warning")
         return redirect(url_for("players"))
 
     invite_result = execute_query(
@@ -4734,8 +4833,12 @@ def room_submit_result(room_id):
         flash("Chỉ trận đang đá mới được nhập kết quả.", "warning")
         return redirect(url_for("room_detail", room_id=room_id))
 
-    host_score = int(request.form.get("host_score", "0"))
-    guest_score = int(request.form.get("guest_score", "0"))
+    try:
+        host_score = int(request.form.get("host_score", "0"))
+        guest_score = int(request.form.get("guest_score", "0"))
+    except (TypeError, ValueError):
+        flash("Tỉ số phải là số nguyên.", "danger")
+        return redirect(url_for("room_detail", room_id=room_id))
 
     if host_score < 0 or guest_score < 0:
         flash("Tỉ số không được âm.", "danger")
@@ -4756,24 +4859,35 @@ def room_submit_result(room_id):
         winner_id = None
         loser_id = None
 
-    db.table("matches").update({
-        "score1": host_score,
-        "score2": guest_score,
-        "submitted_by_id": user["id"],
-        "winner_id": winner_id,
-        "loser_id": loser_id,
-        "status": "waiting_confirm",
-        "updated_at": now_iso(),
-    }).eq("id", match["id"]).execute()
-
-    db.table("match_rooms").update({
-        "host_score": host_score,
-        "guest_score": guest_score,
-        "submitted_by_id": user["id"],
-        "status": "waiting_result_confirm",
-        "state_expires_at": future_iso(RESULT_CONFIRM_TIMEOUT_SECONDS),
-        "updated_at": now_iso(),
-    }).eq("id", room_id).execute()
+    try:
+        execute_query(
+            db.table("matches").update({
+                "score1": host_score,
+                "score2": guest_score,
+                "submitted_by_id": user["id"],
+                "winner_id": winner_id,
+                "loser_id": loser_id,
+                "status": "waiting_confirm",
+                "updated_at": now_iso(),
+            }).eq("id", match["id"]).eq("status", "playing"),
+            "submit_room_match_result",
+        )
+        execute_query(
+            db.table("match_rooms").update({
+                "host_score": host_score,
+                "guest_score": guest_score,
+                "submitted_by_id": user["id"],
+                "status": "waiting_result_confirm",
+                "state_expires_at": future_iso(RESULT_CONFIRM_TIMEOUT_SECONDS),
+                "updated_at": now_iso(),
+            }).eq("id", room_id).eq("status", "playing"),
+            "submit_room_result_state",
+        )
+        ttl_cache_delete("rooms_raw")
+    except Exception as exc:
+        print(f"room_submit_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
+        flash("Không thể lưu kết quả do lỗi dữ liệu/kết nối. Vui lòng thử lại; chưa cộng hoặc trừ RP.", "danger")
+        return redirect(url_for("room_detail", room_id=room_id))
 
     flash("Đã nhập kết quả. Đang chờ người được mời xác nhận.", "success")
     return redirect(url_for("room_detail", room_id=room_id))
@@ -4802,17 +4916,28 @@ def room_confirm_result(room_id):
         flash("Không tìm thấy trận.", "danger")
         return redirect(url_for("room_detail", room_id=room_id))
 
-    delta1, delta2 = apply_match_result(match)
+    try:
+        delta1, delta2 = apply_match_result(match)
+        execute_query(
+            db.table("match_rooms").update({
+                "status": "confirmed",
+                "confirmed_by_id": user["id"],
+                "note": "Khách đã xác nhận kết quả.",
+                "state_expires_at": None,
+                "updated_at": now_iso(),
+            }).eq("id", room_id).eq("status", "waiting_result_confirm"),
+            "confirm_result_room",
+        )
+    except ValueError as exc:
+        print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
+        flash(str(exc), "warning")
+        return redirect(url_for("room_detail", room_id=room_id))
+    except Exception as exc:
+        print(f"room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
+        flash("Không thể xác nhận kết quả do lỗi kết nối dữ liệu. Điểm chưa được xử lý thêm; vui lòng thử lại sau vài giây.", "danger")
+        return redirect(url_for("room_detail", room_id=room_id))
 
-    db.table("match_rooms").update({
-        "status": "confirmed",
-        "confirmed_by_id": user["id"],
-        "note": "Khách đã xác nhận kết quả.",
-        "state_expires_at": None,
-        "updated_at": now_iso(),
-    }).eq("id", room_id).execute()
-
-    flash(f"Đã xác nhận. Chủ phòng: {delta1:+d}, Khách: {delta2:+d}. Hai người có thể bấm Đá tiếp.", "success")
+    flash(f"Đã xác nhận. Chủ phòng: {int(delta1):+d}, Khách: {int(delta2):+d}. Hai người có thể bấm Đá tiếp.", "success")
     return redirect(url_for("room_detail", room_id=room_id))
 
 
@@ -5034,43 +5159,123 @@ def confirm_result():
     return redirect(url_for("rooms"))
 
 
+def _safe_int(value, default=0):
+    """Convert Supabase/form numeric values to a real integer safely."""
+    try:
+        return int(round(float(value)))
+    except (TypeError, ValueError, OverflowError):
+        return int(default)
+
+
 def apply_match_result(match):
-    if match["score1"] is None or match["score2"] is None:
+    """Apply one ranked result exactly once with clear validation and recovery.
+
+    The match row is claimed by changing its status to ``processing_result``.
+    A repeated click cannot apply RP twice, even when requests overlap.
+    """
+    if not match or not match.get("id"):
+        raise ValueError("Thiếu dữ liệu trận đấu.")
+    if match.get("score1") is None or match.get("score2") is None:
         raise ValueError("Trận chưa có tỉ số.")
 
-    player1 = get_user(match["player1_id"])
-    player2 = get_user(match["player2_id"])
+    # Idempotency: a confirmed match with stored deltas was already applied.
+    if match.get("status") == "confirmed" and match.get("delta1") is not None and match.get("delta2") is not None:
+        return _safe_int(match.get("delta1")), _safe_int(match.get("delta2"))
+    if match.get("status") == "processing_result":
+        raise ValueError("Kết quả đang được xử lý. Không cần nhấn xác nhận lần nữa.")
 
-    score1 = int(match["score1"])
-    score2 = int(match["score2"])
+    player1_id = match.get("player1_id")
+    player2_id = match.get("player2_id")
+    if not player1_id or not player2_id:
+        raise ValueError("Trận đấu thiếu ID của một trong hai người chơi.")
 
-    delta1, delta2 = calculate_deltas(
-        player1,
-        player2,
-        score1,
-        score2,
-        match.get("team1"),
-        match.get("team2"),
-        match.get("team1_overall"),
-        match.get("team2_overall"),
-        match.get("team1_tier"),
-        match.get("team2_tier"),
-    )
-    delta1 = apply_host_xp_factor(delta1, match.get("host_xp_factor", HOST_XP_FACTOR))
+    player1 = get_user(player1_id)
+    player2 = get_user(player2_id)
+    if not player1 or not player2:
+        missing = []
+        if not player1:
+            missing.append("người chơi 1")
+        if not player2:
+            missing.append("người chơi 2")
+        raise ValueError("Không tìm thấy dữ liệu " + " và ".join(missing) + ". Chưa cập nhật RP.")
 
-    update_player_after_match(player1, delta1, score1, score2)
-    update_player_after_match(player2, delta2, score2, score1)
+    score1 = _safe_int(match.get("score1"), -1)
+    score2 = _safe_int(match.get("score2"), -1)
+    if score1 < 0 or score2 < 0:
+        raise ValueError("Tỉ số không hợp lệ.")
 
-    db.table("matches").update({
-        "delta1": delta1,
-        "delta2": delta2,
-        "status": "confirmed",
-        "note": "Đã xác nhận.",
-        "updated_at": now_iso(),
-    }).eq("id", match["id"]).execute()
+    original_status = str(match.get("status") or "waiting_confirm")
+    try:
+        claim = execute_query(
+            db.table("matches").update({
+                "status": "processing_result",
+                "updated_at": now_iso(),
+            }).eq("id", match["id"]).eq("status", original_status),
+            "claim_match_result",
+        )
+        if not (claim.data or []):
+            fresh = get_match(match["id"])
+            if fresh and fresh.get("status") == "confirmed":
+                return _safe_int(fresh.get("delta1")), _safe_int(fresh.get("delta2"))
+            raise ValueError("Kết quả đã được một yêu cầu khác xử lý hoặc trạng thái trận đã thay đổi.")
 
-    sync_achievements_for_users([match.get("player1_id"), match.get("player2_id")])
-    return delta1, delta2
+        delta1, delta2 = calculate_deltas(
+            player1, player2, score1, score2,
+            match.get("team1"), match.get("team2"),
+            match.get("team1_overall"), match.get("team2_overall"),
+            match.get("team1_tier"), match.get("team2_tier"),
+        )
+        delta1, delta2 = _safe_int(delta1), _safe_int(delta2)
+
+        # The 0.95 coefficient belongs to the actual room host, not implicitly player1.
+        host_user_id = match.get("host_user_id")
+        if not host_user_id:
+            try:
+                room_row = execute_query(
+                    db.table("match_rooms").select("host_user_id").eq("match_id", match["id"]).limit(1),
+                    "get_result_host",
+                    attempts=2,
+                )
+                host_user_id = (room_row.data or [{}])[0].get("host_user_id")
+            except Exception as exc:
+                print(f"get_result_host warning match={match.get('id')}: {type(exc).__name__}: {exc}")
+        if str(host_user_id or "") == str(player1_id):
+            delta1 = _safe_int(apply_host_xp_factor(delta1, match.get("host_xp_factor", HOST_XP_FACTOR)))
+        elif str(host_user_id or "") == str(player2_id):
+            delta2 = _safe_int(apply_host_xp_factor(delta2, match.get("host_xp_factor", HOST_XP_FACTOR)))
+
+        update_player_after_match(player1, delta1, score1, score2)
+        update_player_after_match(player2, delta2, score2, score1)
+
+        execute_query(
+            db.table("matches").update({
+                "delta1": int(delta1),
+                "delta2": int(delta2),
+                "status": "confirmed",
+                "note": "Đã xác nhận.",
+                "updated_at": now_iso(),
+            }).eq("id", match["id"]).eq("status", "processing_result"),
+            "finalize_match_result",
+        )
+    except Exception as exc:
+        print(f"apply_match_result ERROR match={match.get('id')} status={original_status}: {type(exc).__name__}: {exc}")
+        try:
+            execute_query(
+                db.table("matches").update({"status": original_status, "updated_at": now_iso()})
+                .eq("id", match["id"]).eq("status", "processing_result"),
+                "restore_match_after_result_error",
+                attempts=2,
+            )
+        except Exception as restore_exc:
+            print(f"apply_match_result RESTORE ERROR match={match.get('id')}: {type(restore_exc).__name__}: {restore_exc}")
+        raise
+
+    # Badge synchronization is auxiliary and must never invalidate a confirmed match.
+    try:
+        sync_achievements_for_users([player1_id, player2_id])
+    except Exception as exc:
+        print(f"achievement_sync warning match={match.get('id')}: {type(exc).__name__}: {exc}")
+    return int(delta1), int(delta2)
 
 
 def resolve_match_dispute_with_result(
@@ -5220,20 +5425,27 @@ def update_player_after_match(player, delta, goals_for, goals_against):
     draw = 1 if goals_for == goals_against else 0
     loss = 1 if goals_for < goals_against else 0
 
-    new_points = max(0, int(player["rank_points"]) + delta)
+    delta = _safe_int(delta)
+    goals_for = _safe_int(goals_for)
+    goals_against = _safe_int(goals_against)
+    new_points = max(0, _safe_int(player.get("rank_points")) + delta)
     current_streak = int(player.get("streak", 0) or 0)
     new_streak = current_streak + 1 if win else 0 if loss else current_streak
 
-    db.table("users").update({
-        "rank_points": new_points,
-        "total_matches": int(player.get("total_matches", 0) or 0) + 1,
-        "wins": int(player.get("wins", 0) or 0) + win,
-        "draws": int(player.get("draws", 0) or 0) + draw,
-        "losses": int(player.get("losses", 0) or 0) + loss,
-        "goals_for": int(player.get("goals_for", 0) or 0) + goals_for,
-        "goals_against": int(player.get("goals_against", 0) or 0) + goals_against,
-        "streak": new_streak,
-    }).eq("id", player["id"]).execute()
+    execute_query(
+        db.table("users").update({
+            "rank_points": new_points,
+            "total_matches": _safe_int(player.get("total_matches")) + 1,
+            "wins": _safe_int(player.get("wins")) + win,
+            "draws": _safe_int(player.get("draws")) + draw,
+            "losses": _safe_int(player.get("losses")) + loss,
+            "goals_for": _safe_int(player.get("goals_for")) + goals_for,
+            "goals_against": _safe_int(player.get("goals_against")) + goals_against,
+            "streak": new_streak,
+        }).eq("id", player["id"]),
+        f"update_player_after_match:{player.get('id')}",
+    )
+    ttl_cache_delete("players_raw", "achievement_map")
 
 
 
@@ -6247,81 +6459,134 @@ def admin_update_match_result(match_id):
     try:
         score1 = int(request.form.get("score1", "0"))
         score2 = int(request.form.get("score2", "0"))
-    except ValueError:
-        flash("Tỉ số phải là số.", "danger")
+    except (TypeError, ValueError):
+        flash("Tỉ số phải là số nguyên.", "danger")
         return redirect_admin("matches")
-
     if score1 < 0 or score2 < 0:
         flash("Tỉ số không được âm.", "danger")
         return redirect_admin("matches")
 
-    if score1 > score2:
-        winner_id = match["player1_id"]
-        loser_id = match["player2_id"]
-    elif score1 < score2:
-        winner_id = match["player2_id"]
-        loser_id = match["player1_id"]
-    else:
-        winner_id = None
-        loser_id = None
+    if not match.get("player1_id") or not match.get("player2_id"):
+        flash("Trận đấu thiếu dữ liệu người chơi nên chưa thể sửa.", "danger")
+        return redirect_admin("matches")
+    if not get_user(match.get("player1_id")) or not get_user(match.get("player2_id")):
+        flash("Không tìm thấy một trong hai người chơi. Chưa thay đổi BXH.", "danger")
+        return redirect_admin("matches")
 
-    note = request.form.get("note", "").strip() or "Admin đã sửa kết quả."
+    winner_id = match.get("player1_id") if score1 > score2 else match.get("player2_id") if score2 > score1 else None
+    loser_id = match.get("player2_id") if score1 > score2 else match.get("player1_id") if score2 > score1 else None
+    note = request.form.get("note", "").strip()[:500] or "Admin đã sửa kết quả."
 
     if match.get("status") == "disputed":
         dispute = get_match_dispute_by_match(match_id, DISPUTE_PENDING_STATUSES)
         if dispute:
             try:
                 resolve_match_dispute_with_result(
-                    dispute,
-                    score1,
-                    score2,
-                    current_user().get("id"),
-                    "edited_result",
-                    note,
+                    dispute, score1, score2, current_user().get("id"), "edited_result", note,
                 )
             except Exception as exc:
+                print(f"admin_update_disputed ERROR match={match_id}: {type(exc).__name__}: {exc}")
                 flash(f"Không thể xử lý tranh chấp: {exc}", "danger")
                 return redirect_admin("disputes")
             log_admin_action("Sửa/Xác nhận tranh chấp", "match", match_id, details=f"Tỷ số mới {score1}-{score2}. {note}")
             flash("Đã sửa tỷ số tranh chấp và cập nhật BXH.", "success")
             return redirect_admin("disputes")
 
-    # Nếu trận cũ đã từng cộng điểm, hoàn tác đúng trận đó trước khi áp dụng tỷ số mới.
-    reverse_confirmed_match_result(match)
+    old_match = dict(match)
+    old_was_applied = bool(
+        old_match.get("status") == "confirmed"
+        and old_match.get("delta1") is not None
+        and old_match.get("delta2") is not None
+    )
+    try:
+        if old_was_applied and not reverse_confirmed_match_result(old_match):
+            raise ValueError("Không thể hoàn tác kết quả cũ; chưa lưu tỷ số mới.")
 
-    db.table("matches").update({
-        "score1": score1,
-        "score2": score2,
-        "winner_id": winner_id,
-        "loser_id": loser_id,
-        "status": "confirmed",
-        "delta1": 0,
-        "delta2": 0,
-        "note": note,
-        "updated_at": now_iso(),
-    }).eq("id", match_id).execute()
+        execute_query(
+            db.table("matches").update({
+                "score1": score1,
+                "score2": score2,
+                "winner_id": winner_id,
+                "loser_id": loser_id,
+                "status": "waiting_confirm",
+                "delta1": None,
+                "delta2": None,
+                "note": note,
+                "updated_at": now_iso(),
+            }).eq("id", match_id),
+            "admin_prepare_updated_match",
+        )
+        execute_query(
+            db.table("match_rooms").update({
+                "host_score": score1,
+                "guest_score": score2,
+                "status": "waiting_result_confirm",
+                "note": "Admin đang lưu lại kết quả.",
+                "state_expires_at": None,
+                "updated_at": now_iso(),
+            }).eq("match_id", match_id),
+            "admin_prepare_updated_room",
+            attempts=3,
+        )
 
-    db.table("match_rooms").update({
-        "host_score": score1,
-        "guest_score": score2,
-        "status": "confirmed",
-        "note": "Admin đã sửa/xác nhận kết quả.",
-        "state_expires_at": None,
-        "updated_at": now_iso(),
-    }).eq("match_id", match_id).execute()
-
-    updated_match = get_match(match_id)
-    if updated_match:
-        apply_match_result(updated_match)
-        db.table("matches").update({"note": note, "updated_at": now_iso()}).eq("id", match_id).execute()
+        updated_match = get_match(match_id)
+        if not updated_match:
+            raise RuntimeError("Không đọc lại được trận sau khi lưu tỷ số.")
+        delta1, delta2 = apply_match_result(updated_match)
+        execute_query(
+            db.table("matches").update({"note": note, "updated_at": now_iso()}).eq("id", match_id),
+            "admin_finish_updated_match_note",
+        )
+        execute_query(
+            db.table("match_rooms").update({
+                "status": "confirmed",
+                "note": "Admin đã sửa/xác nhận kết quả.",
+                "state_expires_at": None,
+                "updated_at": now_iso(),
+            }).eq("match_id", match_id),
+            "admin_finish_updated_room",
+            attempts=3,
+        )
+        ttl_cache_delete("rooms_raw", "players_raw", "achievement_map")
+    except Exception as exc:
+        print(f"admin_update_match_result ERROR match={match_id}: {type(exc).__name__}: {exc}")
+        # Best-effort restoration of the original match row. The detailed log above
+        # makes any rare partial failure visible in Vercel instead of a silent 500.
+        try:
+            execute_query(
+                db.table("matches").update({
+                    "score1": old_match.get("score1"),
+                    "score2": old_match.get("score2"),
+                    "winner_id": old_match.get("winner_id"),
+                    "loser_id": old_match.get("loser_id"),
+                    "delta1": old_match.get("delta1"),
+                    "delta2": old_match.get("delta2"),
+                    "status": old_match.get("status"),
+                    "note": old_match.get("note"),
+                    "updated_at": now_iso(),
+                }).eq("id", match_id),
+                "admin_restore_old_match",
+                attempts=2,
+            )
+            if old_was_applied:
+                restored = get_match(match_id)
+                if restored:
+                    # Only reapply when the rollback had already removed old stats.
+                    p1 = get_user(old_match.get("player1_id"))
+                    p2 = get_user(old_match.get("player2_id"))
+                    if p1 and p2:
+                        update_player_after_match(p1, _safe_int(old_match.get("delta1")), _safe_int(old_match.get("score1")), _safe_int(old_match.get("score2")))
+                        update_player_after_match(p2, _safe_int(old_match.get("delta2")), _safe_int(old_match.get("score2")), _safe_int(old_match.get("score1")))
+        except Exception as rollback_exc:
+            print(f"admin_update_match_result ROLLBACK ERROR match={match_id}: {type(rollback_exc).__name__}: {rollback_exc}")
+        flash(f"Không thể lưu lại trận đấu: {exc}. Hệ thống đã ghi log chi tiết trên Vercel.", "danger")
+        return redirect_admin("matches")
 
     log_admin_action(
-        "Sửa/Xác nhận kết quả",
-        "match",
-        match_id,
-        details=f"{match.get('score1')}–{match.get('score2')} → {score1}–{score2}. {note}",
+        "Sửa/Xác nhận kết quả", "match", match_id,
+        details=f"{old_match.get('score1')}–{old_match.get('score2')} → {score1}–{score2}; RP {int(delta1):+d}/{int(delta2):+d}. {note}",
     )
-    flash("Đã sửa kết quả và chỉ cập nhật hai người trong trận này.", "success")
+    flash(f"Đã sửa kết quả và cập nhật lại RP: {int(delta1):+d}/{int(delta2):+d}.", "success")
     return redirect_admin("matches")
 
 

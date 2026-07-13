@@ -281,6 +281,7 @@ function checkActiveRoom() {
 
 
 function checkPendingInvites() {
+    if (document.hidden) return;
     fetch("{{ url_for('api_pending_invites') }}", {
         method: "GET",
         credentials: "same-origin"
@@ -677,11 +678,11 @@ postHeartbeat();
 checkAnnouncement();
 
 setInterval(postHeartbeat, 60000);
-setInterval(checkPendingInvites, 15000);
-setInterval(checkActiveRoom, 15000);
-setInterval(loadBottomChatSmart, 30000);
-setInterval(checkLobbyChatUnread, 30000);
-setInterval(checkAnnouncementSmart, 60000);
+setInterval(checkPendingInvites, 18000);
+setInterval(checkActiveRoom, 18000);
+setInterval(loadBottomChatSmart, 45000);
+setInterval(checkLobbyChatUnread, 45000);
+setInterval(checkAnnouncementSmart, 90000);
 setTimeout(checkPendingInvites, 1500);
 setTimeout(checkActiveRoom, 2500);
 setTimeout(checkLobbyChatUnread, 2000);
@@ -709,7 +710,7 @@ function updateOnlineFloatingCount() {
 }
 
 updateOnlineFloatingCount();
-setInterval(updateOnlineFloatingCountSmart, 60000);
+setInterval(updateOnlineFloatingCountSmart, 90000);
 </script>
 {% endif %}
 

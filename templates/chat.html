@@ -67,7 +67,7 @@ function loadGlobalChat() {
         .catch(function () {});
 }
 
-setInterval(loadGlobalChat, 3000);
+setInterval(loadGlobalChat, 5000);
 setTimeout(function () {
     const box = document.getElementById("globalChatBox");
     if (box) box.scrollTop = box.scrollHeight;
