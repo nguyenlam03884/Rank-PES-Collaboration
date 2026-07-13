@@ -170,28 +170,35 @@ def cache_delete(key):
         delattr(g, key)
 
 
-def execute_query(query, label="Supabase", attempts=3, delay=0.25):
-    """Retry Supabase reads if Vercel/Supabase briefly disconnects."""
+def execute_query(query, label="Supabase", attempts=4, delay=0.25):
+    """Retry short-lived Vercel/Supabase network failures before returning 500."""
     last_error = None
 
-    for attempt in range(attempts):
+    for attempt in range(max(1, attempts)):
         try:
             return query.execute()
         except Exception as exc:
             last_error = exc
-            message = str(exc).lower()
+            message = f"{type(exc).__name__}: {exc}".lower()
 
-            transient = (
-                "server disconnected" in message
-                or "remoteprotocolerror" in message
-                or "connection" in message
-                or "timeout" in message
-                or "temporarily" in message
-            )
+            transient = any(token in message for token in (
+                "connecterror",
+                "connection",
+                "server disconnected",
+                "remoteprotocolerror",
+                "timeout",
+                "temporarily",
+                "device or resource busy",
+                "resource busy",
+                "errno 16",
+                "eagain",
+            ))
 
-            if not transient or attempt == attempts - 1:
+            if not transient or attempt >= max(1, attempts) - 1:
+                print(f"{label} failed after {attempt + 1} attempt(s): {exc}")
                 raise
 
+            # Backoff ngắn: 0.25s, 0.5s, 0.75s...
             time.sleep(delay * (attempt + 1))
 
     raise last_error
@@ -2707,15 +2714,25 @@ def admin_permission_required(permission_code: str):
 @app.before_request
 def before_request():
     try:
-        ensure_admin()
+        # Không gọi ensure_admin() ở mọi request. Trước đây mỗi Vercel instance mới
+        # lại đọc + cập nhật bảng users trước khi tải /bxh, tạo thêm kết nối Supabase
+        # và có thể gây [Errno 16] Device or resource busy.
         if db is not None and session.get("user_id"):
-            mark_current_user_active()
+            # Chỉ cập nhật online tối đa 1 lần/45 giây thay vì ở mọi request
+            # (HTML, API, ảnh, heartbeat đều từng tạo một lệnh UPDATE riêng).
+            now_ts = int(time.time())
+            last_touch = int(session.get("last_activity_touch", 0) or 0)
+            if request.endpoint == "heartbeat" or now_ts - last_touch >= 45:
+                mark_current_user_active()
+                session["last_activity_touch"] = now_ts
+
             user = current_user()
             allowed = {"change_password", "logout", "static", "heartbeat"}
             if user and user.get("must_change_password") and request.endpoint not in allowed:
                 flash("Bạn đang dùng mật khẩu tạm thời. Hãy đổi mật khẩu mới để tiếp tục.", "warning")
                 return redirect(url_for("change_password"))
     except Exception as exc:
+        # Lỗi cập nhật online không được phép làm hỏng route chính.
         print(f"Before request warning: {exc}")
 
 
@@ -3534,7 +3551,13 @@ def _build_recent_form_map(matches, player_ids=None, limit=5):
 def ranking():
     # BXH là trang công khai: khách chưa đăng nhập vẫn xem được.
     # Khi đã đăng nhập, hệ thống vẫn hiển thị thêm vị trí cá nhân như trước.
-    player_rows = list_players()
+    try:
+        player_rows = list_players()
+    except Exception as exc:
+        # BXH là trang công khai; nếu Supabase chập chờn thì vẫn trả trang thay vì HTTP 500.
+        print(f"ranking list_players warning: {exc}")
+        player_rows = []
+
     user = current_user()
     query = (request.args.get("q") or "").strip().casefold()
     rank_filter = (request.args.get("rank") or "all").strip()
@@ -3556,8 +3579,14 @@ def ranking():
         filtered = [player for player in filtered if player.get("rank_info", {}).get("slug") == rank_filter]
 
     top_players = filtered[:100]
+    try:
+        confirmed_matches = list_matches(status="confirmed")
+    except Exception as exc:
+        print(f"ranking list_matches warning: {exc}")
+        confirmed_matches = []
+
     recent_form_map = _build_recent_form_map(
-        list_matches(status="confirmed"),
+        confirmed_matches,
         player_ids={player.get("id") for player in top_players},
         limit=5,
     )
