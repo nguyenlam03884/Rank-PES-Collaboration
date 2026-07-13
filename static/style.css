@@ -3491,3 +3491,8 @@ html[data-theme="light"] .admin-switch-track{background:#cbd5df;border-color:#b9
         height: 84px !important;
     }
 }
+
+
+/* V1.10.8 - keep waiting dice fully visible */
+.room-center-random-trigger.disabled{opacity:1!important;}
+.room-center-random-trigger.disabled .room-center-random-image{opacity:1!important;filter:contrast(1.04) saturate(1.04) drop-shadow(0 14px 24px rgba(0,0,0,.38))!important;}

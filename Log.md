@@ -1,10 +1,11 @@
 # Log
 
-## V1.10.7
+## V1.10.8
 
-- Bỏ hoàn toàn khung, nền, viền và đổ bóng bao quanh khu quay xúc xắc.
-- Xúc xắc tiếp tục đọc từ `static/xucxac.png`.
-- Phóng lớn ảnh `vs.png` để nổi bật giữa hai người chơi.
-- Giữ nút chữ `QUAY RANDOM ĐỘI` và mô tả bên dưới.
-- Tối ưu lại kích thước ảnh VS và xúc xắc trên máy tính, máy tính bảng và điện thoại.
-- Cập nhật phiên bản ứng dụng thành `V1.10.7`.
+- Thay file `static/xucxac.png` bằng đúng ảnh xúc xắc mới người dùng cung cấp.
+- Thêm tham số phiên bản vào URL ảnh để trình duyệt không dùng ảnh lỗi đã cache.
+- Giữ xúc xắc đầy đủ màu sắc ở cả giao diện chủ phòng và đội khách.
+- Đội khách hiển thị chữ `ĐỢI QUAY RANDOM ĐỘI`.
+- Chủ phòng chưa thể quay vì khách chưa sẵn sàng sẽ thấy `ĐỢI KHÁCH SẴN SÀNG`.
+- Chủ phòng đủ điều kiện vẫn thấy `QUAY RANDOM ĐỘI` và có thể bấm để quay.
+- Cập nhật phiên bản thành `V1.10.8`.
