@@ -5906,10 +5906,34 @@ def admin_update_permissions(user_id):
         "admin_can_create_test_account": request.form.get("can_create_test_account") == "1",
         "admin_can_import_accounts_csv": request.form.get("can_import_accounts_csv") == "1",
     }
-    execute_query(
-        db.table("users").update(payload).eq("id", user_id),
-        "update_admin_permissions",
-    )
+    try:
+        execute_query(
+            db.table("users").update(payload).eq("id", user_id),
+            "update_admin_permissions",
+        )
+    except Exception as exc:
+        error_text = str(exc)
+        lowered = error_text.lower()
+        missing_permission_columns = (
+            "admin_can_create_test_account" in lowered
+            or "admin_can_import_accounts_csv" in lowered
+            or "pgrst204" in lowered
+            or "column" in lowered and "schema cache" in lowered
+        )
+        app.logger.exception("Không thể lưu quyền Admin phụ")
+        if missing_permission_columns:
+            flash(
+                "Supabase chưa có cột quyền Admin phụ. Hãy chạy file "
+                "docs/update_admin_permissions_v1_9_1.sql trong Supabase SQL Editor rồi lưu lại.",
+                "danger",
+            )
+        else:
+            flash(
+                "Không thể lưu quyền Admin phụ do lỗi kết nối dữ liệu. Vui lòng thử lại và kiểm tra Runtime Logs.",
+                "danger",
+            )
+        return redirect_admin("overview")
+
     cache_delete("_rz_players_all")
     cache_delete("_rz_users_map")
     log_admin_action("Cập nhật quyền Admin phụ", "user", user_id, user.get("username"), payload)
