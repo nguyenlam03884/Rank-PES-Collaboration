@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.24"
+APP_VERSION = "V1.10.25"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4348,6 +4348,7 @@ def shop_shell_sections():
             "icon": "🔥",
             "title": "Nổi bật",
             "subtitle": "Trang chủ Cửa Hàng",
+            "description": "Các lối vào quan trọng của Shop sẽ được gom tại đây để người chơi không bị ngợp.",
             "items": ["Vật phẩm mới", "Vật phẩm hot", "Đồ giới hạn", "Event", "Giảm giá", "Lucky Box"],
         },
         {
@@ -4355,6 +4356,7 @@ def shop_shell_sections():
             "icon": "🎨",
             "title": "Trang trí",
             "subtitle": "Khung avatar, banner, màu nickname, danh hiệu",
+            "description": "Khu làm đẹp hồ sơ, tên hiển thị và nhận diện người chơi trong toàn hệ thống.",
             "items": ["Hồ sơ", "Banner", "Khung Avatar", "Aura", "Màu Nickname", "Danh hiệu", "Chat", "Emoji"],
         },
         {
@@ -4362,6 +4364,7 @@ def shop_shell_sections():
             "icon": "🧰",
             "title": "Tiện ích",
             "subtitle": "Các quyền đổi thông tin và mở rộng tài khoản",
+            "description": "Khu tiện ích tài khoản. Các vật phẩm thật sẽ được thêm dần ở những bản sau.",
             "items": ["Đổi tên", "Đổi slogan", "Đổi Avatar", "Đổi CLB", "Reset thống kê", "Slot đội hình"],
         },
         {
@@ -4369,9 +4372,16 @@ def shop_shell_sections():
             "icon": "🎁",
             "title": "Lucky Box",
             "subtitle": "Khung chuẩn bị cho hòm quà và vé quay",
+            "description": "Khu hòm quà, vé quay, pity và lịch sử quay sẽ phát triển sau khi Shop/Kho đồ ổn định.",
             "items": ["Hòm Đồng", "Hòm Bạc", "Hòm Vàng", "Hòm VIP", "Vé quay", "Pity", "Lịch sử quay"],
         },
     ]
+
+
+def get_shop_section_by_key(tab_key):
+    sections = shop_shell_sections()
+    return next((section for section in sections if section.get("key") == tab_key), None)
+
 
 
 
@@ -4514,6 +4524,16 @@ def profile(user_id):
 @login_required
 def shop():
     user = current_user()
+    sections = shop_shell_sections()
+    tab_keys = [section.get("key") for section in sections]
+    active_tab = (request.args.get("tab") or "featured").strip().lower()
+    if active_tab not in {*tab_keys, "gift-code"}:
+        active_tab = "featured"
+    active_section = get_shop_section_by_key(active_tab)
+    shop_tabs = [
+        {"key": section.get("key"), "icon": section.get("icon"), "title": section.get("title")}
+        for section in sections
+    ] + [{"key": "gift-code", "icon": "🎟️", "title": "Gift Code"}]
     gift_result = {
         "status": request.args.get("gift_result", ""),
         "reward": _safe_int(request.args.get("reward"), 0),
@@ -4522,7 +4542,10 @@ def shop():
     }
     return render_template(
         "shop.html",
-        sections=shop_shell_sections(),
+        sections=sections,
+        shop_tabs=shop_tabs,
+        active_tab=active_tab,
+        active_section=active_section,
         gift_result=gift_result,
     )
 
@@ -4541,7 +4564,7 @@ def redeem_gift_code_route():
     code = normalize_gift_code(request.form.get("gift_code"))
     if not code:
         flash("Hãy nhập gift code.", "warning")
-        return redirect(url_for("shop") + "#gift-code")
+        return redirect(url_for("shop", tab="gift-code"))
 
     try:
         result = execute_query(
@@ -4564,17 +4587,17 @@ def redeem_gift_code_route():
                 "unsupported_reward": "Loại phần thưởng của gift code chưa được hỗ trợ.",
             }
             flash(reason_messages.get(payload.get("error"), "Không thể đổi gift code này."), "danger")
-            return redirect(url_for("shop") + "#gift-code")
+            return redirect(url_for("shop", tab="gift-code"))
 
         ttl_cache_delete(f"user:{user_id}", "players_raw")
         cache_delete("_rz_current_user")
         reward = _safe_int(payload.get("reward_zcoin"), 0)
         balance_after = _safe_int(payload.get("balance_after"), 0)
-        return redirect(url_for("shop", gift_result="success", reward=reward, balance=balance_after, code=code) + "#gift-code")
+        return redirect(url_for("shop", tab="gift-code", gift_result="success", reward=reward, balance=balance_after, code=code))
     except Exception as exc:
         print(f"redeem_gift_code_route error: {exc}")
         flash("Không thể đổi gift code lúc này. Hãy kiểm tra SQL V1.10.23 đã chạy thành công chưa.", "danger")
-        return redirect(url_for("shop") + "#gift-code")
+        return redirect(url_for("shop", tab="gift-code"))
 
 
 # =========================

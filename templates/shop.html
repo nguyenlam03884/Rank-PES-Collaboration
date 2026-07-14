@@ -31,50 +31,64 @@
 </script>
 {% endif %}
 
-<section class="shop-layout">
-    <aside class="shop-side panel" id="gift-code">
-        <span class="eyebrow">Gift Code</span>
-        <h2>🎟️ Nhập mã nhận quà</h2>
-        <p class="small">Admin có thể tạo code tặng ZCOIN. Người chơi nhập mã tại đây để nhận thưởng vào ví.</p>
-        <form method="post" action="{{ url_for('redeem_gift_code_route') }}" class="gift-redeem-form">
-            <input name="gift_code" maxlength="40" placeholder="Ví dụ: PES-WELCOME" autocomplete="off" required>
+<section class="panel shop-tab-page">
+    <div class="shop-tabs-shell shop-tabs-navigation" role="tablist" aria-label="Danh mục Cửa Hàng">
+        {% for tab in shop_tabs %}
+        <a class="{% if active_tab == tab['key'] %}active{% endif %}"
+           href="{{ url_for('shop', tab=tab['key']) }}"
+           {% if active_tab == tab['key'] %}aria-current="page"{% endif %}>
+            {{ tab['icon'] }} {{ tab['title'] }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if active_tab == 'gift-code' %}
+    <div class="shop-tab-body shop-gift-tab" id="gift-code">
+        <div class="shop-tab-headline">
+            <div>
+                <span class="eyebrow">Gift Code</span>
+                <h2>🎟️ Nhập mã nhận quà</h2>
+                <p>Admin có thể tạo code tặng ZCOIN. Người chơi nhập mã tại đây để nhận thưởng vào ví.</p>
+            </div>
+            <span class="badge green">Đang hoạt động</span>
+        </div>
+        <form method="post" action="{{ url_for('redeem_gift_code_route') }}" class="gift-redeem-form shop-gift-redeem-card">
+            <label>
+                <span>Mã gift code</span>
+                <input name="gift_code" maxlength="40" placeholder="Ví dụ: PES-WELCOME" autocomplete="off" required>
+            </label>
             <button class="btn gold" type="submit">Đổi code</button>
         </form>
         <div class="shop-note-card">
-            <strong>🚧 Cửa Hàng đang ở bản khung</strong>
-            <small>Vật phẩm thật, giá bán, trang bị và Lucky Box sẽ được thêm ở các bản sau.</small>
+            <strong>🎁 Gift Code dùng chung ví ZCOIN</strong>
+            <small>Khi đổi thành công, ZCOIN sẽ cộng vào số dư và ghi vào lịch sử giao dịch.</small>
         </div>
-    </aside>
-
-    <div class="shop-main">
-        <div class="shop-tabs-shell">
-            <a href="#featured">🔥 Nổi bật</a>
-            <a href="#decor">🎨 Trang trí</a>
-            <a href="#utility">🧰 Tiện ích</a>
-            <a href="#lucky">🎁 Lucky Box</a>
-        </div>
-
-        {% for section in sections %}
-        <section id="{{ section['key'] }}" class="panel shop-section-card">
-            <div class="shop-section-head">
-                <div>
-                    <span class="eyebrow">{{ section['subtitle'] }}</span>
-                    <h2>{{ section['icon'] }} {{ section['title'] }}</h2>
-                </div>
-                <span class="badge pending">Sắp phát triển</span>
-            </div>
-            <div class="shop-shell-grid">
-                {% for item in section['items'] %}
-                <article class="shop-shell-item">
-                    <div class="shop-shell-icon">{{ section['icon'] }}</div>
-                    <strong>{{ item }}</strong>
-                    <small>Khung chờ vật phẩm</small>
-                    <button class="btn gray" type="button" disabled>Sắp mở</button>
-                </article>
-                {% endfor %}
-            </div>
-        </section>
-        {% endfor %}
     </div>
+    {% else %}
+    <div class="shop-tab-body" id="{{ active_section['key'] if active_section else 'featured' }}">
+        <div class="shop-section-head shop-tab-headline">
+            <div>
+                <span class="eyebrow">{{ active_section['subtitle'] if active_section else 'Trang chủ Cửa Hàng' }}</span>
+                <h2>{{ active_section['icon'] if active_section else '🔥' }} {{ active_section['title'] if active_section else 'Nổi bật' }}</h2>
+                <p>{{ active_section['description'] if active_section else 'Các vật phẩm sẽ được bổ sung ở bản sau.' }}</p>
+            </div>
+            <span class="badge pending">Sắp phát triển</span>
+        </div>
+        <div class="shop-shell-grid shop-tab-grid">
+            {% for item in active_section['items'] %}
+            <article class="shop-shell-item">
+                <div class="shop-shell-icon">{{ active_section['icon'] }}</div>
+                <strong>{{ item }}</strong>
+                <small>Khung chờ vật phẩm</small>
+                <button class="btn gray" type="button" disabled>Sắp mở</button>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="shop-note-card shop-tab-note">
+            <strong>🚧 Đây là khung danh mục riêng</strong>
+            <small>Vật phẩm thật của tab {{ active_section['title'] }} sẽ được thêm vào đây ở các bản sau, không còn nhảy xuống section phía dưới.</small>
+        </div>
+    </div>
+    {% endif %}
 </section>
 {% endblock %}

@@ -130,7 +130,7 @@ function toggleTheme(){
                         <div class="topbar-user-menu-list">
                             <a href="{{ url_for('profile', user_id=current_user.id) }}#account"><span>⚙️</span><strong>Quản lý tài khoản</strong><small>Hồ sơ, tên hiển thị, avatar</small></a>
                             <a href="{{ url_for('inventory') }}"><span>🎒</span><strong>Kho đồ</strong><small>Khung quản lý vật phẩm</small></a>
-                            <a href="{{ url_for('shop') }}#gift-code"><span>🎟️</span><strong>Gift Code</strong><small>Nhập mã nhận ZCOIN</small></a>
+                            <a href="{{ url_for('shop', tab='gift-code') }}"><span>🎟️</span><strong>Gift Code</strong><small>Nhập mã nhận ZCOIN</small></a>
                             <a href="{{ url_for('profile', user_id=current_user.id) }}#checkin"><span>🎁</span><strong>Điểm danh</strong><small>Nhận ZCOIN hằng ngày</small></a>
                             <a href="{{ url_for('matches') }}"><span>📜</span><strong>Lịch sử</strong><small>Toàn bộ lịch sử trận đấu</small></a>
                         </div>

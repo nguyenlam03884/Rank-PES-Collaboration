@@ -156,3 +156,13 @@
 - Không cần SQL.
 - Rollback: quay lại deployment V1.10.23 nếu cần, không restore Supabase.
 - Commit khuyến nghị trên GitHub: `V1.10.24_SHOP_TEMPLATE_ITEMS_HOTFIX_NO_SQL`.
+
+## V1.10.25_SHOP_TAB_PAGE_NAVIGATION_NO_SQL
+
+- Sửa trải nghiệm Cửa Hàng: các tab Nổi bật, Trang trí, Tiện ích, Lucky Box, Gift Code mở thành từng danh mục riêng bằng `?tab=...`.
+- Không còn bấm tab rồi nhảy xuống section phía dưới bằng anchor.
+- Chỉ render nội dung của tab đang chọn để giao diện Shop gọn và giống game store hơn.
+- Gift Code được đưa thành tab riêng trong Cửa Hàng; menu user cập nhật sang `/shop?tab=gift-code`.
+- Không cần SQL, không thay đổi database.
+- Không đụng Gift Code backend, ZCOIN, Điểm danh, phòng đấu, BXH, Admin hoặc logic tính điểm.
+- Commit khuyến nghị trên GitHub: `V1.10.25_SHOP_TAB_PAGE_NAVIGATION_NO_SQL`.

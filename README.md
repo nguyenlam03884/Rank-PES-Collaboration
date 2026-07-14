@@ -1,4 +1,23 @@
 
+## V1.10.25_SHOP_TAB_PAGE_NAVIGATION_NO_SQL
+
+**Mục tiêu:** chỉnh Cửa Hàng thành dạng tab/danh mục riêng, không còn dùng anchor nhảy xuống section bên dưới.
+
+**Thay đổi:**
+- `/shop` nhận tham số `?tab=` để mở đúng danh mục: Nổi bật, Trang trí, Tiện ích, Lucky Box, Gift Code.
+- Chỉ hiển thị nội dung của tab đang chọn.
+- Gift Code chuyển thành tab riêng trong Cửa Hàng.
+- Menu user trỏ Gift Code tới `/shop?tab=gift-code`.
+- Cập nhật CSS active tab và khu nội dung tab.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng Gift Code backend, ZCOIN, Điểm danh, phòng đấu, BXH hoặc Admin.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.25_SHOP_TAB_PAGE_NAVIGATION_NO_SQL`
+
+
 
 ## V1.10.24_SHOP_TEMPLATE_ITEMS_HOTFIX_NO_SQL
 

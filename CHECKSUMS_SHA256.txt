@@ -1,0 +1,7 @@
+a2cb5deab1f2c2a0699228586eb154e237f004980ac2085c6ae75f91a9343993  ./Log.md
+32f192115a96779a0c07734b02b67f1de1b6e42ec3476fd2e7ccdc3fad60d8ff  ./README.md
+acace61d63e7caf669d5acdeb53c979da216fe39394800e634dacf8b20520ea3  ./app.py
+c1c4add9e6dd53b3e4417b770154145c73d447eb7fbda96b195565ae8bf585bc  ./docs/update_v1_10_25_shop_tab_page_navigation_no_sql.txt
+bf24bee669bfb656c3e350f18ab9c09ff71236359762af80c673cb5eb5fac6fa  ./static/style.css
+f9292a77633cca5cd29e5127c69d22afc6d0511a9ffc781fc6266ce5300712c4  ./templates/base.html
+359851da07f7feb7c7637572af21684fa22a3ab7e73b66827896f0cc7cda892c  ./templates/shop.html
