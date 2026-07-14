@@ -105,3 +105,12 @@
 - Thêm fallback khi ảnh đội hoặc ảnh giải bị lỗi URL, tránh hiển thị icon ảnh lỗi.
 - Không cần SQL.
 - File thay đổi: app.py, templates/room_detail.html, static/style.css, README.md, Log.md, docs/update_v1_10_18_room_score_input_league_logo_hotfix_no_sql.txt.
+
+
+## V1.10.20_TOPBAR_ZCOIN_BALANCE_NO_SQL
+
+- Hiển thị số dư ZCOIN của người dùng ngay trên topbar, cạnh khu thông báo/chuông.
+- Pill ZCOIN dẫn nhanh về Hồ sơ cá nhân → tab ZCOIN.
+- Không thay đổi database, điểm danh, phòng đấu, BXH, admin hoặc logic tính điểm.
+- Không cần SQL.
+- Commit khuyến nghị trên GitHub: `V1.10.20_TOPBAR_ZCOIN_BALANCE_NO_SQL`.

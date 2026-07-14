@@ -68,3 +68,20 @@ Rollback: rollback Vercel về bản trước, không cần restore Supabase.
 - Chỉ sửa đúng phạm vi tính năng cần sửa.
 - Không upload .env, __pycache__, *.pyc.
 - Nếu có SQL phải tách install/check/rollback và chỉ chạy khi đã thống nhất.
+
+
+## V1.10.20_TOPBAR_ZCOIN_BALANCE_NO_SQL
+
+**Mục tiêu:** hiển thị số dư ZCOIN ngay trên thanh topbar cạnh khu thông báo, để người chơi nhìn thấy số dư ở mọi trang.
+
+**Thay đổi:**
+- Thêm pill ZCOIN trên topbar.
+- Pill ZCOIN trỏ về `Hồ sơ cá nhân → ZCOIN`.
+- Cập nhật CSS responsive cho desktop/mobile.
+
+**Không thay đổi:**
+- Không đụng SQL/database.
+- Không đụng logic điểm danh.
+- Không đụng phòng đấu, BXH, lịch sử, Players, Admin.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.20_TOPBAR_ZCOIN_BALANCE_NO_SQL`

@@ -105,6 +105,11 @@ function toggleTheme(){
                         {% endif %}
                     </div>
                 </div>
+                <a class="topbar-zcoin-pill" href="{{ url_for('profile', user_id=current_user.id) }}#zcoin" title="Xem ví ZCOIN">
+                    <span class="topbar-zcoin-icon">🪙</span>
+                    <strong>{{ '{:,}'.format((current_user.zcoin_balance|default(0, true))|int).replace(',', '.') }}</strong>
+                    <small>ZCOIN</small>
+                </a>
                 <div class="topbar-user-menu-wrap">
                     <button id="topbarUserMenuButton" class="topbar-profile topbar-profile-button" type="button" onclick="toggleTopbarUserMenu(event)" aria-expanded="false" aria-haspopup="true">
                         {{ player_avatar(current_user, size='sm') }}
