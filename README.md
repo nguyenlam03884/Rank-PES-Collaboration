@@ -1,3 +1,24 @@
+## V1.10.29_MOBILE_LAYOUT_SIDEBAR_SPACE_HOTFIX_NO_SQL
+
+**Mục tiêu:** sửa lỗi mobile bị khoảng trống lớn phía trên khiến Dashboard/topbar bị đẩy xuống dưới.
+
+**Nguyên nhân:** sidebar mobile đang bị `transform` ẩn sang trái nhưng vẫn chiếm layout flow, tạo khoảng trắng lớn trước nội dung chính.
+
+**Thay đổi:**
+- Sidebar mobile chuyển sang `position: fixed` để không chiếm chiều cao trang.
+- Nút ☰ vẫn mở/đóng sidebar như cũ.
+- Căn lại nhẹ topbar mobile cho icon, ZCOIN và profile gọn hơn.
+- Cập nhật cache CSS trong `templates/base.html` lên `?v=1.10.29`.
+- `APP_VERSION` cập nhật lên `V1.10.29`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng Shop, Gift Code, ZCOIN, Điểm danh, BXH, Admin hoặc logic phòng đấu.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.29_MOBILE_LAYOUT_SIDEBAR_SPACE_HOTFIX_NO_SQL`
+
+
 ## V1.10.28_ROOM_RANK_FRAME_CARD_BACKGROUND_CLEANUP_NO_SQL
 
 **Mục tiêu:** bỏ hẳn nền xanh/đỏ phía sau 2 ô người chơi trong phòng đấu, chỉ giữ khung rank làm chủ đạo.
