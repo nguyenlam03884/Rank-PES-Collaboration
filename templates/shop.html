@@ -74,6 +74,55 @@
             </div>
             <span class="badge pending">Sắp phát triển</span>
         </div>
+        {% if active_tab == 'decor' and profile_banner_items %}
+        <div class="shop-profile-banner-block">
+            <div class="shop-profile-banner-title">
+                <div>
+                    <span class="eyebrow">Banner hồ sơ</span>
+                    <h3>5 banner hồ sơ đầu tiên</h3>
+                    <p>Đây là bộ tài nguyên đã được tích hợp vào app để chuẩn bị cho hệ thống mua/sử dụng vật phẩm sau này.</p>
+                </div>
+                <span class="badge pending">Chưa mở mua</span>
+            </div>
+            <div class="profile-banner-shop-grid">
+                {% for banner in profile_banner_items %}
+                <article class="profile-banner-shop-card rarity-{{ banner['rarity_slug'] }}">
+                    <div class="profile-banner-preview" style="background-image:url('{{ url_for('static', filename=banner['file']) }}');">
+                        <img class="profile-banner-item-icon" src="{{ url_for('static', filename=banner['icon']) }}" alt="Icon {{ banner['name'] }}" loading="lazy">
+                        <span class="profile-banner-rarity">{{ banner['rarity'] }}</span>
+                    </div>
+                    <div class="profile-banner-info">
+                        <h3>{{ banner['name'] }}</h3>
+                        <p>{{ banner['desc'] }}</p>
+                        <div class="profile-banner-meta">
+                            <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="ZCOIN"> {{ '{:,}'.format(banner['price']).replace(',', '.') }} ZCOIN</strong>
+                            <span>{{ banner['rarity'] }}</span>
+                        </div>
+                        <button class="btn gray" type="button" disabled>Đang chuẩn bị</button>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="shop-other-decor-block">
+            <div class="shop-profile-banner-title compact">
+                <div>
+                    <span class="eyebrow">Trang trí khác</span>
+                    <h3>Các nhóm vật phẩm sẽ phát triển sau</h3>
+                </div>
+            </div>
+            <div class="shop-shell-grid shop-tab-grid">
+                {% for item in active_section['items'] if item != 'Banner' %}
+                <article class="shop-shell-item">
+                    <div class="shop-shell-icon">{{ active_section['icon'] }}</div>
+                    <strong>{{ item }}</strong>
+                    <small>Khung chờ vật phẩm</small>
+                    <button class="btn gray" type="button" disabled>Sắp mở</button>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
         <div class="shop-shell-grid shop-tab-grid">
             {% for item in active_section['items'] %}
             <article class="shop-shell-item">
@@ -84,9 +133,10 @@
             </article>
             {% endfor %}
         </div>
+        {% endif %}
         <div class="shop-note-card shop-tab-note">
             <strong>🚧 Đây là khung danh mục riêng</strong>
-            <small>Vật phẩm thật của tab {{ active_section['title'] }} sẽ được thêm vào đây ở các bản sau, không còn nhảy xuống section phía dưới.</small>
+            <small>{% if active_tab == 'decor' %}Banner hồ sơ đã được thêm vào Cửa Hàng để xem trước; chức năng mua và sử dụng sẽ phát triển ở bản sau.{% else %}Vật phẩm thật của tab {{ active_section['title'] }} sẽ được thêm vào đây ở các bản sau, không còn nhảy xuống section phía dưới.{% endif %}</small>
         </div>
     </div>
     {% endif %}

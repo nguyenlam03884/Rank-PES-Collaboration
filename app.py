@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.30"
+APP_VERSION = "V1.10.31"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4340,6 +4340,66 @@ def list_gift_code_redemptions(limit=80):
         return [], True
 
 
+
+# Profile banner assets for Shop shell (V1.10.31).
+# These are static catalog previews only; purchase/equip logic will be added in a later Shop phase.
+PROFILE_BANNER_SHOP_ITEMS = [
+    {
+        "code": "profile_banner_locker_room",
+        "name": "Phòng Thay Đồ",
+        "rarity": "Thường",
+        "rarity_slug": "common",
+        "price": 350,
+        "file": "shop/profile_banners/profile_banner_locker_room.webp",
+        "icon": "shop/profile_banner_icons/profile_banner_locker_room_icon.png",
+        "desc": "Không khí phòng thay đồ chuyên nghiệp, hiện đại và gần gũi.",
+    },
+    {
+        "code": "profile_banner_tactical_master",
+        "name": "Chiến Thuật Gia",
+        "rarity": "Hiếm",
+        "rarity_slug": "rare",
+        "price": 750,
+        "file": "shop/profile_banners/profile_banner_tactical_master.webp",
+        "icon": "shop/profile_banner_icons/profile_banner_tactical_master_icon.png",
+        "desc": "Sơ đồ chiến thuật hologram dành cho người chơi thích kiểm soát trận đấu.",
+    },
+    {
+        "code": "profile_banner_neon_derby",
+        "name": "Derby Neon",
+        "rarity": "Sử Thi",
+        "rarity_slug": "epic",
+        "price": 1500,
+        "file": "shop/profile_banners/profile_banner_neon_derby.webp",
+        "icon": "shop/profile_banner_icons/profile_banner_neon_derby_icon.png",
+        "desc": "Đêm derby bùng nổ giữa hai luồng năng lượng xanh và tím.",
+    },
+    {
+        "code": "profile_banner_trophy_gallery",
+        "name": "Phòng Truyền Thống",
+        "rarity": "Huyền Thoại",
+        "rarity_slug": "legendary",
+        "price": 2800,
+        "file": "shop/profile_banners/profile_banner_trophy_gallery.webp",
+        "icon": "shop/profile_banner_icons/profile_banner_trophy_gallery_icon.png",
+        "desc": "Phòng trưng bày thành tích với cúp vàng và ánh sáng danh vọng.",
+    },
+    {
+        "code": "profile_banner_coronation",
+        "name": "Đăng Quang",
+        "rarity": "Tuyệt Phẩm",
+        "rarity_slug": "masterpiece",
+        "price": 5200,
+        "file": "shop/profile_banners/profile_banner_coronation.webp",
+        "icon": "shop/profile_banner_icons/profile_banner_coronation_icon.png",
+        "desc": "Khoảnh khắc bước lên bục vô địch dưới ánh đèn sân vận động.",
+    },
+]
+
+
+def profile_banner_shop_items():
+    return [dict(item) for item in PROFILE_BANNER_SHOP_ITEMS]
+
 def shop_shell_sections():
     """Static shop shell. Real item catalog will be added in later versions."""
     return [
@@ -4356,7 +4416,7 @@ def shop_shell_sections():
             "icon": "🎨",
             "title": "Trang trí",
             "subtitle": "Khung avatar, banner, màu nickname, danh hiệu",
-            "description": "Khu làm đẹp hồ sơ, tên hiển thị và nhận diện người chơi trong toàn hệ thống.",
+            "description": "Khu làm đẹp hồ sơ, tên hiển thị và nhận diện người chơi trong toàn hệ thống. Banner hồ sơ đã có 5 mẫu đầu tiên để xem trước.",
             "items": ["Hồ sơ", "Banner", "Khung Avatar", "Aura", "Màu Nickname", "Danh hiệu", "Chat", "Emoji"],
         },
         {
@@ -4547,6 +4607,7 @@ def shop():
         active_tab=active_tab,
         active_section=active_section,
         gift_result=gift_result,
+        profile_banner_items=profile_banner_shop_items(),
     )
 
 

@@ -1,3 +1,26 @@
+## V1.10.31_SHOP_PROFILE_BANNER_ASSETS_NO_SQL
+
+**Mục tiêu:** tích hợp gói `PES_2026_PROFILE_BANNER_PACK_5` vào Cửa Hàng, tab Trang trí, để người chơi xem trước 5 banner hồ sơ đầu tiên.
+
+**Thay đổi:**
+- Thêm 5 banner WEBP vào `static/shop/profile_banners/`.
+- Thêm 5 icon Shop PNG vào `static/shop/profile_banner_icons/`.
+- Thêm preview pack và manifest JSON/CSV gốc để tiện quản lý tài nguyên.
+- `app.py` thêm catalog tĩnh `PROFILE_BANNER_SHOP_ITEMS`.
+- `templates/shop.html` hiển thị khu `Banner hồ sơ` trong tab `Trang trí` với ảnh, tên, độ hiếm và giá ZCOIN đề xuất.
+- `static/style.css` thêm giao diện card banner trong Shop.
+- `templates/base.html` cập nhật cache CSS lên `?v=1.10.31`.
+- `APP_VERSION` cập nhật lên `V1.10.31`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Chưa mở mua/sử dụng banner thật; đây là bước tích hợp tài nguyên và hiển thị trong Shop trước.
+- Không đụng Gift Code, ZCOIN, Điểm danh, BXH, Admin, phòng đấu hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.31_SHOP_PROFILE_BANNER_ASSETS_NO_SQL`
+
+
 ## V1.10.30_TOPBAR_ANNOUNCEMENT_FIT_HOTFIX_NO_SQL
 
 **Mục tiêu:** sửa thanh thông báo trên topbar bị dài và lấn vào cụm icon bên phải.

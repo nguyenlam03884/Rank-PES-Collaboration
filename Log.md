@@ -1,3 +1,13 @@
+## V1.10.31_SHOP_PROFILE_BANNER_ASSETS_NO_SQL
+
+- Tích hợp gói `PES_2026_PROFILE_BANNER_PACK_5` vào app.
+- Thêm 5 banner hồ sơ đầu tiên: Phòng Thay Đồ, Chiến Thuật Gia, Derby Neon, Phòng Truyền Thống, Đăng Quang.
+- Cửa Hàng / Trang trí hiển thị card banner với ảnh preview, icon, độ hiếm và giá ZCOIN đề xuất.
+- Chưa mở chức năng mua/sử dụng banner thật, để tránh thay đổi database và logic Kho đồ khi chưa chốt hệ thống vật phẩm.
+- Không cần SQL, không đổi database, không đụng Gift Code/ZCOIN/Điểm danh/BXH/Admin/phòng đấu.
+- Rollback: quay lại deployment V1.10.30 nếu cần.
+
+
 ## V1.10.30_TOPBAR_ANNOUNCEMENT_FIT_HOTFIX_NO_SQL
 
 - Hotfix thanh thông báo trên topbar bị dài/lấn sát cụm icon bên phải.
