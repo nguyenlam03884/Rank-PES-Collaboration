@@ -1,3 +1,21 @@
+## V1.10.37_SHOP_HIDE_MISSING_PRICE_BUTTON_NO_SQL
+
+**Mục tiêu:** chỉnh giao diện Shop để không hiện dòng `Thiếu xxx` trên nút mua khi người chơi chưa đủ ZCOIN.
+
+**Thay đổi:**
+- Nút mua khi chưa đủ ZCOIN sẽ chỉ hiển thị giá vật phẩm, ví dụ `300 ZCOIN`, `700 ZCOIN`.
+- Popup xem trước cũng dùng giá vật phẩm thay cho dòng `Thiếu xxx ZCOIN`.
+- `APP_VERSION` cập nhật lên `V1.10.37`.
+- `templates/base.html` cập nhật cache CSS lên `?v=1.10.37`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng luồng mua, Kho đồ, Gift Code, ZCOIN, Điểm danh, BXH, Admin, phòng đấu hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.37_SHOP_HIDE_MISSING_PRICE_BUTTON_NO_SQL`
+
+
 ## V1.10.36_SHOP_PURCHASE_INVENTORY_SAFE
 
 **Mục tiêu:** chốt tab Nổi bật thành nơi hiển thị vật phẩm thật và mở bán thử nghiệm 5 banner hồ sơ bằng ZCOIN để người dùng có thể mua và lưu vào Kho đồ.

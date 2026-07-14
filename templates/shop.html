@@ -3,7 +3,6 @@
     {% set user_balance = (current_user.zcoin_balance|default(0, true))|int %}
     {% set owned = banner['code'] in owned_item_codes %}
     {% set can_buy = (not owned) and (not inventory_setup_required) and (user_balance >= banner['price']) %}
-    {% set missing = banner['price'] - user_balance %}
     <article class="profile-banner-shop-card rarity-{{ banner['rarity_slug'] }}{% if owned %} owned{% endif %}"
              data-preview-name="{{ banner['name'] }}"
              data-preview-rarity="{{ banner['rarity'] }}"
@@ -15,8 +14,7 @@
              data-preview-buy-url="{{ url_for('buy_shop_item_route', item_code=banner['code']) }}"
              data-preview-tab="{{ source_tab }}"
              data-preview-owned="{{ '1' if owned else '0' }}"
-             data-preview-can-buy="{{ '1' if can_buy else '0' }}"
-             data-preview-missing="{{ '{:,}'.format(missing if missing > 0 else 0).replace(',', '.') }}">
+             data-preview-can-buy="{{ '1' if can_buy else '0' }}">
         <div class="profile-banner-preview" style="background-image:url('{{ url_for('static', filename=banner['file']) }}');">
             <img class="profile-banner-item-icon" src="{{ url_for('static', filename=banner['icon']) }}" alt="Icon {{ banner['name'] }}" loading="lazy">
             <span class="profile-banner-rarity">{{ banner['rarity'] }}</span>
@@ -40,7 +38,7 @@
                     {% elif can_buy %}
                         <button class="btn gold" type="submit">Mua ngay</button>
                     {% else %}
-                        <button class="btn gray" type="button" disabled>Thiếu {{ '{:,}'.format(missing).replace(',', '.') }}</button>
+                        <button class="btn gray" type="button" disabled>{{ '{:,}'.format(banner['price']).replace(',', '.') }} ZCOIN</button>
                     {% endif %}
                 </form>
             </div>
@@ -303,11 +301,10 @@
             if (buyButton) {
                 const owned = card.dataset.previewOwned === '1';
                 const canBuy = card.dataset.previewCanBuy === '1';
-                const missing = card.dataset.previewMissing || '0';
                 buyButton.disabled = !canBuy;
                 if (owned) buyButton.textContent = 'Đã sở hữu';
                 else if (canBuy) buyButton.textContent = 'Mua ngay';
-                else buyButton.textContent = 'Thiếu ' + missing + ' ZCOIN';
+                else buyButton.textContent = (card.dataset.previewPrice || '0') + ' ZCOIN';
             }
             backdrop.hidden = false;
             backdrop.removeAttribute('hidden');
