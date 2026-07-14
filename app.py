@@ -16,12 +16,6 @@ from threading import Lock
 
 from dotenv import load_dotenv
 from PIL import Image, ImageOps, UnidentifiedImageError
-
-try:
-    from pillow_heif import register_heif_opener
-    register_heif_opener()
-except ImportError:
-    register_heif_opener = None
 from flask import (
     Flask,
     jsonify,
@@ -41,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.40"
+APP_VERSION = "V1.10.38"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -49,9 +43,9 @@ ONLINE_TIMEOUT_SECONDS = 90
 CHAT_COOLDOWN_SECONDS = 5
 CHAT_MAX_LENGTH = 200
 AVATAR_BUCKET = "avatars"
-AVATAR_MAX_BYTES = 12 * 1024 * 1024
+AVATAR_MAX_BYTES = 8 * 1024 * 1024
 AVATAR_OUTPUT_SIZE = 512
-AVATAR_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "HEIF", "HEIC"}
+AVATAR_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 DISPUTE_EVIDENCE_BUCKET = "dispute-evidence"
 DISPUTE_EVIDENCE_MAX_BYTES = 4 * 1024 * 1024
 DISPUTE_EVIDENCE_MAX_SIDE = 1600
@@ -401,7 +395,7 @@ def prepare_avatar_bytes(file_storage):
 
     raw = file_storage.read(AVATAR_MAX_BYTES + 1)
     if len(raw) > AVATAR_MAX_BYTES:
-        raise ValueError("Ảnh đại diện không được vượt quá 12 MB.")
+        raise ValueError("Ảnh đại diện không được vượt quá 8 MB.")
     if not raw:
         raise ValueError("File ảnh đang trống.")
 
@@ -411,7 +405,7 @@ def prepare_avatar_bytes(file_storage):
             width, height = probe.size
             probe.verify()
         if image_format not in AVATAR_ALLOWED_FORMATS:
-            raise ValueError("Chỉ chấp nhận ảnh JPG, PNG, WEBP hoặc HEIC/HEIF.")
+            raise ValueError("Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.")
         if width < 80 or height < 80:
             raise ValueError("Ảnh quá nhỏ. Vui lòng chọn ảnh từ 80×80 pixel trở lên.")
         if width * height > 25_000_000:
@@ -1018,8 +1012,50 @@ def calculate_deltas(player_a, player_b, score_a: int, score_b: int, team_a=None
     win_points = min(MAX_POSITIVE_POINTS_PER_MATCH, max(1, int(win_points)))
 
     if a_won:
-        return win_points, BASE_LOSS_POINTS
-    return BASE_LOSS_POINTS, win_points
+        return enforce_ranked_delta_signs(score_a, score_b, win_points, BASE_LOSS_POINTS)
+    return enforce_ranked_delta_signs(score_a, score_b, BASE_LOSS_POINTS, win_points)
+
+
+def enforce_ranked_delta_signs(score1, score2, delta1, delta2):
+    """Guarantee winner-positive / loser-negative RP for ranked matches.
+
+    This is a final guard against bad/old rows or unexpected form/admin flows that
+    could otherwise store 0 RP for a non-draw result.
+    """
+    score1 = _safe_int(score1)
+    score2 = _safe_int(score2)
+    delta1 = _safe_int(delta1)
+    delta2 = _safe_int(delta2)
+
+    if score1 == score2:
+        return 0, 0
+
+    if score1 > score2:
+        if delta1 <= 0:
+            delta1 = BASE_WIN_POINTS
+        if delta2 >= 0:
+            delta2 = BASE_LOSS_POINTS
+    else:
+        if delta1 >= 0:
+            delta1 = BASE_LOSS_POINTS
+        if delta2 <= 0:
+            delta2 = BASE_WIN_POINTS
+
+    return int(delta1), int(delta2)
+
+
+def display_delta_with_result_guard(score_for, score_against, stored_delta):
+    """Display fallback for older confirmed rows that were saved with invalid 0 RP."""
+    score_for = _safe_int(score_for)
+    score_against = _safe_int(score_against)
+    stored_delta = _safe_int(stored_delta)
+    if score_for == score_against:
+        return 0
+    if score_for > score_against and stored_delta <= 0:
+        return BASE_WIN_POINTS
+    if score_for < score_against and stored_delta >= 0:
+        return BASE_LOSS_POINTS
+    return stored_delta
 
 TEAM_LOGO_BUCKET = "team-logos"
 SMART_RANDOM_MODE = "Smart Rank"
@@ -2013,17 +2049,9 @@ def decorate_match_for_view(match, viewer_id=None):
         as_player1 = item.get("player1_id") == viewer_id
         my_score = item.get("score1") if as_player1 else item.get("score2")
         opponent_score = item.get("score2") if as_player1 else item.get("score1")
-        item["my_delta"] = int((item.get("delta1") if as_player1 else item.get("delta2")) or 0)
-        # Defensive legacy display: old confirmed rows could store +RP for the
-        # winner but 0 for the loser. Show the correct sign immediately; the
-        # V1.10.39 SQL migration also synchronizes the database and BXH points.
-        if item.get("status") == "confirmed" and my_score is not None and opponent_score is not None:
-            if my_score < opponent_score and item["my_delta"] >= 0:
-                item["my_delta"] = BASE_LOSS_POINTS
-            elif my_score > opponent_score and item["my_delta"] <= 0:
-                item["my_delta"] = BASE_WIN_POINTS
-            elif my_score == opponent_score:
-                item["my_delta"] = 0
+        stored_my_delta = int((item.get("delta1") if as_player1 else item.get("delta2")) or 0)
+        item["my_delta"] = stored_my_delta
+        item["my_delta_was_guarded"] = False
         item["opponent_id"] = item.get("player2_id") if as_player1 else item.get("player1_id")
         item["opponent_name"] = item.get("player2_name") if as_player1 else item.get("player1_name")
         item["my_avatar_url"] = item.get("player1_avatar_url") if as_player1 else item.get("player2_avatar_url")
@@ -2043,6 +2071,9 @@ def decorate_match_for_view(match, viewer_id=None):
         )
 
         if item.get("status") == "confirmed" and my_score is not None and opponent_score is not None:
+            guarded_delta = display_delta_with_result_guard(my_score, opponent_score, stored_my_delta)
+            item["my_delta_was_guarded"] = guarded_delta != stored_my_delta
+            item["my_delta"] = guarded_delta
             if my_score > opponent_score:
                 item["result_code"], item["result_label"] = "win", "THẮNG"
             elif my_score < opponent_score:
@@ -4123,6 +4154,11 @@ def update_profile_avatar():
             "update_profile_avatar",
         )
         session["avatar_url"] = new_url
+        cache_delete("_rz_current_user")
+        cache_delete("_rz_users_map")
+        cache_delete("_rz_players_all")
+        cache_delete("_rz_matches_all")
+        ttl_cache_delete("players_raw", "rooms_raw", "achievement_map", f"user:{user.get('id')}")
         if old_path and old_path != new_path:
             remove_avatar_object(old_path)
         flash("Ảnh đại diện đã được cập nhật và sẽ hiển thị trên toàn app.", "success")
@@ -5695,38 +5731,6 @@ def room_start(room_id):
     return redirect(url_for("room_detail", room_id=room_id))
 
 
-def _map_room_scores_to_match_players(match, room, host_score, guest_score):
-    """Map room host/guest scores to match player1/player2 order safely.
-
-    Legacy rooms or restored matches can have player1/player2 in the reverse order.
-    RP calculation must always follow match.player1_id/match.player2_id, while the
-    room UI always displays host_score/guest_score.
-    """
-    player1_id = str(match.get("player1_id") or "")
-    player2_id = str(match.get("player2_id") or "")
-    host_id = str(room.get("host_user_id") or "")
-    guest_id = str(room.get("guest_user_id") or "")
-
-    if player1_id == host_id and player2_id == guest_id:
-        return int(host_score), int(guest_score)
-    if player1_id == guest_id and player2_id == host_id:
-        return int(guest_score), int(host_score)
-    raise ValueError("Dữ liệu người chơi trong phòng và trận đấu không khớp. Chưa cập nhật RP.")
-
-
-def _map_match_deltas_to_room_players(match, room, delta1, delta2):
-    """Return RP deltas in room host/guest order for messages and UI."""
-    player1_id = str(match.get("player1_id") or "")
-    player2_id = str(match.get("player2_id") or "")
-    host_id = str(room.get("host_user_id") or "")
-    guest_id = str(room.get("guest_user_id") or "")
-    if player1_id == host_id and player2_id == guest_id:
-        return int(delta1), int(delta2)
-    if player1_id == guest_id and player2_id == host_id:
-        return int(delta2), int(delta1)
-    return int(delta1), int(delta2)
-
-
 @app.route("/room/<room_id>/submit-result", methods=["POST"])
 @login_required
 def room_submit_result(room_id):
@@ -5761,18 +5765,12 @@ def room_submit_result(room_id):
         flash("Không tìm thấy match gắn với phòng.", "danger")
         return redirect(url_for("room_detail", room_id=room_id))
 
-    try:
-        score1, score2 = _map_room_scores_to_match_players(match, room, host_score, guest_score)
-    except ValueError as exc:
-        flash(str(exc), "danger")
-        return redirect(url_for("room_detail", room_id=room_id))
-
-    if score1 > score2:
-        winner_id = match["player1_id"]
-        loser_id = match["player2_id"]
-    elif score1 < score2:
-        winner_id = match["player2_id"]
-        loser_id = match["player1_id"]
+    if host_score > guest_score:
+        winner_id = room["host_user_id"]
+        loser_id = room["guest_user_id"]
+    elif host_score < guest_score:
+        winner_id = room["guest_user_id"]
+        loser_id = room["host_user_id"]
     else:
         winner_id = None
         loser_id = None
@@ -5780,8 +5778,8 @@ def room_submit_result(room_id):
     try:
         execute_query(
             db.table("matches").update({
-                "score1": score1,
-                "score2": score2,
+                "score1": host_score,
+                "score2": guest_score,
                 "submitted_by_id": user["id"],
                 "winner_id": winner_id,
                 "loser_id": loser_id,
@@ -5835,25 +5833,6 @@ def room_confirm_result(room_id):
         return redirect(url_for("room_detail", room_id=room_id))
 
     try:
-        # Repair score orientation for rooms whose match player order is reversed.
-        normalized_score1, normalized_score2 = _map_room_scores_to_match_players(
-            match, room, room.get("host_score"), room.get("guest_score")
-        )
-        if (_safe_int(match.get("score1"), -1), _safe_int(match.get("score2"), -1)) != (normalized_score1, normalized_score2):
-            winner_id = match.get("player1_id") if normalized_score1 > normalized_score2 else match.get("player2_id") if normalized_score2 > normalized_score1 else None
-            loser_id = match.get("player2_id") if normalized_score1 > normalized_score2 else match.get("player1_id") if normalized_score2 > normalized_score1 else None
-            execute_query(
-                db.table("matches").update({
-                    "score1": normalized_score1,
-                    "score2": normalized_score2,
-                    "winner_id": winner_id,
-                    "loser_id": loser_id,
-                    "updated_at": now_iso(),
-                }).eq("id", match["id"]).eq("status", "waiting_confirm"),
-                "normalize_room_match_score_order",
-            )
-            match = get_match(match["id"]) or {**match, "score1": normalized_score1, "score2": normalized_score2, "winner_id": winner_id, "loser_id": loser_id}
-
         delta1, delta2 = apply_match_result(match)
         execute_query(
             db.table("match_rooms").update({
@@ -5874,8 +5853,7 @@ def room_confirm_result(room_id):
         flash("Không thể xác nhận kết quả do lỗi kết nối dữ liệu. Điểm chưa được xử lý thêm; vui lòng thử lại sau vài giây.", "danger")
         return redirect(url_for("room_detail", room_id=room_id))
 
-    host_delta, guest_delta = _map_match_deltas_to_room_players(match, room, delta1, delta2)
-    flash(f"Đã xác nhận. Chủ phòng: {host_delta:+d}, Khách: {guest_delta:+d}. Hai người có thể bấm Đá tiếp.", "success")
+    flash(f"Đã xác nhận. Chủ phòng: {int(delta1):+d}, Khách: {int(delta2):+d}. Hai người có thể bấm Đá tiếp.", "success")
     return redirect(url_for("room_detail", room_id=room_id))
 
 
@@ -6116,24 +6094,9 @@ def apply_match_result(match):
     if match.get("score1") is None or match.get("score2") is None:
         raise ValueError("Trận chưa có tỉ số.")
 
-    # Idempotency: only a confirmed match whose stored deltas match the score
-    # is considered fully applied. Legacy rows such as +22/0 or 0/0 must not
-    # silently pass as valid, because that leaves the loser without an RP deduction.
+    # Idempotency: a confirmed match with stored deltas was already applied.
     if match.get("status") == "confirmed" and match.get("delta1") is not None and match.get("delta2") is not None:
-        stored_delta1 = _safe_int(match.get("delta1"))
-        stored_delta2 = _safe_int(match.get("delta2"))
-        stored_score1 = _safe_int(match.get("score1"), -1)
-        stored_score2 = _safe_int(match.get("score2"), -1)
-        deltas_are_valid = (
-            (stored_score1 == stored_score2 and stored_delta1 == 0 and stored_delta2 == 0)
-            or (stored_score1 > stored_score2 and stored_delta1 > 0 and stored_delta2 < 0)
-            or (stored_score2 > stored_score1 and stored_delta2 > 0 and stored_delta1 < 0)
-        )
-        if deltas_are_valid:
-            return stored_delta1, stored_delta2
-        raise ValueError(
-            "Dữ liệu RP của trận cũ chưa đồng bộ. Hãy chạy file SQL sửa lịch sử của V1.10.39 trước."
-        )
+        return _safe_int(match.get("delta1")), _safe_int(match.get("delta2"))
     if match.get("status") == "processing_result":
         raise ValueError("Kết quả đang được xử lý. Không cần nhấn xác nhận lần nữa.")
 
@@ -6180,17 +6143,6 @@ def apply_match_result(match):
         )
         delta1, delta2 = _safe_int(delta1), _safe_int(delta2)
 
-        # Guard against any accidental sign regression in ranked scoring.
-        if score1 == score2:
-            if delta1 != 0 or delta2 != 0:
-                raise ValueError("Sai quy tắc RP: trận hòa phải có delta bằng 0 cho cả hai người chơi.")
-        elif score1 > score2:
-            if delta1 <= 0 or delta2 >= 0:
-                raise ValueError("Sai quy tắc RP: người thắng phải được cộng và người thua phải bị trừ điểm.")
-        else:
-            if delta2 <= 0 or delta1 >= 0:
-                raise ValueError("Sai quy tắc RP: người thắng phải được cộng và người thua phải bị trừ điểm.")
-
         # The 0.95 coefficient belongs to the actual room host, not implicitly player1.
         host_user_id = match.get("host_user_id")
         if not host_user_id:
@@ -6208,21 +6160,12 @@ def apply_match_result(match):
         elif str(host_user_id or "") == str(player2_id):
             delta2 = _safe_int(apply_host_xp_factor(delta2, match.get("host_xp_factor", HOST_XP_FACTOR)))
 
-        player1_snapshot = {key: player1.get(key) for key in (
-            "rank_points", "total_matches", "wins", "draws", "losses",
-            "goals_for", "goals_against", "streak"
-        )}
-        player2_snapshot = {key: player2.get(key) for key in (
-            "rank_points", "total_matches", "wins", "draws", "losses",
-            "goals_for", "goals_against", "streak"
-        )}
-        player1_updated = False
-        player2_updated = False
+        # Final safety guard: a non-draw ranked match must never save +0/0 RP
+        # for the loser or non-positive RP for the winner.
+        delta1, delta2 = enforce_ranked_delta_signs(score1, score2, delta1, delta2)
 
         update_player_after_match(player1, delta1, score1, score2)
-        player1_updated = True
         update_player_after_match(player2, delta2, score2, score1)
-        player2_updated = True
 
         execute_query(
             db.table("matches").update({
@@ -6234,26 +6177,12 @@ def apply_match_result(match):
             }).eq("id", match["id"]).eq("status", "processing_result"),
             "finalize_match_result",
         )
+        cache_delete("_rz_matches_all")
+        cache_delete("_rz_players_all")
+        cache_delete("_rz_users_map")
+        ttl_cache_delete("players_raw", "rooms_raw", "achievement_map", f"user:{player1_id}", f"user:{player2_id}")
     except Exception as exc:
         print(f"apply_match_result ERROR match={match.get('id')} status={original_status}: {type(exc).__name__}: {exc}")
-        # If a later database write fails, restore exact pre-match player values so
-        # retrying cannot double-apply RP or statistics to only one participant.
-        try:
-            if locals().get("player1_updated"):
-                execute_query(
-                    db.table("users").update(player1_snapshot).eq("id", player1_id),
-                    "rollback_player1_after_result_error",
-                    attempts=2,
-                )
-            if locals().get("player2_updated"):
-                execute_query(
-                    db.table("users").update(player2_snapshot).eq("id", player2_id),
-                    "rollback_player2_after_result_error",
-                    attempts=2,
-                )
-            ttl_cache_delete("players_raw", "achievement_map")
-        except Exception as rollback_exc:
-            print(f"apply_match_result ROLLBACK ERROR match={match.get('id')}: {type(rollback_exc).__name__}: {rollback_exc}")
         try:
             execute_query(
                 db.table("matches").update({"status": original_status, "updated_at": now_iso()})
@@ -6625,7 +6554,11 @@ def admin():
 
 
 
-def _safe_int(value, default=0, minimum=0, maximum=999999):
+def _safe_int_bounded(value, default=0, minimum=0, maximum=999999):
+    """Bounded integer parser for admin CSV/import form fields.
+
+    Keep this separate from _safe_int because ranked RP deltas can be negative.
+    """
     try:
         parsed = int(str(value).strip())
     except (TypeError, ValueError):
@@ -6652,10 +6585,10 @@ def _build_test_user_payload(row, default_password="Test@12345"):
     if len(password) < 6:
         raise ValueError(f"Mật khẩu của {username} phải có ít nhất 6 ký tự.")
 
-    wins = _safe_int(row.get("wins"), 0)
-    draws = _safe_int(row.get("draws"), 0)
-    losses = _safe_int(row.get("losses"), 0)
-    supplied_total = _safe_int(row.get("total_matches"), wins + draws + losses)
+    wins = _safe_int_bounded(row.get("wins"), 0)
+    draws = _safe_int_bounded(row.get("draws"), 0)
+    losses = _safe_int_bounded(row.get("losses"), 0)
+    supplied_total = _safe_int_bounded(row.get("total_matches"), wins + draws + losses)
     total_matches = max(supplied_total, wins + draws + losses)
 
     return {
@@ -6666,13 +6599,13 @@ def _build_test_user_payload(row, default_password="Test@12345"):
         "role": "player",
         "account_status": "approved",
         "invite_code_used": None,
-        "rank_points": _safe_int(row.get("rank_points"), DEFAULT_POINTS, 0, 999999),
+        "rank_points": _safe_int_bounded(row.get("rank_points"), DEFAULT_POINTS, 0, 999999),
         "wins": wins,
         "draws": draws,
         "losses": losses,
         "total_matches": total_matches,
-        "goals_for": _safe_int(row.get("goals_for"), 0),
-        "goals_against": _safe_int(row.get("goals_against"), 0),
+        "goals_for": _safe_int_bounded(row.get("goals_for"), 0),
+        "goals_against": _safe_int_bounded(row.get("goals_against"), 0),
         "is_online": False,
         "must_change_password": False,
         "register_ip": "ADMIN_TEST_IMPORT",
@@ -6687,8 +6620,8 @@ def _build_test_user_payload(row, default_password="Test@12345"):
 def admin_create_gift_code():
     custom_code = normalize_gift_code(request.form.get("code"))
     code = custom_code or generate_gift_code(request.form.get("prefix") or GIFT_CODE_DEFAULT_PREFIX)
-    reward_zcoin = _safe_int(request.form.get("reward_zcoin"), 0, 1, GIFT_CODE_MAX_REWARD_ZCOIN)
-    max_redemptions = _safe_int(request.form.get("max_redemptions"), 1, 1, 100000)
+    reward_zcoin = _safe_int_bounded(request.form.get("reward_zcoin"), 0, 1, GIFT_CODE_MAX_REWARD_ZCOIN)
+    max_redemptions = _safe_int_bounded(request.form.get("max_redemptions"), 1, 1, 100000)
     note = (request.form.get("note") or "").strip()[:250]
     expires_at = None
     expires_raw = (request.form.get("expires_at") or "").strip()
@@ -6882,9 +6815,9 @@ def admin_import_test_accounts():
                 # Chỉ rank_points được phép nhập số âm để Admin hoàn tác/trừ RP.
                 # Các thống kê trận đấu vẫn bắt buộc không âm để tránh dữ liệu sai.
                 if field == "rank_points":
-                    increments[field] = _safe_int(raw_value, 0, -999999, 999999)
+                    increments[field] = _safe_int_bounded(raw_value, 0, -999999, 999999)
                 else:
-                    increments[field] = _safe_int(raw_value, 0, 0, 999999)
+                    increments[field] = _safe_int_bounded(raw_value, 0, 0, 999999)
 
             # Nếu CSV có thắng/hòa/thua nhưng không có total_matches,
             # tự cộng tổng số trận tương ứng để dữ liệu không bị lệch.
@@ -6902,7 +6835,7 @@ def admin_import_test_accounts():
 
             update_payload = {}
             for field, increment in increments.items():
-                current_value = _safe_int(existing_user.get(field), 0, 0, 999999)
+                current_value = _safe_int_bounded(existing_user.get(field), 0, 0, 999999)
                 if field == "rank_points":
                     # Cho phép cộng/trừ RP nhưng không để tổng điểm xuống dưới 0.
                     update_payload[field] = max(0, min(999999, current_value + increment))

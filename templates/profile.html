@@ -288,15 +288,16 @@
                     {{ player_avatar(player, size='xxl') }}
                     <div>
                         <p>Ảnh sẽ xuất hiện cạnh tên của bạn trên Dashboard, BXH, Players, phòng đấu, chat và lịch sử trận.</p>
-                        <p class="small">JPG, PNG, WEBP, HEIC/HEIF • Tối đa 12 MB • Hệ thống tự cắt ảnh vuông.</p>
+                        <p class="small">JPG, PNG, WEBP • Tối đa 8 MB • Hệ thống tự cắt ảnh vuông.</p>
                     </div>
                 </div>
-                <form class="avatar-upload-form" method="post" action="{{ url_for('update_profile_avatar') }}" enctype="multipart/form-data">
-                    <label class="avatar-file-label">
+                <form class="avatar-upload-form mobile-safe-avatar-form" method="post" action="{{ url_for('update_profile_avatar') }}" enctype="multipart/form-data">
+                    <label class="avatar-file-label" for="avatarFileInput">
                         <span>Chọn ảnh mới</span>
-                        <input id="avatarFileInput" type="file" name="avatar" accept="image/*,.heic,.heif" required>
                     </label>
-                    <button class="btn gold" type="submit" id="avatarSubmitButton">Lưu ảnh đại diện</button>
+                    <input id="avatarFileInput" class="mobile-safe-file-input" type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/*" required>
+                    <small class="avatar-selected-file" id="avatarSelectedFile">Chưa chọn ảnh.</small>
+                    <button class="btn gold" type="submit">Lưu ảnh đại diện</button>
                 </form>
                 {% if player.avatar_url %}
                 <form method="post" action="{{ url_for('delete_profile_avatar') }}" onsubmit="return confirm('Xóa ảnh đại diện hiện tại?');">
@@ -308,25 +309,6 @@
         </div>
     </section>
 </div>
-
-<script>
-(function setupMobileAvatarUpload(){
-    const input = document.getElementById('avatarFileInput');
-    const button = document.getElementById('avatarSubmitButton');
-    if (!input || !button) return;
-    input.addEventListener('change', function(){
-        const file = input.files && input.files[0];
-        if (!file) return;
-        button.disabled = false;
-        button.textContent = 'Lưu ảnh: ' + file.name.slice(0, 28);
-    });
-    const form = input.closest('form');
-    if (form) form.addEventListener('submit', function(){
-        button.disabled = true;
-        button.textContent = 'Đang tải ảnh...';
-    });
-})();
-</script>
 
 <script>
 (function setupProfileTabs(){
@@ -402,6 +384,23 @@
         if (frame < 230 && document.body.contains(backdrop)) requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
+})();
+
+(function setupMobileAvatarUpload(){
+    const input = document.getElementById('avatarFileInput');
+    const output = document.getElementById('avatarSelectedFile');
+    if (!input || !output) return;
+    input.addEventListener('change', function(){
+        const file = input.files && input.files[0];
+        if (!file) {
+            output.textContent = 'Chưa chọn ảnh.';
+            output.classList.remove('is-selected');
+            return;
+        }
+        const sizeMb = file.size ? (file.size / 1024 / 1024).toFixed(1) : '';
+        output.textContent = file.name + (sizeMb ? ' • ' + sizeMb + ' MB' : '');
+        output.classList.add('is-selected');
+    });
 })();
 
 </script>

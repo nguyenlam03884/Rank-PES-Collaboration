@@ -5140,3 +5140,52 @@ html[data-theme="light"] .inventory-item-info p{color:#475569}
   .shop-preview-buy-form .btn{width:100%}
   .inventory-item-grid{grid-template-columns:1fr}
 }
+
+/* V1.10.38_RP_DELTA_GUARD_AVATAR_MOBILE_HOTFIX_NO_SQL
+   Mobile-safe avatar upload and stricter RP display guard for old inconsistent rows. */
+.mobile-safe-avatar-form{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:end;
+}
+.mobile-safe-avatar-form .avatar-file-label{
+  margin:0;
+  cursor:pointer;
+}
+.mobile-safe-file-input{
+  width:100%;
+  min-height:46px;
+  padding:11px 12px;
+  border-radius:12px;
+  border:1px dashed rgba(148,163,184,.45);
+  background:#0f172a;
+  color:#dbeafe;
+  font-weight:800;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.avatar-selected-file{
+  grid-column:1 / -1;
+  display:block;
+  margin-top:-2px;
+  color:#94a3b8;
+  font-weight:800;
+}
+.avatar-selected-file.is-selected{
+  color:#bbf7d0;
+}
+@media(max-width:620px){
+  .mobile-safe-avatar-form{
+    grid-template-columns:1fr;
+  }
+  .mobile-safe-avatar-form .btn,
+  .mobile-safe-file-input{
+    width:100%;
+    min-height:48px;
+  }
+  .avatar-file-label span{
+    display:block;
+    margin-bottom:6px;
+  }
+}
