@@ -1,4 +1,15 @@
 
+## V1.10.22_ADMIN_MATCH_RESULT_DELTA_HOTFIX_NO_SQL
+
+- Hotfix chức năng Admin sửa kết quả trận đấu.
+- Sửa lỗi Supabase báo `null value in column "delta1" of relation "matches" violates not-null constraint`.
+- Không còn ghi `delta1 = NULL` / `delta2 = NULL` khi chuẩn bị tính lại kết quả; dùng 0/0 tạm thời rồi ghi delta thật sau khi tính RP.
+- Chỉnh thêm luồng Admin xử lý tranh chấp để apply kết quả đúng thứ tự, tránh confirmed sớm trước khi có delta thật.
+- Không cần SQL, không đổi database schema, không đổi công thức tính RP.
+- File thay đổi: app.py, README.md, Log.md, docs/update_v1_10_22_admin_match_result_delta_hotfix_no_sql.txt.
+- Commit khuyến nghị: `V1.10.22_ADMIN_MATCH_RESULT_DELTA_HOTFIX_NO_SQL`.
+
+
 ## V1.10.19_FRIENDLY_TOGGLE_HARD_LOCK_NO_SQL
 
 - Sửa triệt để nút bật/tắt trận Giao hữu trong Admin.

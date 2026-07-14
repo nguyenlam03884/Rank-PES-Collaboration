@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.21"
+APP_VERSION = "V1.10.22"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5771,13 +5771,18 @@ def resolve_match_dispute_with_result(
         winner_id = loser_id = None
 
     final_note = (resolution_note or "Tranh chấp đã được xử lý và kết quả được công nhận.").strip()[:500]
+    # Không chuyển thẳng sang confirmed trước khi tính RP.
+    # Một số database đang đặt matches.delta1/delta2 là NOT NULL, nên luôn giữ 0 tạm thời
+    # trong lúc chuẩn bị; apply_match_result sẽ claim sang processing_result rồi ghi delta thật.
     execute_query(
         db.table("matches").update({
             "score1": score1,
             "score2": score2,
             "winner_id": winner_id,
             "loser_id": loser_id,
-            "status": "confirmed",
+            "status": "waiting_confirm",
+            "delta1": 0,
+            "delta2": 0,
             "note": final_note,
             "updated_at": now_iso(),
         }).eq("id", match.get("id")).eq("status", "disputed"),
@@ -6967,6 +6972,8 @@ def admin_update_match_result(match_id):
         if old_was_applied and not reverse_confirmed_match_result(old_match):
             raise ValueError("Không thể hoàn tác kết quả cũ; chưa lưu tỷ số mới.")
 
+        # Không set delta1/delta2 = None vì production có constraint NOT NULL.
+        # Dùng 0 làm giá trị tạm; apply_match_result sẽ ghi delta thật sau khi tính RP.
         execute_query(
             db.table("matches").update({
                 "score1": score1,
@@ -6974,8 +6981,8 @@ def admin_update_match_result(match_id):
                 "winner_id": winner_id,
                 "loser_id": loser_id,
                 "status": "waiting_confirm",
-                "delta1": None,
-                "delta2": None,
+                "delta1": 0,
+                "delta2": 0,
                 "note": note,
                 "updated_at": now_iso(),
             }).eq("id", match_id),
@@ -7024,8 +7031,8 @@ def admin_update_match_result(match_id):
                     "score2": old_match.get("score2"),
                     "winner_id": old_match.get("winner_id"),
                     "loser_id": old_match.get("loser_id"),
-                    "delta1": old_match.get("delta1"),
-                    "delta2": old_match.get("delta2"),
+                    "delta1": _safe_int(old_match.get("delta1"), 0),
+                    "delta2": _safe_int(old_match.get("delta2"), 0),
                     "status": old_match.get("status"),
                     "note": old_match.get("note"),
                     "updated_at": now_iso(),

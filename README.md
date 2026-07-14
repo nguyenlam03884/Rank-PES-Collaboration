@@ -1,4 +1,22 @@
 
+## V1.10.22_ADMIN_MATCH_RESULT_DELTA_HOTFIX_NO_SQL
+
+**Mục tiêu:** sửa lỗi Admin không lưu được kết quả trận đấu do `matches.delta1`/`delta2` bị ghi `NULL` trong khi database đang yêu cầu NOT NULL.
+
+**Thay đổi:**
+- Admin sửa kết quả dùng `delta1 = 0`, `delta2 = 0` làm giá trị tạm trước khi tính lại RP.
+- Sau khi chuẩn bị tỷ số mới, hệ thống vẫn gọi `apply_match_result()` để tính delta thật và cập nhật BXH.
+- Luồng xử lý tranh chấp Admin cũng được chỉnh để không chuyển thẳng sang confirmed trước khi tính RP.
+- Rollback nội bộ khi sửa lỗi luôn restore delta thành số nguyên an toàn, không ghi NULL.
+
+**Không thay đổi:**
+- Không cần SQL/database migration.
+- Không đổi công thức tính RP.
+- Không đụng ZCOIN, Điểm danh, BXH, Dashboard, Players, menu user hoặc Kho đồ.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.22_ADMIN_MATCH_RESULT_DELTA_HOTFIX_NO_SQL`
+
+
 ## Update V1.10.19_FRIENDLY_TOGGLE_HARD_LOCK_NO_SQL
 
 Mục tiêu: sửa dứt điểm tình trạng Admin tắt Giao hữu nhưng người chơi vẫn còn thấy hoặc bấm được chức năng Giao hữu trong phòng đấu.
