@@ -34,7 +34,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.15"
+APP_VERSION = "V1.10.16"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -651,6 +651,67 @@ def has_admin_permission(user, permission_code: str) -> bool:
         return False
     field = ADMIN_PERMISSION_FIELDS.get(permission_code)
     return bool(field and user.get(field) is True)
+
+
+FRIENDLY_MATCHES_SETTING_KEY = "friendly_matches_enabled"
+_friendly_matches_cache = {"value": None, "expires_at": 0.0}
+
+
+def friendly_matches_enabled(force=False) -> bool:
+    """Global Admin toggle for friendly matches. Defaults to enabled."""
+    now = time.time()
+    if not force and _friendly_matches_cache["value"] is not None and now < _friendly_matches_cache["expires_at"]:
+        return bool(_friendly_matches_cache["value"])
+    enabled = True
+    if db is not None:
+        try:
+            result = execute_query(
+                db.table("system_settings").select("setting_value").eq("setting_key", FRIENDLY_MATCHES_SETTING_KEY).limit(1),
+                "load_friendly_matches_enabled",
+                attempts=2,
+            )
+            if result.data:
+                stored = result.data[0].get("setting_value")
+                if isinstance(stored, str):
+                    lowered = stored.strip().lower()
+                    if lowered in {"true", "false"}:
+                        enabled = lowered == "true"
+                    else:
+                        parsed = json.loads(stored)
+                        enabled = bool(parsed.get("enabled", parsed) if isinstance(parsed, dict) else parsed)
+                elif isinstance(stored, dict):
+                    enabled = bool(stored.get("enabled", True))
+                elif stored is not None:
+                    enabled = bool(stored)
+            else:
+                execute_query(
+                    db.table("system_settings").upsert({
+                        "setting_key": FRIENDLY_MATCHES_SETTING_KEY,
+                        "setting_value": True,
+                        "updated_at": now_iso(),
+                    }, on_conflict="setting_key"),
+                    "seed_friendly_matches_enabled",
+                    attempts=2,
+                )
+        except Exception as exc:
+            print(f"friendly_matches_enabled fallback warning: {exc}")
+    _friendly_matches_cache.update({"value": enabled, "expires_at": now + 20})
+    return bool(enabled)
+
+
+def set_friendly_matches_enabled(enabled: bool):
+    if db is None:
+        raise RuntimeError("Chưa cấu hình Supabase.")
+    execute_query(
+        db.table("system_settings").upsert({
+            "setting_key": FRIENDLY_MATCHES_SETTING_KEY,
+            "setting_value": bool(enabled),
+            "updated_at": now_iso(),
+        }, on_conflict="setting_key"),
+        "set_friendly_matches_enabled",
+        attempts=3,
+    )
+    _friendly_matches_cache.update({"value": bool(enabled), "expires_at": time.time() + 20})
 
 
 def normalize_invite_code(value: str) -> str:
@@ -3606,6 +3667,22 @@ def admin_clear_announcement():
     return redirect_admin("system")
 
 
+@app.route("/admin/settings/friendly-matches", methods=["POST"])
+@login_required
+@admin_required
+def admin_toggle_friendly_matches():
+    enabled = request.form.get("friendly_matches_enabled") == "1"
+    set_friendly_matches_enabled(enabled)
+    log_admin_action(
+        "Cập nhật trận giao hữu",
+        "system",
+        target_label="friendly_matches_enabled",
+        details="Bật trận giao hữu" if enabled else "Tắt trận giao hữu",
+    )
+    flash("Đã bật trận giao hữu." if enabled else "Đã tắt trận giao hữu.", "success")
+    return redirect_admin("system")
+
+
 @app.route("/api/announcement/current")
 @login_required
 def api_current_announcement():
@@ -4547,7 +4624,7 @@ def room_detail(room_id):
         flash("Bạn không thuộc phòng này.", "danger")
         return redirect(url_for("rooms"))
 
-    return render_template("room_detail.html", room=room, friendly_tiers=get_available_team_tiers())
+    return render_template("room_detail.html", room=room, friendly_tiers=get_available_team_tiers(), friendly_matches_enabled=friendly_matches_enabled())
 
 
 @app.route("/room/<room_id>/leave", methods=["POST"])
@@ -4885,6 +4962,9 @@ def room_random_teams(room_id):
 
     try:
         if match_mode == MATCH_MODE_FRIENDLY:
+            if not friendly_matches_enabled(force=True):
+                flash("Admin đang tắt chế độ trận giao hữu. Vui lòng chọn trận xếp hạng.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
             selected_tier = (request.form.get("friendly_tier") or room.get("friendly_tier") or "A").strip().upper()
             result = friendly_random_team_pair(selected_tier)
             execute_query(
@@ -4989,6 +5069,9 @@ def room_reroll_friendly(room_id):
         return redirect(url_for("room_detail", room_id=room_id))
     if room.get("status") != "friendly_playing":
         flash("Phòng không có trận giao hữu đang diễn ra.", "warning")
+        return redirect(url_for("room_detail", room_id=room_id))
+    if not friendly_matches_enabled(force=True):
+        flash("Admin đang tắt chế độ trận giao hữu. Không thể random tiếp trận giao hữu mới.", "warning")
         return redirect(url_for("room_detail", room_id=room_id))
 
     selected_tier = (room.get("friendly_tier") or "A").strip().upper()
@@ -5911,6 +5994,7 @@ def admin():
         pending_disputes=pending_disputes,
         can_create_test_account=has_admin_permission(current_user(), "create_test_account"),
         can_import_accounts_csv=has_admin_permission(current_user(), "import_accounts_csv"),
+        friendly_matches_enabled=friendly_matches_enabled(),
     )
 
 

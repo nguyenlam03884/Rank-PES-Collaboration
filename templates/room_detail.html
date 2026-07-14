@@ -44,7 +44,7 @@
                 {% endif %}
                 {% if room.status == 'waiting_result_confirm' %}
                     <div class="room-result-review" aria-label="Tỷ số đang chờ xác nhận">
-                        <div class="room-result-score">{{ room.host_score }} <span>-</span> {{ room.guest_score }}</div>
+                        <div class="room-result-score">{{ room.host_score if room.host_score is not none else 0 }} <span>-</span> {{ room.guest_score if room.guest_score is not none else 0 }}</div>
                         {% if current_user.id == room.guest_user_id or current_user.role == 'admin' %}
                         <div class="room-result-actions">
                             <form method="post" action="{{ url_for('room_confirm_result', room_id=room.id) }}">
@@ -74,6 +74,13 @@
                         <div class="room-result-waiting">Đang chờ sân khách xác nhận</div>
                         {% endif %}
                     </div>
+                {% elif room.status in ['playing', 'friendly_playing'] %}
+                    <div class="room-live-score" aria-label="Tỷ số hiện tại">
+                        <span>{{ room.host_score if room.host_score is not none else 0 }}</span>
+                        <em>-</em>
+                        <span>{{ room.guest_score if room.guest_score is not none else 0 }}</span>
+                    </div>
+                    <div class="room-center-state-pill">{{ 'Giao hữu' if room.status == 'friendly_playing' else 'Đang thi đấu' }}</div>
                 {% else %}
                     <img class="room-center-vs-image" src="{{ url_for('static', filename='vs.png') }}" alt="VS" loading="eager">
                     {% if room.status == 'waiting_ready' %}
@@ -167,6 +174,7 @@
             {% if room.has_guest %}
             <div class="room-mode-grid">
 
+                {% if friendly_matches_enabled %}
                 <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Đang quay đội...';">
                     <input type="hidden" name="match_mode" value="friendly">
                     <h3>🤝 Giao hữu</h3>
@@ -179,6 +187,13 @@
                     <p class="small">Hai CLB khác nhau trong cùng Tier. Không lưu lịch sử, không tính RP.</p>
                     <button class="btn gold" type="submit">🎲 Quay đội Giao hữu</button>
                 </form>
+                {% else %}
+                <div class="room-mode-card disabled friendly-disabled-card">
+                    <h3>🤝 Giao hữu</h3>
+                    <p class="small">Admin đang tắt chế độ trận giao hữu. Người chơi chỉ có thể quay đội Xếp hạng.</p>
+                    <button class="btn gray" type="button" disabled>Đã tắt</button>
+                </div>
+                {% endif %}
             </div>
             {% else %}
             <a class="btn gold" href="{{ url_for('players') }}">👤 Mời đối thủ</a>

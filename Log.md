@@ -67,4 +67,10 @@
 - Nếu đã chạy SQL V1.10.14 và điểm danh hoạt động thì không cần chạy SQL thêm.
 - File thay đổi: app.py, templates/base.html, templates/profile.html, templates/room_detail.html, static/style.css, Log.md, docs/*.
 - Rollback: quay lại deployment trước; không cần restore database nếu chỉ lỗi code.
+## V1.10.16_ROOM_SCORE_FRIENDLY_TOGGLE_NO_SQL
+
+- Khôi phục hiển thị tỷ số 0 - 0 ở giữa phòng đấu khi trận đang thi đấu.
+- Thêm cài đặt Admin bật/tắt chế độ trận giao hữu trong tab Hệ thống.
+- Khi giao hữu bị tắt, phòng đấu chỉ cho quay trận Xếp hạng và không cho random tiếp giao hữu.
+- Không cần SQL, không đổi database schema.
 

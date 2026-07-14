@@ -573,6 +573,29 @@
         </form>
     </div>
 
+    <div class="panel admin-system-toggle-panel">
+        <div class="admin-section-heading">
+            <div>
+                <h2>🤝 Trận giao hữu</h2>
+                <p class="small">Bật/tắt chế độ quay đội Giao hữu trong phòng đấu. Khi tắt, người chơi chỉ còn quay đội Xếp hạng.</p>
+            </div>
+            <span class="badge {{ 'success' if friendly_matches_enabled else 'danger' }}">{{ 'Đang bật' if friendly_matches_enabled else 'Đang tắt' }}</span>
+        </div>
+        <form method="post" action="{{ url_for('admin_toggle_friendly_matches') }}" class="admin-system-toggle-form" onsubmit="return confirm('Xác nhận thay đổi trạng thái trận giao hữu?');">
+            <label class="admin-permission-option admin-system-toggle-option">
+                <span class="admin-permission-copy">
+                    <strong>Cho phép trận giao hữu</strong>
+                    <small>Không lưu lịch sử, không tính RP; chỉ ảnh hưởng lựa chọn Giao hữu trong phòng đấu.</small>
+                </span>
+                <span class="admin-switch">
+                    <input type="checkbox" name="friendly_matches_enabled" value="1" {% if friendly_matches_enabled %}checked{% endif %}>
+                    <span class="admin-switch-track" aria-hidden="true"></span>
+                </span>
+            </label>
+            <button class="btn gold" type="submit">Lưu cài đặt giao hữu</button>
+        </form>
+    </div>
+
 </section>
 
 
