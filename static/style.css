@@ -4064,3 +4064,73 @@ html[data-theme="light"] .topbar-zcoin-icon{background:#fff3bf;border-color:#efc
         width: 100%;
     }
 }
+
+/* V1.10.26_ROOM_RANK_FRAME_ASSETS_NO_SQL
+   Hiển thị 10 ảnh khung rank mới trong phòng đấu theo slug rank hiện tại.
+   Chỉ là lớp trang trí phía sau nội dung phòng; không thay đổi logic thi đấu. */
+.room-team-card{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+.room-rank-frame-bg{
+  position:absolute;
+  inset:6px 3px 4px;
+  width:calc(100% - 6px);
+  height:calc(100% - 10px);
+  object-fit:contain;
+  object-position:center;
+  pointer-events:none;
+  z-index:0;
+  opacity:.68;
+  filter:drop-shadow(0 18px 32px rgba(0,0,0,.38));
+}
+.room-rank-frame-bg.muted{
+  opacity:.35;
+  filter:grayscale(.25) drop-shadow(0 14px 26px rgba(0,0,0,.32));
+}
+.room-team-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:radial-gradient(circle at center, rgba(4,10,20,.05), rgba(4,10,20,.36) 68%, rgba(4,10,20,.56) 100%);
+}
+.room-team-card > :not(.room-rank-frame-bg){
+  position:relative;
+  z-index:1;
+}
+.room-team-card .room-player-heading-plain{
+  padding-top:14px;
+}
+.room-team-card .room-card-club-area{
+  padding:30px 24px 78px;
+  justify-content:center;
+}
+.room-team-card .room-club-logo-large,
+.room-team-card .room-team-placeholder-shield{
+  width:154px;
+  height:154px;
+}
+.room-team-card .room-team-name-lg,
+.room-team-card .room-team-points-value,
+.room-team-card .room-team-league-text{
+  text-shadow:0 4px 16px rgba(0,0,0,.72);
+}
+.room-team-card .room-team-points-value{
+  color:#ffe07a;
+}
+.room-team-card .room-player-name{
+  text-shadow:0 4px 14px rgba(0,0,0,.72);
+}
+@media(max-width:1120px){
+  .room-rank-frame-bg{opacity:.58;inset:4px 0;width:100%;height:calc(100% - 8px)}
+  .room-team-card .room-card-club-area{padding-bottom:64px}
+}
+@media(max-width:640px){
+  .room-rank-frame-bg{opacity:.48;inset:2px 0;height:calc(100% - 4px)}
+  .room-team-card .room-card-club-area{padding:20px 12px 50px}
+  .room-team-card .room-club-logo-large,
+  .room-team-card .room-team-placeholder-shield{width:108px;height:108px}
+}

@@ -1,4 +1,22 @@
 
+## V1.10.26_ROOM_RANK_FRAME_ASSETS_NO_SQL
+
+**Mục tiêu:** thêm 10 ảnh khung rank mới vào phòng đấu, tự động hiển thị theo rank hiện tại của từng người chơi.
+
+**Thay đổi:**
+- Thêm `static/rank_frames/` gồm 10 ảnh PNG: Gà, Non, Báo Thủ, Mới Tập Chơi, Bán Chuyên, Chuyên Nghiệp, Đẳng Cấp, Siêu Sao, Huyền Thoại, GOAT.
+- `templates/room_detail.html` hiển thị khung rank phía sau card chủ phòng và khách.
+- `static/style.css` bổ sung CSS đặt khung rank như lớp trang trí, không ảnh hưởng logic phòng đấu.
+- `APP_VERSION` cập nhật lên `V1.10.26`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng Shop, Gift Code, ZCOIN, Điểm danh, BXH, Admin hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.26_ROOM_RANK_FRAME_ASSETS_NO_SQL`
+
+
 ## V1.10.25_SHOP_TAB_PAGE_NAVIGATION_NO_SQL
 
 **Mục tiêu:** chỉnh Cửa Hàng thành dạng tab/danh mục riêng, không còn dùng anchor nhảy xuống section bên dưới.

@@ -1,4 +1,13 @@
 
+## V1.10.26_ROOM_RANK_FRAME_ASSETS_NO_SQL
+
+- Thêm 10 ảnh khung rank mới do người dùng cung cấp vào `static/rank_frames/`.
+- Map ảnh theo 10 rank hiện tại: Gà, Non, Báo Thủ, Mới Tập Chơi, Bán Chuyên, Chuyên Nghiệp, Đẳng Cấp, Siêu Sao, Huyền Thoại, GOAT.
+- Phòng đấu hiển thị khung rank phía sau card chủ phòng/khách theo `room.host_rank_info.slug` và `room.guest_rank_info.slug`.
+- Không cần SQL, không đổi database, không đụng Shop/Gift Code/ZCOIN/Điểm danh/BXH/Admin.
+- Rollback: quay lại deployment V1.10.25 nếu cần.
+
+
 ## V1.10.23_SHOP_SHELL_GIFT_CODE_SAFE
 
 - Thêm khung Cửa Hàng `/shop` với các khu: Nổi bật, Trang trí, Tiện ích, Lucky Box.
