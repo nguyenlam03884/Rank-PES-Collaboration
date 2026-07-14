@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.31"
+APP_VERSION = "V1.10.32"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1978,6 +1978,9 @@ def decorate_match_for_view(match, viewer_id=None):
     item["status_label"] = match_status_label(item.get("status"))
     item["created_at_display"] = format_vn_datetime(item.get("created_at"))
     item["is_cancelled"] = item.get("status") == "cancelled"
+    # Default score keeps database orientation (player1 - player2).
+    # When a viewer_id is provided, it is overwritten below to viewer perspective
+    # so profile/history rows remain consistent with the THẮNG/THUA badge.
     item["score_display"] = (
         "Không tính"
         if item["is_cancelled"]
@@ -2013,6 +2016,15 @@ def decorate_match_for_view(match, viewer_id=None):
         item["opponent_achievement"] = item.get("player2_achievement") if as_player1 else item.get("player1_achievement")
         item["my_team"] = item.get("team1") if as_player1 else item.get("team2")
         item["opponent_team"] = item.get("team2") if as_player1 else item.get("team1")
+
+        # Profile/history UI displays the viewed player on the left, so the score
+        # must also be displayed from that same perspective. Otherwise a match where
+        # the viewed player is player2 can look like "6 - 2" while showing THUA.
+        item["score_display"] = (
+            "Không tính"
+            if item["is_cancelled"]
+            else f'{my_score if my_score is not None else "-"} - {opponent_score if opponent_score is not None else "-"}'
+        )
 
         if item.get("status") == "confirmed" and my_score is not None and opponent_score is not None:
             if my_score > opponent_score:

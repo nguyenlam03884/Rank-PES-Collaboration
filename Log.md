@@ -1,3 +1,13 @@
+## V1.10.32_HISTORY_SCORE_PERSPECTIVE_HOTFIX_NO_SQL
+
+- Hotfix lỗi hiển thị trong lịch sử/hồ sơ: tỷ số đang hiển thị theo thứ tự database `player1 - player2`, trong khi nhãn THẮNG/THUA hiển thị theo góc nhìn người đang xem.
+- Khi người xem là `player2`, tỷ số giờ được đảo về đúng dạng `điểm của người xem - điểm đối thủ`.
+- Ví dụ: nếu người được xem thắng 6-2 thì sẽ hiện `6 - 2` và `THẮNG`; nếu thua thì hiện theo điểm của người đó và `THUA`.
+- Không cần SQL, không đổi database, không sửa dữ liệu trận cũ.
+- File thay đổi: app.py, README.md, Log.md, docs/update_v1_10_32_history_score_perspective_hotfix_no_sql.txt.
+- Rollback: quay lại deployment V1.10.31 nếu cần.
+
+
 ## V1.10.31_SHOP_PROFILE_BANNER_ASSETS_NO_SQL
 
 - Tích hợp gói `PES_2026_PROFILE_BANNER_PACK_5` vào app.

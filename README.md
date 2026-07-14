@@ -1,3 +1,23 @@
+## V1.10.32_HISTORY_SCORE_PERSPECTIVE_HOTFIX_NO_SQL
+
+**Mục tiêu:** sửa lỗi lịch sử/hồ sơ hiển thị tỷ số không cùng góc nhìn với nhãn THẮNG/THUA.
+
+**Nguyên nhân:** khi người đang xem là `player2`, app đã tính nhãn THẮNG/THUA theo đúng người xem, nhưng `score_display` vẫn giữ thứ tự gốc trong database là `player1 - player2`. Vì vậy có trường hợp nhìn thấy `6 - 2` nhưng lại hiện `THUA`.
+
+**Thay đổi:**
+- `decorate_match_for_view()` giờ hiển thị tỷ số theo góc nhìn của người được xem: `điểm của tôi - điểm đối thủ`.
+- Nhãn `THẮNG`, `THUA`, `HÒA` và tỷ số sẽ khớp nhau.
+- `APP_VERSION` cập nhật lên `V1.10.32`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không sửa dữ liệu lịch sử cũ.
+- Không đụng Shop, Gift Code, ZCOIN, Điểm danh, BXH, Admin hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.32_HISTORY_SCORE_PERSPECTIVE_HOTFIX_NO_SQL`
+
+
 ## V1.10.31_SHOP_PROFILE_BANNER_ASSETS_NO_SQL
 
 **Mục tiêu:** tích hợp gói `PES_2026_PROFILE_BANNER_PACK_5` vào Cửa Hàng, tab Trang trí, để người chơi xem trước 5 banner hồ sơ đầu tiên.
