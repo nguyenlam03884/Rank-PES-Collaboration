@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.32"
+APP_VERSION = "V1.10.33"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4358,53 +4358,53 @@ def list_gift_code_redemptions(limit=80):
 PROFILE_BANNER_SHOP_ITEMS = [
     {
         "code": "profile_banner_locker_room",
-        "name": "Phòng Thay Đồ",
+        "name": "Phòng Thay Đồ Elite",
         "rarity": "Thường",
         "rarity_slug": "common",
         "price": 350,
-        "file": "shop/profile_banners/profile_banner_locker_room.webp",
+        "file": "shop/profile_banners/profile_banner_locker_room.png",
         "icon": "shop/profile_banner_icons/profile_banner_locker_room_icon.png",
-        "desc": "Không khí phòng thay đồ chuyên nghiệp, hiện đại và gần gũi.",
+        "desc": "Không gian phòng thay đồ cao cấp, sạch sẽ và chuyên nghiệp cho hồ sơ của bạn.",
     },
     {
         "code": "profile_banner_tactical_master",
-        "name": "Chiến Thuật Gia",
+        "name": "Bậc Thầy Chiến Thuật",
         "rarity": "Hiếm",
         "rarity_slug": "rare",
         "price": 750,
-        "file": "shop/profile_banners/profile_banner_tactical_master.webp",
+        "file": "shop/profile_banners/profile_banner_tactical_master.png",
         "icon": "shop/profile_banner_icons/profile_banner_tactical_master_icon.png",
-        "desc": "Sơ đồ chiến thuật hologram dành cho người chơi thích kiểm soát trận đấu.",
+        "desc": "Bản đồ chiến thuật số với cảm hứng huấn luyện đỉnh cao trên sân cỏ hiện đại.",
     },
     {
         "code": "profile_banner_neon_derby",
-        "name": "Derby Neon",
+        "name": "Sân Đấu Neon",
         "rarity": "Sử Thi",
         "rarity_slug": "epic",
         "price": 1500,
-        "file": "shop/profile_banners/profile_banner_neon_derby.webp",
+        "file": "shop/profile_banners/profile_banner_neon_derby.png",
         "icon": "shop/profile_banner_icons/profile_banner_neon_derby_icon.png",
-        "desc": "Đêm derby bùng nổ giữa hai luồng năng lượng xanh và tím.",
+        "desc": "Bầu không khí derby rực sáng với ánh tím xanh nổi bật và cảm giác cực cháy.",
     },
     {
         "code": "profile_banner_trophy_gallery",
-        "name": "Phòng Truyền Thống",
+        "name": "Hành Lang Vinh Quang",
         "rarity": "Huyền Thoại",
         "rarity_slug": "legendary",
         "price": 2800,
-        "file": "shop/profile_banners/profile_banner_trophy_gallery.webp",
+        "file": "shop/profile_banners/profile_banner_trophy_gallery.png",
         "icon": "shop/profile_banner_icons/profile_banner_trophy_gallery_icon.png",
-        "desc": "Phòng trưng bày thành tích với cúp vàng và ánh sáng danh vọng.",
+        "desc": "Phòng trưng bày danh hiệu sang trọng dành cho những người chơi thích chất vương giả.",
     },
     {
         "code": "profile_banner_coronation",
-        "name": "Đăng Quang",
+        "name": "Đăng Quang Hoàng Kim",
         "rarity": "Tuyệt Phẩm",
         "rarity_slug": "masterpiece",
         "price": 5200,
-        "file": "shop/profile_banners/profile_banner_coronation.webp",
+        "file": "shop/profile_banners/profile_banner_coronation.png",
         "icon": "shop/profile_banner_icons/profile_banner_coronation_icon.png",
-        "desc": "Khoảnh khắc bước lên bục vô địch dưới ánh đèn sân vận động.",
+        "desc": "Khoảnh khắc đăng quang trên bục vàng, nổi bật như một nhà vô địch thực thụ.",
     },
 ]
 

@@ -1,3 +1,15 @@
+## V1.10.33_SHOP_ITEM_REPLACE_PREVIEW_NO_SQL
+
+- Thay toàn bộ vật phẩm banner mẫu cũ trong Cửa Hàng / Trang trí bằng bộ ảnh mới người dùng cung cấp.
+- Thêm 5 banner hồ sơ mới và 5 icon vật phẩm mới, giữ cấu trúc Shop gọn và chuyên nghiệp hơn.
+- Card vật phẩm trong Shop giờ có nút `Xem trước` để mở popup preview trực tiếp.
+- Preview hiển thị ảnh banner lớn, icon vật phẩm, tên, độ hiếm, giá ZCOIN và mockup tên người chơi.
+- Cập nhật cache CSS trong `templates/base.html` lên `?v=1.10.33` để tránh trình duyệt giữ style cũ.
+- Không cần SQL, không đổi database, chưa mở chức năng mua/sở hữu/trang bị thật.
+- File thay đổi: `app.py`, `templates/base.html`, `templates/shop.html`, `static/style.css`, `static/shop/profile_banners/*`, `static/shop/profile_banner_icons/*`, `README.md`, `Log.md`, `docs/update_v1_10_33_shop_item_replace_preview_no_sql.txt`.
+- Rollback: quay lại deployment V1.10.32 nếu cần.
+
+
 ## V1.10.32_HISTORY_SCORE_PERSPECTIVE_HOTFIX_NO_SQL
 
 - Hotfix lỗi hiển thị trong lịch sử/hồ sơ: tỷ số đang hiển thị theo thứ tự database `player1 - player2`, trong khi nhãn THẮNG/THUA hiển thị theo góc nhìn người đang xem.

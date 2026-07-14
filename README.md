@@ -1,3 +1,26 @@
+## V1.10.33_SHOP_ITEM_REPLACE_PREVIEW_NO_SQL
+
+**Mục tiêu:** thay các vật phẩm mẫu cũ trong tab Trang trí của Cửa Hàng bằng bộ banner hồ sơ mới do người dùng cung cấp, đồng thời thêm chức năng xem trước trực tiếp ngay trong Shop.
+
+**Thay đổi:**
+- Thay 5 banner hồ sơ cũ bằng 5 ảnh banner mới trong `static/shop/profile_banners/`.
+- Thay 5 icon vật phẩm cũ bằng 5 icon mới trong `static/shop/profile_banner_icons/`.
+- `app.py` cập nhật catalog tĩnh `PROFILE_BANNER_SHOP_ITEMS` với tên vật phẩm, mô tả, độ hiếm và giá tương ứng.
+- `templates/shop.html` đổi card Shop sang dạng vật phẩm rõ ràng hơn và thêm nút `Xem trước`.
+- Thêm modal xem trước ngay trong Cửa Hàng để người chơi xem banner ở kích thước lớn, kèm icon, giá và độ hiếm.
+- `templates/base.html` cập nhật cache CSS lên `?v=1.10.33`.
+- `static/style.css` bổ sung layout cho nút preview và modal xem trước.
+- `APP_VERSION` cập nhật lên `V1.10.33`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Chưa mở mua thật / lưu kho / trang bị thật.
+- Không đụng Gift Code, ZCOIN, Điểm danh, BXH, Admin, phòng đấu hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.33_SHOP_ITEM_REPLACE_PREVIEW_NO_SQL`
+
+
 ## V1.10.32_HISTORY_SCORE_PERSPECTIVE_HOTFIX_NO_SQL
 
 **Mục tiêu:** sửa lỗi lịch sử/hồ sơ hiển thị tỷ số không cùng góc nhìn với nhãn THẮNG/THUA.

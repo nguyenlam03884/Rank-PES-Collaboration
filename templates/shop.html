@@ -4,7 +4,7 @@
     <div>
         <span class="eyebrow">PES 2026 STORE</span>
         <h1>🛒 Cửa Hàng</h1>
-        <p>Khung Cửa Hàng đã sẵn sàng để sau này bổ sung vật phẩm, Lucky Box, trang trí hồ sơ và tiện ích tài khoản.</p>
+        <p>Cửa hàng đã được thay các vật phẩm mẫu cũ bằng bộ banner hồ sơ mới. Bạn có thể xem trước trực tiếp ngay trong Shop trước khi hệ thống mua/trang bị được mở chính thức.</p>
     </div>
     <div class="shop-wallet-card">
         <span>Số dư</span>
@@ -72,21 +72,31 @@
                 <h2>{{ active_section['icon'] if active_section else '🔥' }} {{ active_section['title'] if active_section else 'Nổi bật' }}</h2>
                 <p>{{ active_section['description'] if active_section else 'Các vật phẩm sẽ được bổ sung ở bản sau.' }}</p>
             </div>
+            {% if active_tab == 'decor' %}
+            <span class="badge green">Xem trước đã bật</span>
+            {% else %}
             <span class="badge pending">Sắp phát triển</span>
+            {% endif %}
         </div>
         {% if active_tab == 'decor' and profile_banner_items %}
         <div class="shop-profile-banner-block">
             <div class="shop-profile-banner-title">
                 <div>
                     <span class="eyebrow">Banner hồ sơ</span>
-                    <h3>5 banner hồ sơ đầu tiên</h3>
-                    <p>Đây là bộ tài nguyên đã được tích hợp vào app để chuẩn bị cho hệ thống mua/sử dụng vật phẩm sau này.</p>
+                    <h3>5 vật phẩm banner hồ sơ mới</h3>
+                    <p>Đã thay toàn bộ vật phẩm mẫu cũ bằng bộ banner mới. Nhấn <strong>Xem trước</strong> để mở bản xem trước chi tiết ngay trong Cửa Hàng.</p>
                 </div>
-                <span class="badge pending">Chưa mở mua</span>
+                <span class="badge green">Preview Live</span>
             </div>
             <div class="profile-banner-shop-grid">
                 {% for banner in profile_banner_items %}
-                <article class="profile-banner-shop-card rarity-{{ banner['rarity_slug'] }}">
+                <article class="profile-banner-shop-card rarity-{{ banner['rarity_slug'] }}"
+                         data-preview-name="{{ banner['name'] }}"
+                         data-preview-rarity="{{ banner['rarity'] }}"
+                         data-preview-price="{{ '{:,}'.format(banner['price']).replace(',', '.') }}"
+                         data-preview-desc="{{ banner['desc'] }}"
+                         data-preview-image="{{ url_for('static', filename=banner['file']) }}"
+                         data-preview-icon="{{ url_for('static', filename=banner['icon']) }}">
                     <div class="profile-banner-preview" style="background-image:url('{{ url_for('static', filename=banner['file']) }}');">
                         <img class="profile-banner-item-icon" src="{{ url_for('static', filename=banner['icon']) }}" alt="Icon {{ banner['name'] }}" loading="lazy">
                         <span class="profile-banner-rarity">{{ banner['rarity'] }}</span>
@@ -98,7 +108,10 @@
                             <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="ZCOIN"> {{ '{:,}'.format(banner['price']).replace(',', '.') }} ZCOIN</strong>
                             <span>{{ banner['rarity'] }}</span>
                         </div>
-                        <button class="btn gray" type="button" disabled>Đang chuẩn bị</button>
+                        <div class="profile-banner-actions">
+                            <button class="btn gold js-shop-preview" type="button">Xem trước</button>
+                            <button class="btn gray" type="button" disabled>Chưa mở mua</button>
+                        </div>
                     </div>
                 </article>
                 {% endfor %}
@@ -135,10 +148,95 @@
         </div>
         {% endif %}
         <div class="shop-note-card shop-tab-note">
-            <strong>🚧 Đây là khung danh mục riêng</strong>
-            <small>{% if active_tab == 'decor' %}Banner hồ sơ đã được thêm vào Cửa Hàng để xem trước; chức năng mua và sử dụng sẽ phát triển ở bản sau.{% else %}Vật phẩm thật của tab {{ active_section['title'] }} sẽ được thêm vào đây ở các bản sau, không còn nhảy xuống section phía dưới.{% endif %}</small>
+            <strong>🚧 Trạng thái hiện tại</strong>
+            <small>{% if active_tab == 'decor' %}Các banner hồ sơ mới đã trở thành vật phẩm hiển thị trong Shop và đã có tính năng xem trước. Chức năng mua / lưu kho / trang bị thật sẽ phát triển ở bản tiếp theo.{% else %}Vật phẩm thật của tab {{ active_section['title'] }} sẽ được thêm vào đây ở các bản sau, không còn nhảy xuống section phía dưới.{% endif %}</small>
         </div>
     </div>
     {% endif %}
 </section>
+
+<div class="shop-preview-backdrop" id="shopPreviewBackdrop" hidden>
+    <div class="shop-preview-modal" role="dialog" aria-modal="true" aria-labelledby="shopPreviewTitle">
+        <button class="shop-preview-close" type="button" id="shopPreviewClose" aria-label="Đóng">×</button>
+        <div class="shop-preview-stage" id="shopPreviewStage">
+            <img class="shop-preview-banner" id="shopPreviewBanner" src="" alt="Preview item banner">
+            <div class="shop-preview-card">
+                <div class="shop-preview-avatar-wrap">
+                    <img class="shop-preview-avatar" src="{{ current_user.avatar_url or url_for('static', filename='zcoin-logo.png') }}" alt="Avatar người chơi">
+                    <img class="shop-preview-icon" id="shopPreviewIcon" src="" alt="Item icon">
+                </div>
+                <div class="shop-preview-texts">
+                    <span class="eyebrow">Xem trước vật phẩm</span>
+                    <h3 id="shopPreviewTitle">Banner hồ sơ</h3>
+                    <p class="shop-preview-owner">{{ current_user.display_name or current_user.username or 'Người chơi PES 2026' }}</p>
+                    <div class="shop-preview-badges">
+                        <span id="shopPreviewRarity">Thường</span>
+                        <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt=""> <span id="shopPreviewPrice">0</span> ZCOIN</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="shop-preview-body">
+            <p id="shopPreviewDesc">Mô tả vật phẩm.</p>
+            <div class="shop-preview-footer">
+                <button class="btn gold" type="button" disabled>Chưa mở mua</button>
+                <button class="btn" type="button" id="shopPreviewCloseAlt">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    document.addEventListener('DOMContentLoaded', function(){
+        const backdrop = document.getElementById('shopPreviewBackdrop');
+        const closeBtn = document.getElementById('shopPreviewClose');
+        const closeAltBtn = document.getElementById('shopPreviewCloseAlt');
+        const bannerEl = document.getElementById('shopPreviewBanner');
+        const iconEl = document.getElementById('shopPreviewIcon');
+        const titleEl = document.getElementById('shopPreviewTitle');
+        const rarityEl = document.getElementById('shopPreviewRarity');
+        const priceEl = document.getElementById('shopPreviewPrice');
+        const descEl = document.getElementById('shopPreviewDesc');
+
+        if (!backdrop) return;
+
+        function openPreview(card){
+            bannerEl.src = card.dataset.previewImage || '';
+            iconEl.src = card.dataset.previewIcon || '';
+            titleEl.textContent = card.dataset.previewName || 'Vật phẩm';
+            rarityEl.textContent = card.dataset.previewRarity || 'Thường';
+            priceEl.textContent = card.dataset.previewPrice || '0';
+            descEl.textContent = card.dataset.previewDesc || '';
+            backdrop.hidden = false;
+            document.body.classList.add('shop-preview-open');
+        }
+
+        function closePreview(){
+            backdrop.hidden = true;
+            document.body.classList.remove('shop-preview-open');
+        }
+
+        document.querySelectorAll('.js-shop-preview').forEach(function(button){
+            button.addEventListener('click', function(){
+                const card = button.closest('.profile-banner-shop-card');
+                if (card) openPreview(card);
+            });
+        });
+
+        [closeBtn, closeAltBtn].forEach(function(btn){
+            if (!btn) return;
+            btn.addEventListener('click', closePreview);
+        });
+
+        backdrop.addEventListener('click', function(event){
+            if (event.target === backdrop) closePreview();
+        });
+
+        document.addEventListener('keydown', function(event){
+            if (event.key === 'Escape' && !backdrop.hidden) closePreview();
+        });
+    });
+})();
+</script>
 {% endblock %}

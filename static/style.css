@@ -4678,3 +4678,189 @@ html[data-theme="light"] .topbar-zcoin-icon{background:#fff3bf;border-color:#efc
   .profile-banner-info p{min-height:unset;font-size:13px}
   .profile-banner-meta{align-items:flex-start;flex-direction:column;gap:8px}
 }
+
+/* V1.10.33_SHOP_ITEM_REPLACE_PREVIEW_NO_SQL
+   Thay vật phẩm mẫu cũ bằng bộ banner hồ sơ mới và thêm xem trước trực tiếp trong Shop. */
+.profile-banner-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.profile-banner-actions .btn{
+  margin:0;
+}
+.shop-preview-open{
+  overflow:hidden;
+}
+.shop-preview-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:10090;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(2,8,18,.82);
+  backdrop-filter:blur(8px);
+}
+.shop-preview-modal{
+  width:min(980px,96vw);
+  max-height:92vh;
+  overflow:auto;
+  border-radius:24px;
+  border:1px solid rgba(245,190,60,.24);
+  background:linear-gradient(180deg,rgba(11,22,40,.98),rgba(6,13,24,.98));
+  box-shadow:0 30px 80px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.03);
+  position:relative;
+}
+.shop-preview-close{
+  position:absolute;
+  right:14px;
+  top:14px;
+  z-index:3;
+  width:38px;
+  height:38px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(9,18,34,.82);
+  color:#fff;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+}
+.shop-preview-stage{
+  position:relative;
+  min-height:320px;
+  border-radius:24px 24px 0 0;
+  overflow:hidden;
+  background:#091221;
+}
+.shop-preview-banner{
+  display:block;
+  width:100%;
+  height:100%;
+  min-height:320px;
+  object-fit:cover;
+}
+.shop-preview-stage::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(4,10,18,.18),rgba(4,10,18,.25) 35%,rgba(4,10,18,.88));
+  pointer-events:none;
+}
+.shop-preview-card{
+  position:absolute;
+  left:24px;
+  right:24px;
+  bottom:22px;
+  z-index:2;
+  display:flex;
+  align-items:flex-end;
+  gap:18px;
+}
+.shop-preview-avatar-wrap{
+  position:relative;
+  width:92px;
+  min-width:92px;
+  height:92px;
+}
+.shop-preview-avatar{
+  width:92px;
+  height:92px;
+  border-radius:24px;
+  object-fit:cover;
+  border:2px solid rgba(255,255,255,.4);
+  box-shadow:0 16px 34px rgba(0,0,0,.35);
+  background:rgba(255,255,255,.06);
+}
+.shop-preview-icon{
+  position:absolute;
+  right:-8px;
+  bottom:-8px;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  object-fit:cover;
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:0 10px 20px rgba(0,0,0,.35);
+  background:#0b1730;
+}
+.shop-preview-texts h3{
+  margin:2px 0 6px;
+  color:#fff;
+  font-size:clamp(24px,2.5vw,34px);
+}
+.shop-preview-owner{
+  margin:0 0 10px;
+  font-size:16px;
+  font-weight:900;
+  color:#dce8f8;
+}
+.shop-preview-badges{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.shop-preview-badges span,
+.shop-preview-badges strong{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(6,13,24,.62);
+  border:1px solid rgba(255,255,255,.12);
+  color:#fff;
+  font-weight:900;
+}
+.shop-preview-badges strong{
+  color:#ffd568;
+}
+.shop-preview-badges strong img{
+  width:18px;
+  height:18px;
+}
+.shop-preview-body{
+  padding:20px 24px 24px;
+}
+.shop-preview-body p{
+  margin:0;
+  color:#c7d3e4;
+  line-height:1.65;
+}
+.shop-preview-footer{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:18px;
+}
+html[data-theme="light"] .shop-preview-modal{
+  background:#fff;
+}
+html[data-theme="light"] .shop-preview-body p,
+html[data-theme="light"] .shop-preview-owner{
+  color:#334155;
+}
+@media(max-width:760px){
+  .profile-banner-actions{
+    grid-template-columns:1fr;
+  }
+  .shop-preview-backdrop{padding:12px}
+  .shop-preview-stage,
+  .shop-preview-banner{min-height:240px}
+  .shop-preview-card{
+    left:16px;
+    right:16px;
+    bottom:16px;
+    align-items:flex-start;
+    gap:12px;
+  }
+  .shop-preview-avatar-wrap,
+  .shop-preview-avatar{width:74px;height:74px;min-width:74px;border-radius:20px}
+  .shop-preview-icon{width:32px;height:32px;border-radius:10px;right:-6px;bottom:-6px}
+  .shop-preview-texts h3{font-size:23px}
+  .shop-preview-owner{font-size:14px}
+  .shop-preview-footer{flex-direction:column}
+  .shop-preview-footer .btn{width:100%}
+}
