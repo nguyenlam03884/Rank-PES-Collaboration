@@ -41,7 +41,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.39"
+APP_VERSION = "V1.10.40"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -5695,6 +5695,38 @@ def room_start(room_id):
     return redirect(url_for("room_detail", room_id=room_id))
 
 
+def _map_room_scores_to_match_players(match, room, host_score, guest_score):
+    """Map room host/guest scores to match player1/player2 order safely.
+
+    Legacy rooms or restored matches can have player1/player2 in the reverse order.
+    RP calculation must always follow match.player1_id/match.player2_id, while the
+    room UI always displays host_score/guest_score.
+    """
+    player1_id = str(match.get("player1_id") or "")
+    player2_id = str(match.get("player2_id") or "")
+    host_id = str(room.get("host_user_id") or "")
+    guest_id = str(room.get("guest_user_id") or "")
+
+    if player1_id == host_id and player2_id == guest_id:
+        return int(host_score), int(guest_score)
+    if player1_id == guest_id and player2_id == host_id:
+        return int(guest_score), int(host_score)
+    raise ValueError("Dữ liệu người chơi trong phòng và trận đấu không khớp. Chưa cập nhật RP.")
+
+
+def _map_match_deltas_to_room_players(match, room, delta1, delta2):
+    """Return RP deltas in room host/guest order for messages and UI."""
+    player1_id = str(match.get("player1_id") or "")
+    player2_id = str(match.get("player2_id") or "")
+    host_id = str(room.get("host_user_id") or "")
+    guest_id = str(room.get("guest_user_id") or "")
+    if player1_id == host_id and player2_id == guest_id:
+        return int(delta1), int(delta2)
+    if player1_id == guest_id and player2_id == host_id:
+        return int(delta2), int(delta1)
+    return int(delta1), int(delta2)
+
+
 @app.route("/room/<room_id>/submit-result", methods=["POST"])
 @login_required
 def room_submit_result(room_id):
@@ -5729,12 +5761,18 @@ def room_submit_result(room_id):
         flash("Không tìm thấy match gắn với phòng.", "danger")
         return redirect(url_for("room_detail", room_id=room_id))
 
-    if host_score > guest_score:
-        winner_id = room["host_user_id"]
-        loser_id = room["guest_user_id"]
-    elif host_score < guest_score:
-        winner_id = room["guest_user_id"]
-        loser_id = room["host_user_id"]
+    try:
+        score1, score2 = _map_room_scores_to_match_players(match, room, host_score, guest_score)
+    except ValueError as exc:
+        flash(str(exc), "danger")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+    if score1 > score2:
+        winner_id = match["player1_id"]
+        loser_id = match["player2_id"]
+    elif score1 < score2:
+        winner_id = match["player2_id"]
+        loser_id = match["player1_id"]
     else:
         winner_id = None
         loser_id = None
@@ -5742,8 +5780,8 @@ def room_submit_result(room_id):
     try:
         execute_query(
             db.table("matches").update({
-                "score1": host_score,
-                "score2": guest_score,
+                "score1": score1,
+                "score2": score2,
                 "submitted_by_id": user["id"],
                 "winner_id": winner_id,
                 "loser_id": loser_id,
@@ -5797,6 +5835,25 @@ def room_confirm_result(room_id):
         return redirect(url_for("room_detail", room_id=room_id))
 
     try:
+        # Repair score orientation for rooms whose match player order is reversed.
+        normalized_score1, normalized_score2 = _map_room_scores_to_match_players(
+            match, room, room.get("host_score"), room.get("guest_score")
+        )
+        if (_safe_int(match.get("score1"), -1), _safe_int(match.get("score2"), -1)) != (normalized_score1, normalized_score2):
+            winner_id = match.get("player1_id") if normalized_score1 > normalized_score2 else match.get("player2_id") if normalized_score2 > normalized_score1 else None
+            loser_id = match.get("player2_id") if normalized_score1 > normalized_score2 else match.get("player1_id") if normalized_score2 > normalized_score1 else None
+            execute_query(
+                db.table("matches").update({
+                    "score1": normalized_score1,
+                    "score2": normalized_score2,
+                    "winner_id": winner_id,
+                    "loser_id": loser_id,
+                    "updated_at": now_iso(),
+                }).eq("id", match["id"]).eq("status", "waiting_confirm"),
+                "normalize_room_match_score_order",
+            )
+            match = get_match(match["id"]) or {**match, "score1": normalized_score1, "score2": normalized_score2, "winner_id": winner_id, "loser_id": loser_id}
+
         delta1, delta2 = apply_match_result(match)
         execute_query(
             db.table("match_rooms").update({
@@ -5817,7 +5874,8 @@ def room_confirm_result(room_id):
         flash("Không thể xác nhận kết quả do lỗi kết nối dữ liệu. Điểm chưa được xử lý thêm; vui lòng thử lại sau vài giây.", "danger")
         return redirect(url_for("room_detail", room_id=room_id))
 
-    flash(f"Đã xác nhận. Chủ phòng: {int(delta1):+d}, Khách: {int(delta2):+d}. Hai người có thể bấm Đá tiếp.", "success")
+    host_delta, guest_delta = _map_match_deltas_to_room_players(match, room, delta1, delta2)
+    flash(f"Đã xác nhận. Chủ phòng: {host_delta:+d}, Khách: {guest_delta:+d}. Hai người có thể bấm Đá tiếp.", "success")
     return redirect(url_for("room_detail", room_id=room_id))
 
 
