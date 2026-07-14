@@ -200,6 +200,9 @@
         const descEl = document.getElementById('shopPreviewDesc');
 
         if (!backdrop) return;
+        // V1.10.34: đảm bảo modal luôn ẩn khi trang Shop vừa load, chỉ mở khi bấm Xem trước.
+        backdrop.hidden = true;
+        backdrop.setAttribute('hidden', 'hidden');
 
         function openPreview(card){
             bannerEl.src = card.dataset.previewImage || '';
@@ -209,11 +212,13 @@
             priceEl.textContent = card.dataset.previewPrice || '0';
             descEl.textContent = card.dataset.previewDesc || '';
             backdrop.hidden = false;
+            backdrop.removeAttribute('hidden');
             document.body.classList.add('shop-preview-open');
         }
 
         function closePreview(){
             backdrop.hidden = true;
+            backdrop.setAttribute('hidden', 'hidden');
             document.body.classList.remove('shop-preview-open');
         }
 

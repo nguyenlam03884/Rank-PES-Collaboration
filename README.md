@@ -1,3 +1,23 @@
+## V1.10.34_SHOP_PREVIEW_MODAL_HIDDEN_HOTFIX_NO_SQL
+
+**Mục tiêu:** sửa lỗi popup xem trước vật phẩm trong Cửa Hàng tự hiện ngay khi vào trang và không đóng được.
+
+**Nguyên nhân:** modal `#shopPreviewBackdrop` có thuộc tính `hidden`, nhưng CSS `.shop-preview-backdrop` lại đặt `display:grid`, làm một số trình duyệt vẫn render popup dù chưa bấm `Xem trước`.
+
+**Thay đổi:**
+- `static/style.css` thêm rule ép `.shop-preview-backdrop[hidden]` và `#shopPreviewBackdrop[hidden]` về `display:none!important`.
+- `templates/shop.html` ép modal ẩn khi Shop vừa load, chỉ mở khi bấm `Xem trước`, và khi đóng sẽ set lại `hidden`.
+- `templates/base.html` cập nhật cache CSS lên `?v=1.10.34`.
+- `APP_VERSION` cập nhật lên `V1.10.34`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng Shop catalog, ảnh vật phẩm, Gift Code, ZCOIN, Điểm danh, BXH, Admin, phòng đấu hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.34_SHOP_PREVIEW_MODAL_HIDDEN_HOTFIX_NO_SQL`
+
+
 ## V1.10.33_SHOP_ITEM_REPLACE_PREVIEW_NO_SQL
 
 **Mục tiêu:** thay các vật phẩm mẫu cũ trong tab Trang trí của Cửa Hàng bằng bộ banner hồ sơ mới do người dùng cung cấp, đồng thời thêm chức năng xem trước trực tiếp ngay trong Shop.

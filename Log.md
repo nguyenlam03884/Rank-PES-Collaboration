@@ -1,3 +1,15 @@
+## V1.10.34_SHOP_PREVIEW_MODAL_HIDDEN_HOTFIX_NO_SQL
+
+- Hotfix lỗi vào Cửa Hàng thì popup xem trước vật phẩm tự hiện dù người dùng chưa bấm `Xem trước`.
+- Sửa lỗi nút dấu X / nút Đóng không tắt được popup do CSS vẫn giữ `display:grid` trên element có `hidden`.
+- Thêm CSS bắt buộc ẩn modal khi có `hidden` và chỉ hiển thị khi remove `hidden`.
+- JS Shop được bổ sung bước ép modal về trạng thái ẩn khi trang vừa load, đồng thời set/remove `hidden` rõ ràng khi mở/đóng preview.
+- Cập nhật cache CSS trong `templates/base.html` lên `?v=1.10.34`.
+- Không cần SQL, không đổi database, không đụng catalog vật phẩm/ảnh/Gift Code/ZCOIN/Điểm danh/BXH/Admin/phòng đấu.
+- File thay đổi: `app.py`, `templates/base.html`, `templates/shop.html`, `static/style.css`, `README.md`, `Log.md`, `docs/update_v1_10_34_shop_preview_modal_hidden_hotfix_no_sql.txt`.
+- Rollback: quay lại deployment V1.10.33 nếu cần.
+
+
 ## V1.10.33_SHOP_ITEM_REPLACE_PREVIEW_NO_SQL
 
 - Thay toàn bộ vật phẩm banner mẫu cũ trong Cửa Hàng / Trang trí bằng bộ ảnh mới người dùng cung cấp.

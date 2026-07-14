@@ -4864,3 +4864,16 @@ html[data-theme="light"] .shop-preview-owner{
   .shop-preview-footer{flex-direction:column}
   .shop-preview-footer .btn{width:100%}
 }
+
+
+/* V1.10.34_SHOP_PREVIEW_MODAL_HIDDEN_HOTFIX_NO_SQL
+   Sửa popup xem trước Shop tự hiện khi vào Cửa Hàng: hidden phải thắng display:grid. */
+.shop-preview-backdrop[hidden],
+#shopPreviewBackdrop[hidden]{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+.shop-preview-backdrop:not([hidden]){
+  display:grid!important;
+}
