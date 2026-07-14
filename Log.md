@@ -1,3 +1,16 @@
+## V1.10.36_SHOP_PURCHASE_INVENTORY_SAFE
+
+- Mở bán thử nghiệm 5 banner hồ sơ trong Cửa Hàng bằng ZCOIN.
+- Tab Nổi bật đã hiển thị vật phẩm thật thay vì các ô placeholder cũ.
+- Người chơi có thể mua vật phẩm; hệ thống trừ ZCOIN, ghi `zcoin_transactions`, ghi `shop_purchases` và thêm vật phẩm vào `user_inventory`.
+- Kho đồ `/inventory` hiển thị danh sách vật phẩm đã sở hữu.
+- Bảo vệ mua trùng cùng một vật phẩm bằng unique `(user_id, item_code)` và kiểm tra trong function `buy_shop_item`.
+- Nếu chưa chạy SQL, Shop vẫn xem được vật phẩm nhưng khóa nút mua và hiển thị cảnh báo cần cài SQL.
+- Không mở trang bị banner vào hồ sơ ở bản này để giữ an toàn giao diện profile hiện tại.
+- File thay đổi: `app.py`, `templates/base.html`, `templates/shop.html`, `templates/inventory.html`, `static/style.css`, `README.md`, `Log.md`, `docs/01_install_v1_10_36_shop_purchase_inventory.sql`, `docs/02_check_v1_10_36_shop_purchase_inventory.sql`, `docs/99_rollback_v1_10_36_shop_purchase_inventory.sql`, `docs/update_v1_10_36_shop_purchase_inventory_safe.txt`.
+- Rollback: rollback code về V1.10.35; chỉ chạy `99_rollback` nếu thật sự muốn xóa dữ liệu mua/Kho đồ đã phát sinh.
+
+
 ## V1.10.35_SHOP_PRICE_ROOM_HEADER_BALANCE_NO_SQL
 
 - Chốt lại giá ZCOIN cho 5 banner hồ sơ trong Cửa Hàng theo mức cân bằng với điểm danh 80–150 ZCOIN/ngày.

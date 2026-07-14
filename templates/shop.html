@@ -1,15 +1,65 @@
 {% extends "base.html" %}
+{% macro render_banner_card(banner, source_tab) %}
+    {% set user_balance = (current_user.zcoin_balance|default(0, true))|int %}
+    {% set owned = banner['code'] in owned_item_codes %}
+    {% set can_buy = (not owned) and (not inventory_setup_required) and (user_balance >= banner['price']) %}
+    {% set missing = banner['price'] - user_balance %}
+    <article class="profile-banner-shop-card rarity-{{ banner['rarity_slug'] }}{% if owned %} owned{% endif %}"
+             data-preview-name="{{ banner['name'] }}"
+             data-preview-rarity="{{ banner['rarity'] }}"
+             data-preview-price="{{ '{:,}'.format(banner['price']).replace(',', '.') }}"
+             data-preview-desc="{{ banner['desc'] }}"
+             data-preview-image="{{ url_for('static', filename=banner['file']) }}"
+             data-preview-icon="{{ url_for('static', filename=banner['icon']) }}"
+             data-preview-code="{{ banner['code'] }}"
+             data-preview-buy-url="{{ url_for('buy_shop_item_route', item_code=banner['code']) }}"
+             data-preview-tab="{{ source_tab }}"
+             data-preview-owned="{{ '1' if owned else '0' }}"
+             data-preview-can-buy="{{ '1' if can_buy else '0' }}"
+             data-preview-missing="{{ '{:,}'.format(missing if missing > 0 else 0).replace(',', '.') }}">
+        <div class="profile-banner-preview" style="background-image:url('{{ url_for('static', filename=banner['file']) }}');">
+            <img class="profile-banner-item-icon" src="{{ url_for('static', filename=banner['icon']) }}" alt="Icon {{ banner['name'] }}" loading="lazy">
+            <span class="profile-banner-rarity">{{ banner['rarity'] }}</span>
+            {% if owned %}<span class="profile-banner-owned-badge">Đã sở hữu</span>{% endif %}
+        </div>
+        <div class="profile-banner-info">
+            <h3>{{ banner['name'] }}</h3>
+            <p>{{ banner['desc'] }}</p>
+            <div class="profile-banner-meta">
+                <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="ZCOIN"> {{ '{:,}'.format(banner['price']).replace(',', '.') }} ZCOIN</strong>
+                <span>{{ banner['rarity'] }}</span>
+            </div>
+            <div class="profile-banner-actions shop-live-actions">
+                <button class="btn gold js-shop-preview" type="button">Xem trước</button>
+                <form method="post" action="{{ url_for('buy_shop_item_route', item_code=banner['code']) }}" class="shop-buy-form">
+                    <input type="hidden" name="tab" value="{{ source_tab }}">
+                    {% if owned %}
+                        <button class="btn green" type="button" disabled>Đã sở hữu</button>
+                    {% elif inventory_setup_required %}
+                        <button class="btn gray" type="button" disabled>Cần SQL</button>
+                    {% elif can_buy %}
+                        <button class="btn gold" type="submit">Mua ngay</button>
+                    {% else %}
+                        <button class="btn gray" type="button" disabled>Thiếu {{ '{:,}'.format(missing).replace(',', '.') }}</button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </article>
+{% endmacro %}
+
 {% block content %}
 <section class="shop-hero panel">
     <div>
         <span class="eyebrow">PES 2026 STORE</span>
         <h1>🛒 Cửa Hàng</h1>
-        <p>Cửa hàng đã được thay các vật phẩm mẫu cũ bằng bộ banner hồ sơ mới. Bạn có thể xem trước trực tiếp ngay trong Shop trước khi hệ thống mua/trang bị được mở chính thức.</p>
+        <p>Cửa hàng đã mở bán thử nghiệm các banner hồ sơ bằng ZCOIN. Người chơi có thể xem trước, mua vật phẩm và kiểm tra trong Kho đồ.</p>
     </div>
     <div class="shop-wallet-card">
         <span>Số dư</span>
         <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt=""> {{ '{:,}'.format((current_user.zcoin_balance|default(0, true))|int).replace(',', '.') }} ZCOIN</strong>
         <a href="{{ url_for('profile', user_id=current_user.id) }}#zcoin">Xem ví ZCOIN</a>
+        <a href="{{ url_for('inventory') }}">Kho đồ</a>
     </div>
 </section>
 
@@ -29,6 +79,31 @@
     });
 })();
 </script>
+{% endif %}
+
+{% if purchase_result.status == 'success' %}
+<div class="gift-success-panel shop-purchase-success" id="shop-purchase-success">
+    <div class="gift-success-icon">✅</div>
+    <div>
+        <span class="eyebrow">Mua vật phẩm thành công</span>
+        <h2>{{ purchase_result.item }}</h2>
+        <p>Vật phẩm đã được đưa vào <a href="{{ url_for('inventory') }}">Kho đồ</a>. Số dư mới: <strong>{{ '{:,}'.format(purchase_result.balance).replace(',', '.') }} ZCOIN</strong>.</p>
+    </div>
+</div>
+<script>
+(function(){
+    document.addEventListener('DOMContentLoaded', function(){
+        if (typeof launchConfetti === 'function') launchConfetti(100);
+    });
+})();
+</script>
+{% endif %}
+
+{% if inventory_setup_required %}
+<div class="shop-note-card shop-sql-warning">
+    <strong>⚠️ Chưa chạy SQL Shop V1.10.36</strong>
+    <small>Shop vẫn xem được vật phẩm, nhưng nút mua sẽ khóa cho đến khi chạy file <code>01_install_v1_10_36_shop_purchase_inventory.sql</code> trong Supabase.</small>
+</div>
 {% endif %}
 
 <section class="panel shop-tab-page">
@@ -64,6 +139,36 @@
             <small>Khi đổi thành công, ZCOIN sẽ cộng vào số dư và ghi vào lịch sử giao dịch.</small>
         </div>
     </div>
+    {% elif active_tab == 'featured' %}
+    <div class="shop-tab-body" id="featured">
+        <div class="shop-section-head shop-tab-headline">
+            <div>
+                <span class="eyebrow">Trang chủ Cửa Hàng</span>
+                <h2>🔥 Nổi bật hôm nay</h2>
+                <p>Các banner hồ sơ đang được đề xuất sẽ hiển thị tại đây để người chơi mua nhanh bằng ZCOIN.</p>
+            </div>
+            <span class="badge green">Đã mở bán</span>
+        </div>
+        <div class="shop-profile-banner-block">
+            <div class="shop-profile-banner-title">
+                <div>
+                    <span class="eyebrow">Vật phẩm nổi bật</span>
+                    <h3>Banner hồ sơ đáng chú ý</h3>
+                    <p>Đây là các vật phẩm thật trong Shop. Sau khi mua, vật phẩm sẽ nằm trong Kho đồ của tài khoản.</p>
+                </div>
+                <a class="btn" href="{{ url_for('shop', tab='decor') }}">Xem tất cả Trang trí</a>
+            </div>
+            <div class="profile-banner-shop-grid featured-real-grid">
+                {% for banner in featured_items %}
+                    {{ render_banner_card(banner, 'featured') }}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="shop-note-card shop-tab-note">
+            <strong>💡 Gợi ý</strong>
+            <small>Nếu chưa đủ ZCOIN, người chơi có thể điểm danh hằng ngày hoặc dùng Gift Code do Admin phát.</small>
+        </div>
+    </div>
     {% else %}
     <div class="shop-tab-body" id="{{ active_section['key'] if active_section else 'featured' }}">
         <div class="shop-section-head shop-tab-headline">
@@ -73,7 +178,7 @@
                 <p>{{ active_section['description'] if active_section else 'Các vật phẩm sẽ được bổ sung ở bản sau.' }}</p>
             </div>
             {% if active_tab == 'decor' %}
-            <span class="badge green">Xem trước đã bật</span>
+            <span class="badge green">Đã mở bán</span>
             {% else %}
             <span class="badge pending">Sắp phát triển</span>
             {% endif %}
@@ -83,37 +188,14 @@
             <div class="shop-profile-banner-title">
                 <div>
                     <span class="eyebrow">Banner hồ sơ</span>
-                    <h3>5 vật phẩm banner hồ sơ mới</h3>
-                    <p>Đã thay toàn bộ vật phẩm mẫu cũ bằng bộ banner mới. Nhấn <strong>Xem trước</strong> để mở bản xem trước chi tiết ngay trong Cửa Hàng.</p>
+                    <h3>5 vật phẩm banner hồ sơ</h3>
+                    <p>Nhấn <strong>Xem trước</strong> để xem chi tiết hoặc <strong>Mua ngay</strong> để sở hữu vật phẩm bằng ZCOIN.</p>
                 </div>
-                <span class="badge green">Preview Live</span>
+                <span class="badge green">Mua bằng ZCOIN</span>
             </div>
             <div class="profile-banner-shop-grid">
                 {% for banner in profile_banner_items %}
-                <article class="profile-banner-shop-card rarity-{{ banner['rarity_slug'] }}"
-                         data-preview-name="{{ banner['name'] }}"
-                         data-preview-rarity="{{ banner['rarity'] }}"
-                         data-preview-price="{{ '{:,}'.format(banner['price']).replace(',', '.') }}"
-                         data-preview-desc="{{ banner['desc'] }}"
-                         data-preview-image="{{ url_for('static', filename=banner['file']) }}"
-                         data-preview-icon="{{ url_for('static', filename=banner['icon']) }}">
-                    <div class="profile-banner-preview" style="background-image:url('{{ url_for('static', filename=banner['file']) }}');">
-                        <img class="profile-banner-item-icon" src="{{ url_for('static', filename=banner['icon']) }}" alt="Icon {{ banner['name'] }}" loading="lazy">
-                        <span class="profile-banner-rarity">{{ banner['rarity'] }}</span>
-                    </div>
-                    <div class="profile-banner-info">
-                        <h3>{{ banner['name'] }}</h3>
-                        <p>{{ banner['desc'] }}</p>
-                        <div class="profile-banner-meta">
-                            <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="ZCOIN"> {{ '{:,}'.format(banner['price']).replace(',', '.') }} ZCOIN</strong>
-                            <span>{{ banner['rarity'] }}</span>
-                        </div>
-                        <div class="profile-banner-actions">
-                            <button class="btn gold js-shop-preview" type="button">Xem trước</button>
-                            <button class="btn gray" type="button" disabled>Chưa mở mua</button>
-                        </div>
-                    </div>
-                </article>
+                    {{ render_banner_card(banner, 'decor') }}
                 {% endfor %}
             </div>
         </div>
@@ -149,7 +231,7 @@
         {% endif %}
         <div class="shop-note-card shop-tab-note">
             <strong>🚧 Trạng thái hiện tại</strong>
-            <small>{% if active_tab == 'decor' %}Các banner hồ sơ mới đã trở thành vật phẩm hiển thị trong Shop và đã có tính năng xem trước. Chức năng mua / lưu kho / trang bị thật sẽ phát triển ở bản tiếp theo.{% else %}Vật phẩm thật của tab {{ active_section['title'] }} sẽ được thêm vào đây ở các bản sau, không còn nhảy xuống section phía dưới.{% endif %}</small>
+            <small>{% if active_tab == 'decor' %}Banner hồ sơ đã mở mua thử nghiệm. Chức năng trang bị banner vào hồ sơ sẽ phát triển ở bước tiếp theo sau khi luồng mua/Kho đồ ổn định.{% else %}Vật phẩm thật của tab {{ active_section['title'] }} sẽ được thêm vào đây ở các bản sau.{% endif %}</small>
         </div>
     </div>
     {% endif %}
@@ -179,7 +261,10 @@
         <div class="shop-preview-body">
             <p id="shopPreviewDesc">Mô tả vật phẩm.</p>
             <div class="shop-preview-footer">
-                <button class="btn gold" type="button" disabled>Chưa mở mua</button>
+                <form method="post" id="shopPreviewBuyForm" class="shop-preview-buy-form">
+                    <input type="hidden" name="tab" id="shopPreviewTab" value="featured">
+                    <button class="btn gold" type="submit" id="shopPreviewBuyButton">Mua ngay</button>
+                </form>
                 <button class="btn" type="button" id="shopPreviewCloseAlt">Đóng</button>
             </div>
         </div>
@@ -198,9 +283,11 @@
         const rarityEl = document.getElementById('shopPreviewRarity');
         const priceEl = document.getElementById('shopPreviewPrice');
         const descEl = document.getElementById('shopPreviewDesc');
+        const buyForm = document.getElementById('shopPreviewBuyForm');
+        const buyButton = document.getElementById('shopPreviewBuyButton');
+        const buyTab = document.getElementById('shopPreviewTab');
 
         if (!backdrop) return;
-        // V1.10.34: đảm bảo modal luôn ẩn khi trang Shop vừa load, chỉ mở khi bấm Xem trước.
         backdrop.hidden = true;
         backdrop.setAttribute('hidden', 'hidden');
 
@@ -211,6 +298,17 @@
             rarityEl.textContent = card.dataset.previewRarity || 'Thường';
             priceEl.textContent = card.dataset.previewPrice || '0';
             descEl.textContent = card.dataset.previewDesc || '';
+            if (buyForm) buyForm.action = card.dataset.previewBuyUrl || '#';
+            if (buyTab) buyTab.value = card.dataset.previewTab || 'featured';
+            if (buyButton) {
+                const owned = card.dataset.previewOwned === '1';
+                const canBuy = card.dataset.previewCanBuy === '1';
+                const missing = card.dataset.previewMissing || '0';
+                buyButton.disabled = !canBuy;
+                if (owned) buyButton.textContent = 'Đã sở hữu';
+                else if (canBuy) buyButton.textContent = 'Mua ngay';
+                else buyButton.textContent = 'Thiếu ' + missing + ' ZCOIN';
+            }
             backdrop.hidden = false;
             backdrop.removeAttribute('hidden');
             document.body.classList.add('shop-preview-open');

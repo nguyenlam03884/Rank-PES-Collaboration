@@ -4931,3 +4931,212 @@ html[data-theme="light"] .shop-preview-owner{
     padding-top:6px;
   }
 }
+
+/* V1.10.36_SHOP_PURCHASE_INVENTORY_SAFE
+   Mở bán thử nghiệm banner hồ sơ bằng ZCOIN, tab Nổi bật hiển thị vật phẩm thật,
+   và Kho đồ hiển thị vật phẩm đã sở hữu. */
+.shop-wallet-card a + a{
+  margin-left:10px;
+}
+.shop-sql-warning{
+  margin:0 0 16px;
+  border-color:rgba(250,204,21,.32)!important;
+  background:linear-gradient(135deg,rgba(250,204,21,.10),rgba(15,23,42,.46))!important;
+}
+.shop-sql-warning code{
+  color:#facc15;
+  font-weight:950;
+}
+.shop-purchase-success{
+  border-color:rgba(34,197,94,.35)!important;
+  background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(15,23,42,.72))!important;
+}
+.shop-purchase-success a{
+  color:#facc15;
+  font-weight:950;
+}
+.profile-banner-shop-card.owned{
+  border-color:rgba(34,197,94,.34);
+  box-shadow:0 22px 70px rgba(34,197,94,.08), inset 0 0 0 1px rgba(34,197,94,.10);
+}
+.profile-banner-owned-badge{
+  position:absolute;
+  left:12px;
+  bottom:12px;
+  z-index:2;
+  display:inline-flex;
+  align-items:center;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(34,197,94,.22);
+  border:1px solid rgba(34,197,94,.42);
+  color:#bbf7d0;
+  font-size:12px;
+  font-weight:950;
+  box-shadow:0 10px 24px rgba(0,0,0,.22);
+}
+.shop-live-actions{
+  grid-template-columns:1fr 1fr;
+  align-items:stretch;
+}
+.shop-buy-form{
+  margin:0;
+  display:block;
+}
+.shop-buy-form .btn{
+  width:100%;
+  min-height:42px;
+}
+.shop-buy-form .btn:disabled,
+.shop-preview-buy-form .btn:disabled{
+  cursor:not-allowed;
+  opacity:.78;
+}
+.btn.green{
+  background:linear-gradient(135deg,#22c55e,#16a34a)!important;
+  border-color:rgba(34,197,94,.6)!important;
+  color:#06250f!important;
+  box-shadow:0 10px 25px rgba(34,197,94,.18);
+}
+.featured-real-grid .profile-banner-shop-card:first-child{
+  border-color:rgba(250,204,21,.42);
+  box-shadow:0 24px 80px rgba(250,204,21,.10), inset 0 0 0 1px rgba(250,204,21,.08);
+}
+.shop-preview-buy-form{
+  margin:0;
+}
+.shop-preview-buy-form .btn{
+  min-width:132px;
+}
+.inventory-wallet-card{
+  min-width:210px;
+}
+.inventory-live-panel{
+  display:grid;
+  gap:18px;
+}
+.inventory-tabs-placeholder{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:10px;
+  border-radius:18px;
+  background:rgba(5,12,22,.55);
+  border:1px solid rgba(148,163,184,.12);
+}
+.inventory-tabs-placeholder span{
+  display:inline-flex;
+  align-items:center;
+  padding:9px 13px;
+  border-radius:999px;
+  color:#94a3b8;
+  font-weight:900;
+  background:rgba(15,23,42,.55);
+  border:1px solid rgba(148,163,184,.12);
+}
+.inventory-tabs-placeholder span.active{
+  color:#fff;
+  background:linear-gradient(135deg,rgba(250,204,21,.24),rgba(15,23,42,.75));
+  border-color:rgba(250,204,21,.32);
+}
+.inventory-item-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+}
+.inventory-item-card{
+  overflow:hidden;
+  border-radius:22px;
+  background:linear-gradient(180deg,rgba(15,23,42,.78),rgba(8,16,30,.88));
+  border:1px solid rgba(148,163,184,.14);
+  box-shadow:0 18px 45px rgba(0,0,0,.22);
+}
+.inventory-item-preview{
+  min-height:140px;
+  background-size:cover;
+  background-position:center;
+  position:relative;
+}
+.inventory-item-preview:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(3,7,18,.10),rgba(3,7,18,.72));
+}
+.inventory-item-preview img{
+  position:absolute;
+  left:14px;
+  bottom:12px;
+  z-index:2;
+  width:56px;
+  height:56px;
+  object-fit:cover;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 10px 25px rgba(0,0,0,.35);
+}
+.inventory-item-preview span{
+  position:absolute;
+  right:14px;
+  top:12px;
+  z-index:2;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(250,204,21,.18);
+  border:1px solid rgba(250,204,21,.34);
+  color:#facc15;
+  font-size:12px;
+  font-weight:950;
+}
+.inventory-item-info{
+  padding:16px;
+}
+.inventory-item-info h3{
+  margin:0 0 8px;
+  color:#fff;
+  font-size:20px;
+}
+.inventory-item-info p{
+  margin:0 0 14px;
+  color:#9fb0c7;
+  line-height:1.55;
+  min-height:48px;
+}
+.inventory-item-meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+.inventory-item-meta span,
+.inventory-item-meta strong{
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(15,23,42,.72);
+  border:1px solid rgba(148,163,184,.14);
+  color:#cbd5e1;
+  font-size:12px;
+  font-weight:900;
+}
+.inventory-item-meta strong{
+  color:#facc15;
+}
+.inventory-item-card .btn{
+  width:100%;
+}
+html[data-theme="light"] .shop-sql-warning,
+html[data-theme="light"] .shop-purchase-success,
+html[data-theme="light"] .inventory-item-card,
+html[data-theme="light"] .inventory-tabs-placeholder{
+  background:#fff!important;
+  border-color:#dbe4ef!important;
+}
+html[data-theme="light"] .inventory-item-info h3{color:#0f172a}
+html[data-theme="light"] .inventory-item-info p{color:#475569}
+@media(max-width:760px){
+  .shop-live-actions{grid-template-columns:1fr}
+  .shop-preview-buy-form,
+  .shop-preview-buy-form .btn{width:100%}
+  .inventory-item-grid{grid-template-columns:1fr}
+}

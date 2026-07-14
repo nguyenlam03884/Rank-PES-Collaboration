@@ -4,22 +4,73 @@
     <div>
         <span class="eyebrow">INVENTORY</span>
         <h1>🎒 Kho đồ</h1>
-        <p>Khung Kho đồ để chuẩn bị quản lý vật phẩm sau khi Cửa Hàng có item thật.</p>
+        <p>Quản lý các vật phẩm bạn đã mua bằng ZCOIN. Giai đoạn này đã lưu quyền sở hữu; chức năng trang bị sẽ mở ở bản tiếp theo.</p>
     </div>
-    <a class="btn gold" href="{{ url_for('shop') }}">Đến Cửa Hàng</a>
+    <div class="shop-wallet-card inventory-wallet-card">
+        <span>Số dư</span>
+        <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt=""> {{ '{:,}'.format((current_user.zcoin_balance|default(0, true))|int).replace(',', '.') }} ZCOIN</strong>
+        <a href="{{ url_for('shop') }}">Đến Cửa Hàng</a>
+    </div>
 </section>
 
+{% if inventory_setup_required %}
+<section class="panel inventory-empty-panel">
+    <div class="inventory-empty-icon">⚠️</div>
+    <h2>Kho đồ cần chạy SQL</h2>
+    <p>Hãy chạy file <strong>01_install_v1_10_36_shop_purchase_inventory.sql</strong> trong Supabase để bật chức năng mua và lưu vật phẩm.</p>
+</section>
+{% elif inventory_items %}
+<section class="panel inventory-live-panel">
+    <div class="shop-section-head shop-tab-headline">
+        <div>
+            <span class="eyebrow">Vật phẩm của bạn</span>
+            <h2>🎒 {{ inventory_items|length }} vật phẩm đã sở hữu</h2>
+            <p>Vật phẩm mua từ Cửa Hàng sẽ được lưu tại đây. Hiện tại banner hồ sơ chưa trang bị trực tiếp lên profile để tránh ảnh hưởng giao diện đang ổn định.</p>
+        </div>
+        <a class="btn gold" href="{{ url_for('shop', tab='decor') }}">Mua thêm</a>
+    </div>
+
+    <div class="inventory-tabs-placeholder">
+        <span class="active">Tất cả</span>
+        <span>Banner hồ sơ</span>
+        <span>Sắp mở: Khung Avatar</span>
+        <span>Sắp mở: Danh hiệu</span>
+    </div>
+
+    <div class="inventory-item-grid">
+        {% for item in inventory_items %}
+        <article class="inventory-item-card rarity-{{ item.metadata.rarity_slug if item.metadata and item.metadata.rarity_slug else 'common' }}">
+            <div class="inventory-item-preview" {% if item.image_path %}style="background-image:url('{{ url_for('static', filename=item.image_path) }}');"{% endif %}>
+                {% if item.icon_path %}<img src="{{ url_for('static', filename=item.icon_path) }}" alt="{{ item.item_name }}" loading="lazy">{% endif %}
+                <span>{{ item.rarity or 'Vật phẩm' }}</span>
+            </div>
+            <div class="inventory-item-info">
+                <h3>{{ item.item_name or item.item_code }}</h3>
+                <p>{{ item.metadata.desc if item.metadata and item.metadata.desc else 'Vật phẩm đã thuộc sở hữu của bạn.' }}</p>
+                <div class="inventory-item-meta">
+                    <span>{{ item.item_type or 'item' }}</span>
+                    <strong>{{ item.acquired_from or 'shop' }}</strong>
+                </div>
+                <button class="btn gray" type="button" disabled>Trang bị sắp mở</button>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% else %}
 <section class="panel inventory-empty-panel">
     <div class="inventory-empty-icon">🎒</div>
-    <h2>Kho đồ đang chuẩn bị</h2>
-    <p>Các tab Khung Avatar, Banner, Màu Nickname, Danh hiệu và vật phẩm đang sử dụng sẽ được thêm sau. Hiện tại hệ thống chỉ mở khung để không ảnh hưởng dữ liệu app.</p>
+    <h2>Kho đồ đang trống</h2>
+    <p>Bạn chưa sở hữu vật phẩm nào. Hãy vào Cửa Hàng để mua banner hồ sơ đầu tiên bằng ZCOIN.</p>
     <div class="inventory-placeholder-grid">
-        <article><strong>Tất cả</strong><small>Sắp mở</small></article>
+        <article><strong>Tất cả</strong><small>0 vật phẩm</small></article>
+        <article><strong>Banner hồ sơ</strong><small>Đã mở mua</small></article>
         <article><strong>Khung Avatar</strong><small>Sắp mở</small></article>
-        <article><strong>Banner</strong><small>Sắp mở</small></article>
         <article><strong>Màu Nickname</strong><small>Sắp mở</small></article>
         <article><strong>Danh hiệu</strong><small>Sắp mở</small></article>
         <article><strong>Đang sử dụng</strong><small>Sắp mở</small></article>
     </div>
+    <a class="btn gold" href="{{ url_for('shop', tab='featured') }}">Đến Cửa Hàng</a>
 </section>
+{% endif %}
 {% endblock %}

@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.35"
+APP_VERSION = "V1.10.36"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4353,8 +4353,8 @@ def list_gift_code_redemptions(limit=80):
 
 
 
-# Profile banner assets for Shop shell (V1.10.31).
-# These are static catalog previews only; purchase/equip logic will be added in a later Shop phase.
+# Profile banner assets for Shop (V1.10.36).
+# V1.10.36 opens purchase + inventory ownership for profile banner items.
 PROFILE_BANNER_SHOP_ITEMS = [
     {
         "code": "profile_banner_locker_room",
@@ -4410,25 +4410,72 @@ PROFILE_BANNER_SHOP_ITEMS = [
 
 
 def profile_banner_shop_items():
-    return [dict(item) for item in PROFILE_BANNER_SHOP_ITEMS]
+    items = []
+    for item in PROFILE_BANNER_SHOP_ITEMS:
+        prepared = dict(item)
+        prepared.setdefault("item_type", "profile_banner")
+        prepared.setdefault("is_featured", True)
+        items.append(prepared)
+    return items
+
+
+def all_shop_items():
+    return profile_banner_shop_items()
+
+
+def featured_shop_items():
+    # Hiện 5 banner đầu tiên trong tab Nổi bật để người chơi thấy vật phẩm thật ngay khi vào Shop.
+    return [item for item in all_shop_items() if item.get("is_featured")][:5]
+
+
+def get_shop_item_by_code(item_code):
+    target = str(item_code or "").strip()
+    if not target:
+        return None
+    return next((item for item in all_shop_items() if item.get("code") == target), None)
+
+
+def list_user_inventory(user_id):
+    """Read owned Shop items. If SQL is missing, fail softly so Shop still loads."""
+    if not user_id:
+        return [], False
+    try:
+        result = execute_query(
+            db.table("user_inventory")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True),
+            "list_user_inventory",
+            attempts=2,
+        )
+        return result.data or [], False
+    except Exception as exc:
+        print(f"list_user_inventory warning: {exc}")
+        return [], True
+
+
+def user_inventory_codes(user_id):
+    items, setup_required = list_user_inventory(user_id)
+    return {row.get("item_code") for row in items if row.get("item_code")}, setup_required
+
 
 def shop_shell_sections():
-    """Static shop shell. Real item catalog will be added in later versions."""
+    """Shop tab structure. Featured/Decor now use real profile banner items."""
     return [
         {
             "key": "featured",
             "icon": "🔥",
             "title": "Nổi bật",
             "subtitle": "Trang chủ Cửa Hàng",
-            "description": "Các lối vào quan trọng của Shop sẽ được gom tại đây để người chơi không bị ngợp.",
-            "items": ["Vật phẩm mới", "Vật phẩm hot", "Đồ giới hạn", "Event", "Giảm giá", "Lucky Box"],
+            "description": "Các vật phẩm thật đang được đề xuất sẽ được trưng bày tại đây để người chơi mua nhanh bằng ZCOIN.",
+            "items": ["Banner nổi bật", "Vật phẩm mới", "Đề xuất", "Giới hạn", "Gift Code"],
         },
         {
             "key": "decor",
             "icon": "🎨",
             "title": "Trang trí",
             "subtitle": "Khung avatar, banner, màu nickname, danh hiệu",
-            "description": "Khu làm đẹp hồ sơ, tên hiển thị và nhận diện người chơi trong toàn hệ thống. Banner hồ sơ đã có 5 mẫu đầu tiên để xem trước.",
+            "description": "Khu làm đẹp hồ sơ, tên hiển thị và nhận diện người chơi trong toàn hệ thống. Banner hồ sơ đã mở bán thử nghiệm bằng ZCOIN.",
             "items": ["Hồ sơ", "Banner", "Khung Avatar", "Aura", "Màu Nickname", "Danh hiệu", "Chat", "Emoji"],
         },
         {
@@ -4596,6 +4643,7 @@ def profile(user_id):
 @login_required
 def shop():
     user = current_user()
+    user_id = user.get("id")
     sections = shop_shell_sections()
     tab_keys = [section.get("key") for section in sections]
     active_tab = (request.args.get("tab") or "featured").strip().lower()
@@ -4612,6 +4660,12 @@ def shop():
         "balance": _safe_int(request.args.get("balance"), _safe_int(user.get("zcoin_balance"), 0)),
         "code": request.args.get("code", ""),
     }
+    purchase_result = {
+        "status": request.args.get("purchase_result", ""),
+        "item": request.args.get("item", ""),
+        "balance": _safe_int(request.args.get("balance"), _safe_int(user.get("zcoin_balance"), 0)),
+    }
+    owned_item_codes, inventory_setup_required = user_inventory_codes(user_id)
     return render_template(
         "shop.html",
         sections=sections,
@@ -4619,14 +4673,93 @@ def shop():
         active_tab=active_tab,
         active_section=active_section,
         gift_result=gift_result,
+        purchase_result=purchase_result,
+        inventory_setup_required=inventory_setup_required,
+        owned_item_codes=owned_item_codes,
+        featured_items=featured_shop_items(),
         profile_banner_items=profile_banner_shop_items(),
     )
+
+
+@app.route("/shop/buy/<item_code>", methods=["POST"])
+@login_required
+def buy_shop_item_route(item_code):
+    user = current_user()
+    user_id = user.get("id")
+    tab = (request.form.get("tab") or request.args.get("tab") or "featured").strip().lower()
+    item = get_shop_item_by_code(item_code)
+    if not item:
+        flash("Vật phẩm này không tồn tại hoặc chưa được mở bán.", "danger")
+        return redirect(url_for("shop", tab=tab))
+
+    try:
+        result = execute_query(
+            db.rpc(
+                "buy_shop_item",
+                {
+                    "p_user_id": user_id,
+                    "p_item_code": item.get("code"),
+                    "p_price": _safe_int(item.get("price"), 0),
+                    "p_item_name": item.get("name"),
+                    "p_item_type": item.get("item_type", "profile_banner"),
+                    "p_item_rarity": item.get("rarity"),
+                    "p_item_image": item.get("file"),
+                    "p_item_icon": item.get("icon"),
+                    "p_metadata": {
+                        "rarity_slug": item.get("rarity_slug"),
+                        "desc": item.get("desc"),
+                        "source": "shop_profile_banner_v1_10_36",
+                    },
+                },
+            ),
+            "buy_shop_item_rpc",
+        )
+        payload = result.data
+        if isinstance(payload, list):
+            payload = payload[0] if payload else {}
+        payload = payload or {}
+
+        if not payload.get("ok"):
+            error_messages = {
+                "item_not_available": "Vật phẩm này chưa được mở bán.",
+                "already_owned": "Bạn đã sở hữu vật phẩm này rồi. Hãy vào Kho đồ để xem.",
+                "not_enough_zcoin": "Bạn chưa đủ ZCOIN để mua vật phẩm này.",
+                "user_not_found": "Không tìm thấy tài khoản mua vật phẩm.",
+                "invalid_price": "Giá vật phẩm không hợp lệ.",
+            }
+            flash(error_messages.get(payload.get("error"), "Không thể mua vật phẩm lúc này."), "danger")
+            return redirect(url_for("shop", tab=tab))
+
+        ttl_cache_delete(f"user:{user_id}", "players_raw")
+        cache_delete("_rz_current_user")
+        flash(f"Đã mua {item.get('name')} thành công! Vật phẩm đã được đưa vào Kho đồ.", "success")
+        return redirect(
+            url_for(
+                "shop",
+                tab=tab,
+                purchase_result="success",
+                item=item.get("name"),
+                balance=_safe_int(payload.get("balance_after"), 0),
+            )
+        )
+    except Exception as exc:
+        print(f"buy_shop_item_route error: {exc}")
+        flash("Không thể mua vật phẩm. Hãy kiểm tra đã chạy SQL V1.10.36 chưa.", "danger")
+        return redirect(url_for("shop", tab=tab))
 
 
 @app.route("/inventory")
 @login_required
 def inventory():
-    return render_template("inventory.html")
+    user = current_user()
+    items, setup_required = list_user_inventory(user.get("id"))
+    profile_banners = [item for item in items if item.get("item_type") == "profile_banner"]
+    return render_template(
+        "inventory.html",
+        inventory_items=items,
+        profile_banner_inventory=profile_banners,
+        inventory_setup_required=setup_required,
+    )
 
 
 @app.route("/gift-code/redeem", methods=["POST"])

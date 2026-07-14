@@ -1,3 +1,29 @@
+## V1.10.36_SHOP_PURCHASE_INVENTORY_SAFE
+
+**Mục tiêu:** chốt tab Nổi bật thành nơi hiển thị vật phẩm thật và mở bán thử nghiệm 5 banner hồ sơ bằng ZCOIN để người dùng có thể mua và lưu vào Kho đồ.
+
+**Thay đổi:**
+- Tab `Cửa Hàng → Nổi bật` không còn là placeholder; hiển thị 5 banner hồ sơ thật để mua nhanh.
+- Tab `Cửa Hàng → Trang trí` tiếp tục hiển thị đầy đủ 5 banner hồ sơ.
+- Người dùng có thể bấm `Mua ngay` để mua vật phẩm bằng ZCOIN.
+- Nếu đã sở hữu vật phẩm, Shop hiển thị `Đã sở hữu` và không cho mua trùng.
+- Nếu chưa đủ ZCOIN, Shop hiển thị số ZCOIN còn thiếu.
+- Kho đồ `/inventory` hiển thị vật phẩm đã mua.
+- Thêm SQL install/check/rollback cho bảng `user_inventory`, `shop_purchases` và function `buy_shop_item`.
+- `templates/base.html` cập nhật cache CSS lên `?v=1.10.36`.
+- `APP_VERSION` cập nhật lên `V1.10.36`.
+
+**Cần chạy SQL:**
+1. `docs/01_install_v1_10_36_shop_purchase_inventory.sql`
+2. `docs/02_check_v1_10_36_shop_purchase_inventory.sql`
+
+**Không thay đổi:**
+- Chưa mở trang bị banner trực tiếp lên hồ sơ; bản này chỉ mua + lưu Kho đồ.
+- Không đụng phòng đấu, BXH, Admin sửa trận, Gift Code, Điểm danh hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.36_SHOP_PURCHASE_INVENTORY_SAFE`
+
+
 ## V1.10.35_SHOP_PRICE_ROOM_HEADER_BALANCE_NO_SQL
 
 **Mục tiêu:** chốt lại giá ZCOIN cho 5 banner hồ sơ trong Cửa Hàng và căn lại cụm avatar/tên/rank trong khung phòng đấu để không che đỉnh khung rank.
