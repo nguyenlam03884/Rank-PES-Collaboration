@@ -1,4 +1,16 @@
 
+## V1.10.23_SHOP_SHELL_GIFT_CODE_SAFE
+
+- Thêm khung Cửa Hàng `/shop` với các khu: Nổi bật, Trang trí, Tiện ích, Lucky Box.
+- Thêm khung Kho đồ `/inventory` để chuẩn bị quản lý vật phẩm sau này.
+- Thêm Gift Code thật: user nhập mã trong Cửa Hàng để nhận ZCOIN.
+- Thêm Admin tab `Gift Code`: tạo code, tắt/bật code, xem lịch sử đổi code.
+- Thêm SQL install/check/rollback riêng trong `docs/`.
+- Không thay đổi logic rank/phòng đấu/BXH/điểm danh.
+- File thay đổi: app.py, templates/base.html, templates/shop.html, templates/inventory.html, templates/admin.html, static/style.css, README.md, Log.md, docs/*v1_10_23*.
+- Commit khuyến nghị: `V1.10.23_SHOP_SHELL_GIFT_CODE_SAFE`.
+
+
 ## V1.10.22_ADMIN_MATCH_RESULT_DELTA_HOTFIX_NO_SQL
 
 - Hotfix chức năng Admin sửa kết quả trận đấu.

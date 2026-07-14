@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="shop-hero panel">
+    <div>
+        <span class="eyebrow">INVENTORY</span>
+        <h1>🎒 Kho đồ</h1>
+        <p>Khung Kho đồ để chuẩn bị quản lý vật phẩm sau khi Cửa Hàng có item thật.</p>
+    </div>
+    <a class="btn gold" href="{{ url_for('shop') }}">Đến Cửa Hàng</a>
+</section>
+
+<section class="panel inventory-empty-panel">
+    <div class="inventory-empty-icon">🎒</div>
+    <h2>Kho đồ đang chuẩn bị</h2>
+    <p>Các tab Khung Avatar, Banner, Màu Nickname, Danh hiệu và vật phẩm đang sử dụng sẽ được thêm sau. Hiện tại hệ thống chỉ mở khung để không ảnh hưởng dữ liệu app.</p>
+    <div class="inventory-placeholder-grid">
+        <article><strong>Tất cả</strong><small>Sắp mở</small></article>
+        <article><strong>Khung Avatar</strong><small>Sắp mở</small></article>
+        <article><strong>Banner</strong><small>Sắp mở</small></article>
+        <article><strong>Màu Nickname</strong><small>Sắp mở</small></article>
+        <article><strong>Danh hiệu</strong><small>Sắp mở</small></article>
+        <article><strong>Đang sử dụng</strong><small>Sắp mở</small></article>
+    </div>
+</section>
+{% endblock %}

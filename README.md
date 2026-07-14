@@ -1,4 +1,24 @@
 
+## V1.10.23_SHOP_SHELL_GIFT_CODE_SAFE
+
+**Mục tiêu:** mở khung Cửa Hàng/Kho đồ trước và thêm Gift Code thật để Admin tặng ZCOIN cho người chơi.
+
+**Thay đổi:**
+- Thêm trang `/shop` dạng khung: Nổi bật, Trang trí, Tiện ích, Lucky Box.
+- Thêm trang `/inventory` dạng khung Kho đồ, chưa có vật phẩm thật.
+- Thêm lối vào Cửa Hàng ở sidebar và Kho đồ/Gift Code trong menu user.
+- Thêm Gift Code: người dùng nhập mã trong Cửa Hàng để nhận ZCOIN.
+- Thêm tab Admin `Gift Code` để tạo/tắt code và xem lịch sử đổi code.
+
+**SQL:** cần chạy `docs/01_install_v1_10_23_shop_shell_gift_code.sql`, sau đó kiểm tra bằng `docs/02_check_v1_10_23_shop_shell_gift_code.sql`.
+
+**Không thay đổi:**
+- Không đụng logic rank, phòng đấu, BXH, random đội.
+- Không đổi Điểm danh hằng ngày; Gift Code chỉ dùng chung ví ZCOIN.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.23_SHOP_SHELL_GIFT_CODE_SAFE`
+
+
 ## V1.10.22_ADMIN_MATCH_RESULT_DELTA_HOTFIX_NO_SQL
 
 **Mục tiêu:** sửa lỗi Admin không lưu được kết quả trận đấu do `matches.delta1`/`delta2` bị ghi `NULL` trong khi database đang yêu cầu NOT NULL.

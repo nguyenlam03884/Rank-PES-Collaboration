@@ -35,6 +35,7 @@
     <button class="admin-tab-button" type="button" data-admin-tab="rooms">🚪 Phòng & lời mời</button>
     <button class="admin-tab-button" type="button" data-admin-tab="matches">🎮 Trận đấu</button>
     {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
+    <button class="admin-tab-button" type="button" data-admin-tab="gift-codes">🎟️ Gift Code</button>
     <button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>
     {% if current_user.admin_level == 'owner' %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký Admin</button>{% endif %}
 </div>
@@ -558,6 +559,101 @@
     </div>
 </section>
 {% endif %}
+
+
+<section class="admin-tab-panel" data-admin-panel="gift-codes">
+    <div class="panel admin-highlight">
+        <div class="admin-section-heading">
+            <div>
+                <h2>🎟️ Quản lý Gift Code</h2>
+                <p class="small">Tạo mã tặng ZCOIN cho người chơi. Người dùng nhập mã tại Cửa Hàng → Gift Code.</p>
+            </div>
+            <span class="admin-count">{{ gift_codes|length }}</span>
+        </div>
+        {% if gift_code_setup_required %}
+        <div class="alert warning">Chưa đọc được bảng Gift Code. Hãy chạy SQL <strong>01_install_v1_10_23_shop_shell_gift_code.sql</strong> trước khi tạo code.</div>
+        {% endif %}
+        <form method="post" action="{{ url_for('admin_create_gift_code') }}" class="grid-form admin-gift-code-form">
+            <div><label>Mã code tùy chọn</label><input name="code" maxlength="40" placeholder="Để trống để tự tạo"></div>
+            <div><label>Prefix tự tạo</label><input name="prefix" maxlength="12" value="PES"></div>
+            <div><label>Thưởng ZCOIN</label><input type="number" name="reward_zcoin" min="1" max="100000" value="300" required></div>
+            <div><label>Số lượt dùng tối đa</label><input type="number" name="max_redemptions" min="1" max="100000" value="1" required></div>
+            <div><label>Hết hạn lúc</label><input type="datetime-local" name="expires_at"></div>
+            <div><label>Ghi chú Admin</label><input name="note" maxlength="250" placeholder="Ví dụ: quà event cuối tuần"></div>
+            <button class="btn gold" type="submit">Tạo Gift Code</button>
+        </form>
+        <p class="small">Mỗi tài khoản chỉ đổi được một lần cho mỗi code. Gift Code hiện chỉ hỗ trợ thưởng ZCOIN.</p>
+    </div>
+
+    <div class="panel">
+        <div class="admin-section-heading">
+            <div>
+                <h2>📦 Danh sách code</h2>
+                <p class="small">Theo dõi trạng thái, lượt dùng và tắt/mở code khi cần.</p>
+            </div>
+        </div>
+        <div class="table-wrap admin-table-wrap">
+            <table>
+                <thead><tr><th>Code</th><th>Thưởng</th><th>Lượt dùng</th><th>Trạng thái</th><th>Hết hạn</th><th>Ghi chú</th><th>Hành động</th></tr></thead>
+                <tbody>
+                {% for code in gift_codes %}
+                <tr>
+                    <td><strong><code>{{ code.code }}</code></strong><br><span class="small">Tạo bởi {{ code.created_by_name or '-' }}</span></td>
+                    <td>{{ code.reward_zcoin }} ZCOIN</td>
+                    <td>{{ code.redeemed_count or 0 }} / {{ code.max_redemptions or '∞' }}</td>
+                    <td>
+                        {% if not code.is_active %}<span class="badge danger">Đã tắt</span>
+                        {% elif code.is_expired %}<span class="badge danger">Hết hạn</span>
+                        {% elif code.is_sold_out %}<span class="badge pending">Hết lượt</span>
+                        {% else %}<span class="badge success">Đang bật</span>{% endif %}
+                    </td>
+                    <td>{{ format_vn_datetime(code.expires_at) if code.expires_at else 'Không giới hạn' }}</td>
+                    <td>{{ code.note or '-' }}</td>
+                    <td>
+                        <form class="inline-form" method="post" action="{{ url_for('admin_toggle_gift_code', code_id=code.id) }}">
+                            {% if code.is_active %}
+                            <button class="btn small red" name="action" value="disable" type="submit">Tắt</button>
+                            {% else %}
+                            <button class="btn small green" name="action" value="enable" type="submit">Bật</button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7">Chưa có gift code nào.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="admin-section-heading">
+            <div>
+                <h2>📈 Lịch sử đổi code</h2>
+                <p class="small">80 lượt đổi gần nhất.</p>
+            </div>
+            <span class="admin-count">{{ gift_redemptions|length }}</span>
+        </div>
+        <div class="table-wrap admin-table-wrap">
+            <table>
+                <thead><tr><th>Người nhận</th><th>Code</th><th>Thưởng</th><th>Thời gian</th></tr></thead>
+                <tbody>
+                {% for item in gift_redemptions %}
+                <tr>
+                    <td><strong>{{ item.user_name }}</strong><br><span class="small">@{{ item.username }}</span></td>
+                    <td><code>{{ item.code }}</code></td>
+                    <td>{{ item.reward_zcoin }} ZCOIN</td>
+                    <td>{{ format_vn_datetime(item.redeemed_at) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4">Chưa có ai đổi code.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
 
 <section class="admin-tab-panel" data-admin-panel="system">
     <div class="panel">

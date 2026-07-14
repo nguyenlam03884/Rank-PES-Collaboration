@@ -3841,3 +3841,134 @@ html[data-theme="light"] .topbar-zcoin-pill small{color:#475569!important}
 
 /* V1.10.21 — Use custom ZCOIN logo asset on topbar */
 html[data-theme="light"] .topbar-zcoin-icon{background:#fff3bf;border-color:#efc655;box-shadow:0 0 12px rgba(59,130,246,.10)}
+
+/* V1.10.23_SHOP_SHELL_GIFT_CODE_SAFE */
+.shop-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, rgba(17, 38, 80, .86), rgba(18, 18, 24, .94));
+}
+.shop-hero h1 { margin: 4px 0 8px; font-size: clamp(28px, 3vw, 42px); }
+.shop-hero p { margin: 0; color: var(--muted); max-width: 760px; }
+.shop-wallet-card {
+    min-width: 230px;
+    border: 1px solid rgba(242, 197, 82, .45);
+    border-radius: 18px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, rgba(242, 197, 82, .16), rgba(20, 26, 36, .92));
+    box-shadow: inset 0 0 24px rgba(242, 197, 82, .08);
+}
+.shop-wallet-card span { display: block; color: var(--gold); font-weight: 900; text-transform: uppercase; font-size: 12px; letter-spacing: .08em; }
+.shop-wallet-card strong { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 20px; }
+.shop-wallet-card img { width: 28px; height: 28px; object-fit: contain; }
+.shop-wallet-card a { display: inline-block; margin-top: 8px; color: var(--blue-light); font-weight: 800; }
+.shop-layout { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 18px; align-items: start; }
+.shop-side { position: sticky; top: 18px; }
+.shop-side h2 { margin: 6px 0 8px; }
+.gift-redeem-form { display: grid; gap: 10px; margin: 16px 0; }
+.gift-redeem-form input,
+.admin-gift-code-form input {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(2, 12, 24, .7);
+    color: var(--text);
+    padding: 12px 14px;
+    font-weight: 800;
+}
+.shop-note-card {
+    border: 1px dashed rgba(242, 197, 82, .35);
+    border-radius: 14px;
+    padding: 14px;
+    background: rgba(242, 197, 82, .08);
+}
+.shop-note-card strong { display: block; margin-bottom: 5px; }
+.shop-tabs-shell { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.shop-tabs-shell a {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(8, 18, 34, .78);
+    color: var(--text);
+    font-weight: 900;
+}
+.shop-tabs-shell a:hover { border-color: var(--gold); color: var(--gold); }
+.shop-section-card { margin-bottom: 18px; }
+.shop-section-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 14px; }
+.shop-section-head h2 { margin: 4px 0 0; }
+.shop-shell-grid,
+.inventory-placeholder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+.shop-shell-item,
+.inventory-placeholder-grid article {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(6, 16, 31, .72);
+    padding: 14px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.shop-shell-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: rgba(242, 197, 82, .12);
+    border: 1px solid rgba(242, 197, 82, .28);
+    font-size: 22px;
+}
+.shop-shell-item strong,
+.inventory-placeholder-grid strong { font-size: 16px; }
+.shop-shell-item small,
+.inventory-placeholder-grid small { color: var(--muted); }
+.shop-shell-item .btn { margin-top: auto; }
+.gift-success-panel {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border: 1px solid rgba(34, 197, 94, .45);
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, rgba(34, 197, 94, .16), rgba(8, 18, 34, .92));
+    box-shadow: 0 16px 38px rgba(0, 0, 0, .25);
+}
+.gift-success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    display: grid;
+    place-items: center;
+    background: rgba(34, 197, 94, .18);
+    font-size: 32px;
+}
+.gift-success-panel h2 { margin: 2px 0; font-size: 36px; color: var(--gold); }
+.inventory-empty-panel { text-align: center; padding: 34px; }
+.inventory-empty-icon {
+    width: 82px;
+    height: 82px;
+    margin: 0 auto 12px;
+    border-radius: 28px;
+    display: grid;
+    place-items: center;
+    background: rgba(242, 197, 82, .12);
+    border: 1px solid rgba(242, 197, 82, .3);
+    font-size: 42px;
+}
+.inventory-empty-panel p { color: var(--muted); max-width: 760px; margin: 0 auto 20px; }
+.admin-gift-code-form { margin-top: 14px; }
+.admin-gift-code-form .btn { align-self: end; }
+@media (max-width: 960px) {
+    .shop-layout { grid-template-columns: 1fr; }
+    .shop-side { position: static; }
+    .shop-hero { flex-direction: column; align-items: stretch; }
+}

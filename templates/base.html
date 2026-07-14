@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <title>{{ APP_NAME }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=1.9.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=1.10.23">
 
 <script>
 (function initTheme(){
@@ -34,6 +34,7 @@ function toggleTheme(){
             <a class="{{ 'active' if request.endpoint == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}"><span>🏠</span> Dashboard</a>
             <a class="{{ 'active' if request.endpoint == 'ranking' else '' }}" href="{{ url_for('ranking') }}"><span>🏆</span> BXH</a>
             <a class="{{ 'active' if request.endpoint == 'players' else '' }}" href="{{ url_for('players') }}"><span>👤</span> Players</a>
+            <a class="{{ 'active' if request.endpoint == 'shop' else '' }}" href="{{ url_for('shop') }}"><span>🛒</span> Cửa Hàng</a>
             <a class="{{ 'active' if request.endpoint == 'guide' else '' }}" href="{{ url_for('guide') }}"><span>📘</span> Hướng dẫn</a>
             <a class="{{ 'active' if request.endpoint == 'change_password' else '' }}" href="{{ url_for('change_password') }}"><span>🔐</span> Đổi mật khẩu</a>
             {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a>{% endif %}
@@ -45,7 +46,7 @@ function toggleTheme(){
     <main class="main player-main">
         <header class="player-topbar">
             <button class="sidebar-menu-button" type="button" onclick="document.body.classList.toggle('sidebar-open')">☰</button>
-            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu'} %}
+            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','shop':'Cửa Hàng','inventory':'Kho đồ','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu'} %}
             <div class="topbar-copy"><strong>{{ page_titles.get(request.endpoint, APP_NAME) }}</strong><small>Chào {{ current_user.display_name }}, chúc bạn có một ngày thi đấu tốt!</small></div>
             <div id="adminAnnouncementMount" class="topbar-announcement-mount">
                 {% if active_announcement %}
@@ -128,8 +129,9 @@ function toggleTheme(){
                         </div>
                         <div class="topbar-user-menu-list">
                             <a href="{{ url_for('profile', user_id=current_user.id) }}#account"><span>⚙️</span><strong>Quản lý tài khoản</strong><small>Hồ sơ, tên hiển thị, avatar</small></a>
-                            <button type="button" class="topbar-user-menu-disabled" disabled><span>🎒</span><strong>Kho đồ</strong><small>Sắp phát triển</small></button>
-                            <a href="{{ url_for('profile', user_id=current_user.id) }}#checkin"><span>🎁</span><strong>Điểm danh</strong><small>Khung sườn, kích hoạt sau</small></a>
+                            <a href="{{ url_for('inventory') }}"><span>🎒</span><strong>Kho đồ</strong><small>Khung quản lý vật phẩm</small></a>
+                            <a href="{{ url_for('shop') }}#gift-code"><span>🎟️</span><strong>Gift Code</strong><small>Nhập mã nhận ZCOIN</small></a>
+                            <a href="{{ url_for('profile', user_id=current_user.id) }}#checkin"><span>🎁</span><strong>Điểm danh</strong><small>Nhận ZCOIN hằng ngày</small></a>
                             <a href="{{ url_for('matches') }}"><span>📜</span><strong>Lịch sử</strong><small>Toàn bộ lịch sử trận đấu</small></a>
                         </div>
                         <div class="topbar-user-menu-foot">

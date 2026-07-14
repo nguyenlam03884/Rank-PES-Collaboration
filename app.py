@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.22"
+APP_VERSION = "V1.10.23"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -54,6 +54,8 @@ DISPUTE_EVIDENCE_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 # V1.10.15 - Daily check-in reward economy merged with league logo update.
 DAILY_CHECKIN_MIN_ZCOIN = 80
 DAILY_CHECKIN_MAX_ZCOIN = 150
+GIFT_CODE_DEFAULT_PREFIX = "PES"
+GIFT_CODE_MAX_REWARD_ZCOIN = 100000
 VN_TIMEZONE = timezone(timedelta(hours=7))
 
 ACHIEVEMENT_DEFINITIONS = [
@@ -4275,6 +4277,104 @@ def get_profile_reward_state(user_id):
     return state
 
 
+# =========================
+# Shop shell + Gift code helpers (V1.10.23)
+# =========================
+def normalize_gift_code(raw_code):
+    """Normalize gift code safely for DB lookup/create."""
+    code = str(raw_code or "").strip().upper()
+    code = "".join(ch for ch in code if ch.isalnum() or ch in {"-", "_"})
+    return code[:40]
+
+
+def generate_gift_code(prefix=GIFT_CODE_DEFAULT_PREFIX):
+    safe_prefix = normalize_gift_code(prefix) or GIFT_CODE_DEFAULT_PREFIX
+    alphabet = string.ascii_uppercase + string.digits
+    return f"{safe_prefix}-" + "".join(secrets.choice(alphabet) for _ in range(8))
+
+
+def list_gift_codes(limit=80):
+    try:
+        result = execute_query(
+            db.table("gift_codes")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(limit),
+            "list_gift_codes",
+            attempts=2,
+        )
+        codes = result.data or []
+        now = now_dt()
+        for code in codes:
+            code["is_expired"] = False
+            expires_at = aware_utc(parse_dt(code.get("expires_at"))) if code.get("expires_at") else None
+            if expires_at:
+                code["is_expired"] = expires_at < now
+            max_redemptions = code.get("max_redemptions")
+            code["is_sold_out"] = bool(max_redemptions is not None and int(code.get("redeemed_count") or 0) >= int(max_redemptions or 0))
+        return codes, False
+    except Exception as exc:
+        print(f"list_gift_codes warning: {exc}")
+        return [], True
+
+
+def list_gift_code_redemptions(limit=80):
+    try:
+        result = execute_query(
+            db.table("gift_code_redemptions")
+            .select("*")
+            .order("redeemed_at", desc=True)
+            .limit(limit),
+            "list_gift_code_redemptions",
+            attempts=2,
+        )
+        rows = result.data or []
+        users = users_map()
+        for row in rows:
+            user = users.get(row.get("user_id"), {})
+            row["user_name"] = user.get("display_name") or user.get("username") or "Unknown"
+            row["username"] = user.get("username") or "-"
+        return rows, False
+    except Exception as exc:
+        print(f"list_gift_code_redemptions warning: {exc}")
+        return [], True
+
+
+def shop_shell_sections():
+    """Static shop shell. Real item catalog will be added in later versions."""
+    return [
+        {
+            "key": "featured",
+            "icon": "🔥",
+            "title": "Nổi bật",
+            "subtitle": "Trang chủ Cửa Hàng",
+            "items": ["Vật phẩm mới", "Vật phẩm hot", "Đồ giới hạn", "Event", "Giảm giá", "Lucky Box"],
+        },
+        {
+            "key": "decor",
+            "icon": "🎨",
+            "title": "Trang trí",
+            "subtitle": "Khung avatar, banner, màu nickname, danh hiệu",
+            "items": ["Hồ sơ", "Banner", "Khung Avatar", "Aura", "Màu Nickname", "Danh hiệu", "Chat", "Emoji"],
+        },
+        {
+            "key": "utility",
+            "icon": "🧰",
+            "title": "Tiện ích",
+            "subtitle": "Các quyền đổi thông tin và mở rộng tài khoản",
+            "items": ["Đổi tên", "Đổi slogan", "Đổi Avatar", "Đổi CLB", "Reset thống kê", "Slot đội hình"],
+        },
+        {
+            "key": "lucky",
+            "icon": "🎁",
+            "title": "Lucky Box",
+            "subtitle": "Khung chuẩn bị cho hòm quà và vé quay",
+            "items": ["Hòm Đồng", "Hòm Bạc", "Hòm Vàng", "Hòm VIP", "Vé quay", "Pity", "Lịch sử quay"],
+        },
+    ]
+
+
+
 @app.route("/profile/daily-checkin", methods=["POST"])
 @login_required
 def claim_daily_checkin_route():
@@ -4404,6 +4504,77 @@ def profile(user_id):
         reward_state=reward_state,
         daily_checkin_event=daily_checkin_event,
     )
+
+
+
+# =========================
+# Shop shell / Inventory / Gift Code (V1.10.23)
+# =========================
+@app.route("/shop")
+@login_required
+def shop():
+    user = current_user()
+    gift_result = {
+        "status": request.args.get("gift_result", ""),
+        "reward": _safe_int(request.args.get("reward"), 0),
+        "balance": _safe_int(request.args.get("balance"), _safe_int(user.get("zcoin_balance"), 0)),
+        "code": request.args.get("code", ""),
+    }
+    return render_template(
+        "shop.html",
+        sections=shop_shell_sections(),
+        gift_result=gift_result,
+    )
+
+
+@app.route("/inventory")
+@login_required
+def inventory():
+    return render_template("inventory.html")
+
+
+@app.route("/gift-code/redeem", methods=["POST"])
+@login_required
+def redeem_gift_code_route():
+    user = current_user()
+    user_id = user.get("id")
+    code = normalize_gift_code(request.form.get("gift_code"))
+    if not code:
+        flash("Hãy nhập gift code.", "warning")
+        return redirect(url_for("shop") + "#gift-code")
+
+    try:
+        result = execute_query(
+            db.rpc("redeem_gift_code", {"p_user_id": user_id, "p_code": code}),
+            "redeem_gift_code_rpc",
+        )
+        payload = result.data
+        if isinstance(payload, list):
+            payload = payload[0] if payload else {}
+        payload = payload or {}
+
+        if not payload.get("ok"):
+            reason_messages = {
+                "code_not_found": "Gift code không tồn tại.",
+                "inactive": "Gift code này đã bị tắt.",
+                "expired": "Gift code này đã hết hạn.",
+                "sold_out": "Gift code này đã hết lượt sử dụng.",
+                "already_redeemed": "Bạn đã sử dụng gift code này rồi.",
+                "user_not_found": "Không tìm thấy tài khoản nhận thưởng.",
+                "unsupported_reward": "Loại phần thưởng của gift code chưa được hỗ trợ.",
+            }
+            flash(reason_messages.get(payload.get("error"), "Không thể đổi gift code này."), "danger")
+            return redirect(url_for("shop") + "#gift-code")
+
+        ttl_cache_delete(f"user:{user_id}", "players_raw")
+        cache_delete("_rz_current_user")
+        reward = _safe_int(payload.get("reward_zcoin"), 0)
+        balance_after = _safe_int(payload.get("balance_after"), 0)
+        return redirect(url_for("shop", gift_result="success", reward=reward, balance=balance_after, code=code) + "#gift-code")
+    except Exception as exc:
+        print(f"redeem_gift_code_route error: {exc}")
+        flash("Không thể đổi gift code lúc này. Hãy kiểm tra SQL V1.10.23 đã chạy thành công chưa.", "danger")
+        return redirect(url_for("shop") + "#gift-code")
 
 
 # =========================
@@ -6055,6 +6226,9 @@ def admin():
     password_reset_requests = list_password_reset_requests("pending")
     pending_disputes = [decorate_match_dispute(item, all_matches) for item in list_match_disputes("pending")]
     audit_logs = list_admin_activity_logs() if is_owner_user(current_user()) else []
+    gift_codes, gift_code_setup_required = list_gift_codes()
+    gift_redemptions, gift_redemption_setup_required = list_gift_code_redemptions()
+    gift_code_setup_required = gift_code_setup_required or gift_redemption_setup_required
     duplicate_ip_groups = build_duplicate_ip_groups(admin_users)
     duplicate_ip_user_count = len({
         str(account.get("id"))
@@ -6084,6 +6258,9 @@ def admin():
         can_create_test_account=has_admin_permission(current_user(), "create_test_account"),
         can_import_accounts_csv=has_admin_permission(current_user(), "import_accounts_csv"),
         friendly_matches_enabled=friendly_matches_enabled(force=True),
+        gift_codes=gift_codes,
+        gift_redemptions=gift_redemptions,
+        gift_code_setup_required=gift_code_setup_required,
     )
 
 
@@ -6141,6 +6318,75 @@ def _build_test_user_payload(row, default_password="Test@12345"):
         "register_ip": "ADMIN_TEST_IMPORT",
         "register_user_agent": "PES 2026 Admin Test Data",
     }
+
+
+
+@app.route("/admin/gift-code/create", methods=["POST"])
+@login_required
+@admin_required
+def admin_create_gift_code():
+    custom_code = normalize_gift_code(request.form.get("code"))
+    code = custom_code or generate_gift_code(request.form.get("prefix") or GIFT_CODE_DEFAULT_PREFIX)
+    reward_zcoin = _safe_int(request.form.get("reward_zcoin"), 0, 1, GIFT_CODE_MAX_REWARD_ZCOIN)
+    max_redemptions = _safe_int(request.form.get("max_redemptions"), 1, 1, 100000)
+    note = (request.form.get("note") or "").strip()[:250]
+    expires_at = None
+    expires_raw = (request.form.get("expires_at") or "").strip()
+    if expires_raw:
+        try:
+            # HTML datetime-local returns YYYY-MM-DDTHH:MM in local time.
+            local_dt = datetime.fromisoformat(expires_raw)
+            expires_at = local_dt.replace(tzinfo=VN_TIMEZONE).astimezone(timezone.utc).isoformat()
+        except Exception:
+            flash("Ngày hết hạn gift code không hợp lệ.", "danger")
+            return redirect_admin("gift-codes")
+
+    if not code or len(code) < 4:
+        flash("Mã gift code phải có ít nhất 4 ký tự hợp lệ.", "danger")
+        return redirect_admin("gift-codes")
+
+    actor = current_user()
+    payload = {
+        "code": code,
+        "reward_type": "zcoin",
+        "reward_zcoin": reward_zcoin,
+        "max_redemptions": max_redemptions,
+        "per_user_limit": 1,
+        "is_active": True,
+        "expires_at": expires_at,
+        "created_by": actor.get("id"),
+        "created_by_name": actor.get("username") or actor.get("display_name") or "Admin",
+        "note": note or None,
+        "updated_at": now_iso(),
+    }
+
+    try:
+        execute_query(db.table("gift_codes").insert(payload), "admin_create_gift_code")
+        log_admin_action("Tạo gift code", "gift_code", code, code, {"reward_zcoin": reward_zcoin, "max_redemptions": max_redemptions})
+        flash(f"Đã tạo gift code {code} với phần thưởng {reward_zcoin} ZCOIN.", "success")
+    except Exception as exc:
+        print(f"admin_create_gift_code error: {exc}")
+        flash("Không thể tạo gift code. Có thể mã đã tồn tại hoặc chưa chạy SQL V1.10.23.", "danger")
+    return redirect_admin("gift-codes")
+
+
+@app.route("/admin/gift-code/<code_id>/toggle", methods=["POST"])
+@login_required
+@admin_required
+def admin_toggle_gift_code(code_id):
+    action = (request.form.get("action") or "disable").strip()
+    is_active = action == "enable"
+    try:
+        execute_query(
+            db.table("gift_codes").update({"is_active": is_active, "updated_at": now_iso()}).eq("id", code_id),
+            "admin_toggle_gift_code",
+        )
+        log_admin_action("Bật gift code" if is_active else "Tắt gift code", "gift_code", code_id, code_id, "")
+        flash("Đã cập nhật trạng thái gift code.", "success")
+    except Exception as exc:
+        print(f"admin_toggle_gift_code error: {exc}")
+        flash("Không thể cập nhật gift code lúc này.", "danger")
+    return redirect_admin("gift-codes")
 
 
 @app.route("/admin/test-account/create", methods=["POST"])

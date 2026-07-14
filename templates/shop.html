@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="shop-hero panel">
+    <div>
+        <span class="eyebrow">PES 2026 STORE</span>
+        <h1>🛒 Cửa Hàng</h1>
+        <p>Khung Cửa Hàng đã sẵn sàng để sau này bổ sung vật phẩm, Lucky Box, trang trí hồ sơ và tiện ích tài khoản.</p>
+    </div>
+    <div class="shop-wallet-card">
+        <span>Số dư</span>
+        <strong><img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt=""> {{ '{:,}'.format((current_user.zcoin_balance|default(0, true))|int).replace(',', '.') }} ZCOIN</strong>
+        <a href="{{ url_for('profile', user_id=current_user.id) }}#zcoin">Xem ví ZCOIN</a>
+    </div>
+</section>
+
+{% if gift_result.status == 'success' %}
+<div class="gift-success-panel" id="gift-code-success">
+    <div class="gift-success-icon">🎉</div>
+    <div>
+        <span class="eyebrow">Đổi gift code thành công</span>
+        <h2>+{{ gift_result.reward }} ZCOIN</h2>
+        <p>Mã <strong>{{ gift_result.code }}</strong> đã được ghi vào ví của bạn. Số dư mới: <strong>{{ gift_result.balance }} ZCOIN</strong>.</p>
+    </div>
+</div>
+<script>
+(function(){
+    document.addEventListener('DOMContentLoaded', function(){
+        if (typeof launchConfetti === 'function') launchConfetti(140);
+    });
+})();
+</script>
+{% endif %}
+
+<section class="shop-layout">
+    <aside class="shop-side panel" id="gift-code">
+        <span class="eyebrow">Gift Code</span>
+        <h2>🎟️ Nhập mã nhận quà</h2>
+        <p class="small">Admin có thể tạo code tặng ZCOIN. Người chơi nhập mã tại đây để nhận thưởng vào ví.</p>
+        <form method="post" action="{{ url_for('redeem_gift_code_route') }}" class="gift-redeem-form">
+            <input name="gift_code" maxlength="40" placeholder="Ví dụ: PES-WELCOME" autocomplete="off" required>
+            <button class="btn gold" type="submit">Đổi code</button>
+        </form>
+        <div class="shop-note-card">
+            <strong>🚧 Cửa Hàng đang ở bản khung</strong>
+            <small>Vật phẩm thật, giá bán, trang bị và Lucky Box sẽ được thêm ở các bản sau.</small>
+        </div>
+    </aside>
+
+    <div class="shop-main">
+        <div class="shop-tabs-shell">
+            <a href="#featured">🔥 Nổi bật</a>
+            <a href="#decor">🎨 Trang trí</a>
+            <a href="#utility">🧰 Tiện ích</a>
+            <a href="#lucky">🎁 Lucky Box</a>
+        </div>
+
+        {% for section in sections %}
+        <section id="{{ section.key }}" class="panel shop-section-card">
+            <div class="shop-section-head">
+                <div>
+                    <span class="eyebrow">{{ section.subtitle }}</span>
+                    <h2>{{ section.icon }} {{ section.title }}</h2>
+                </div>
+                <span class="badge pending">Sắp phát triển</span>
+            </div>
+            <div class="shop-shell-grid">
+                {% for item in section.items %}
+                <article class="shop-shell-item">
+                    <div class="shop-shell-icon">{{ section.icon }}</div>
+                    <strong>{{ item }}</strong>
+                    <small>Khung chờ vật phẩm</small>
+                    <button class="btn gray" type="button" disabled>Sắp mở</button>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
