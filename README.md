@@ -1,3 +1,20 @@
+## V1.10.27_ROOM_RANK_FRAME_LAYOUT_HOTFIX_NO_SQL
+
+**Mục tiêu:** chỉnh lại bố cục khung rank trong phòng đấu để avatar, tên người chơi, rank và phần chân khung cân đối hơn.
+
+**Thay đổi:**
+- `templates/room_detail.html` đổi avatar phòng đấu sang kích thước phù hợp hơn và đưa tên giải xuống phần chân khung.
+- `static/style.css` căn lại vị trí khung rank, avatar, tên người chơi, dòng rank, logo đội, tên đội và footer giải đấu.
+- `APP_VERSION` cập nhật lên `V1.10.27`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng Shop, Gift Code, ZCOIN, Điểm danh, BXH, Admin hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.27_ROOM_RANK_FRAME_LAYOUT_HOTFIX_NO_SQL`
+
+
 
 ## V1.10.26_ROOM_RANK_FRAME_ASSETS_NO_SQL
 

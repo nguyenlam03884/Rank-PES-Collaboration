@@ -4134,3 +4134,161 @@ html[data-theme="light"] .topbar-zcoin-icon{background:#fff3bf;border-color:#efc
   .room-team-card .room-club-logo-large,
   .room-team-card .room-team-placeholder-shield{width:108px;height:108px}
 }
+
+/* V1.10.27_ROOM_RANK_FRAME_LAYOUT_HOTFIX_NO_SQL
+   Căn lại bố cục khung rank trong phòng đấu: avatar ở huy hiệu trên, tên/rank cân đối,
+   phần CLB ở giữa và dòng giải nằm vào khu nameplate phía dưới của khung. */
+.room-team-card{
+  min-height:668px;
+  padding:0 0 16px;
+}
+.room-team-card .room-rank-frame-bg{
+  inset:10px 12px 8px;
+  width:calc(100% - 24px);
+  height:calc(100% - 18px);
+  object-fit:contain;
+  opacity:.78;
+}
+.room-team-card .room-player-heading-plain{
+  position:relative;
+  z-index:2;
+  gap:5px;
+  min-height:132px;
+  padding:16px 18px 0;
+}
+.room-team-card .room-frame-avatar{
+  width:58px!important;
+  height:58px!important;
+  min-width:58px!important;
+  border:3px solid rgba(255,255,255,.72)!important;
+  box-shadow:0 10px 24px rgba(0,0,0,.42),0 0 0 4px rgba(15,23,42,.76)!important;
+  transform:translateY(-2px);
+}
+.room-team-card .room-frame-avatar .avatar-achievement{
+  width:22px;
+  height:22px;
+  right:-3px;
+  bottom:-2px;
+  font-size:12px!important;
+  border-width:2px;
+}
+.room-team-card .room-player-name{
+  max-width:80%;
+  margin-top:-1px;
+  font-size:clamp(23px,2vw,28px);
+  line-height:1.08;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.room-team-card .room-player-rankline{
+  min-height:24px;
+  gap:7px;
+  font-size:13px;
+  padding:0 10px;
+  text-shadow:0 3px 12px rgba(0,0,0,.7);
+}
+.room-team-card .room-player-rankline img{
+  width:20px;
+  height:20px;
+}
+.room-team-card .room-ready-status{
+  margin-top:2px;
+  box-shadow:0 8px 20px rgba(0,0,0,.22);
+}
+.room-team-card .room-card-club-area{
+  position:relative;
+  z-index:2;
+  justify-content:center;
+  padding:18px 28px 116px;
+}
+.room-team-card .room-club-logo-large,
+.room-team-card .room-team-placeholder-shield{
+  width:142px;
+  height:142px;
+  margin:0 auto 12px;
+}
+.room-team-card .room-team-name-lg{
+  max-width:84%;
+  font-size:clamp(27px,2.4vw,34px);
+  line-height:1.06;
+  text-shadow:0 4px 16px rgba(0,0,0,.72);
+}
+.room-team-card .room-team-points-block{
+  margin-top:12px;
+}
+.room-team-card .room-team-points-value{
+  font-size:40px;
+}
+.room-team-card .room-frame-footer{
+  position:absolute;
+  left:50%;
+  bottom:30px;
+  transform:translateX(-50%);
+  z-index:2;
+  width:62%;
+  min-height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 12px;
+}
+.room-team-card .room-team-league-footer{
+  width:100%;
+  margin:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:34px;
+  font-size:14px;
+  font-weight:900;
+  color:#eef4ff;
+  text-shadow:0 3px 12px rgba(0,0,0,.72);
+  white-space:nowrap;
+  overflow:hidden;
+}
+.room-team-card .room-team-league-footer span{
+  display:block;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.room-team-card .room-team-league-footer .room-league-logo{
+  flex:0 0 auto;
+  width:20px;
+  height:20px;
+  margin:0;
+}
+
+@media(max-width:1320px){
+  .room-team-card .room-rank-frame-bg{inset:8px 6px 8px;width:calc(100% - 12px)}
+  .room-team-card .room-player-name{max-width:84%;font-size:24px}
+  .room-team-card .room-team-name-lg{font-size:29px}
+  .room-team-card .room-frame-footer{width:68%}
+}
+@media(max-width:1120px){
+  .room-team-card{min-height:590px}
+  .room-team-card .room-card-club-area{padding:16px 24px 104px}
+  .room-team-card .room-club-logo-large,
+  .room-team-card .room-team-placeholder-shield{width:128px;height:128px}
+}
+@media(max-width:640px){
+  .room-team-card{min-height:520px;padding-bottom:12px}
+  .room-team-card .room-rank-frame-bg{inset:4px 2px 4px;width:calc(100% - 4px);height:calc(100% - 8px);opacity:.68}
+  .room-team-card .room-player-heading-plain{min-height:108px;padding:10px 12px 0;gap:4px}
+  .room-team-card .room-frame-avatar{width:46px!important;height:46px!important;min-width:46px!important;border-width:2px!important}
+  .room-team-card .room-frame-avatar .avatar-achievement{width:18px;height:18px;font-size:10px!important;border-width:2px}
+  .room-team-card .room-player-name{max-width:86%;font-size:18px}
+  .room-team-card .room-player-rankline{font-size:11px;gap:6px}
+  .room-team-card .room-player-rankline img{width:17px;height:17px}
+  .room-team-card .room-card-club-area{padding:10px 14px 86px}
+  .room-team-card .room-club-logo-large,
+  .room-team-card .room-team-placeholder-shield{width:108px;height:108px;margin-bottom:10px}
+  .room-team-card .room-team-name-lg{max-width:90%;font-size:21px}
+  .room-team-card .room-team-points-value{font-size:32px}
+  .room-team-card .room-frame-footer{bottom:22px;width:76%;min-height:46px}
+  .room-team-card .room-team-league-footer{font-size:12px;gap:6px}
+  .room-team-card .room-team-league-footer .room-league-logo{width:17px;height:17px}
+}

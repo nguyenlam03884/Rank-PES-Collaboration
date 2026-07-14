@@ -1,3 +1,13 @@
+## V1.10.27_ROOM_RANK_FRAME_LAYOUT_HOTFIX_NO_SQL
+
+- Hotfix lại layout khung rank trong phòng đấu sau bản V1.10.26.
+- Avatar được căn lại gần huy hiệu trên của khung để nhìn cân đối hơn.
+- Tên người chơi và dòng rank được thu/phóng và canh lại để không bị lệch hoặc chèn vào nhau.
+- Phần nameplate dưới của khung nay hiển thị tên giải đấu để tổng thể khớp hơn, không còn khoảng trống nhìn lạc vị trí.
+- Không cần SQL, không đổi database, không đụng Shop/Gift Code/ZCOIN/Điểm danh/BXH/Admin.
+- Rollback: quay lại deployment V1.10.26 nếu cần.
+
+
 
 ## V1.10.26_ROOM_RANK_FRAME_ASSETS_NO_SQL
 

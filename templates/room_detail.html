@@ -15,7 +15,7 @@
         <section class="room-side-card room-team-card home">
             <img class="room-rank-frame-bg" src="{{ url_for('static', filename='rank_frames/' ~ room.host_rank_info.slug ~ '.png') }}" alt="Khung rank {{ room.host_rank_info.name }}" loading="lazy" aria-hidden="true">
             <div class="room-player-heading-plain">
-                {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm') }}
+                {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='md', extra_class='room-frame-avatar') }}
                 <div class="room-player-name">{{ room.host_name }}</div>
                 <div class="room-player-rankline">
                     <img src="{{ url_for('static', filename='ranks/' ~ room.host_rank_info.slug ~ '.png') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
@@ -30,7 +30,9 @@
                     <div class="room-team-points-value">{{ room.host_team_total_stats }}</div>
                 </div>
                 {% endif %}
-                <div class="room-team-league-text">{% if room.host_team_league_logo_url %}<img class="room-league-logo" src="{{ room.host_team_league_logo_url }}" data-alt-srcs="{{ room.host_team_league_logo_alt_urls|default([])|join('|') }}" data-alt-index="0" alt="{{ room.host_team_league }}" loading="lazy" onerror="const a=(this.dataset.altSrcs||'').split('|').filter(Boolean);const i=Number(this.dataset.altIndex||0);if(i<a.length){this.dataset.altIndex=i+1;this.src=a[i];}else{this.remove();}">{% endif %}<span>{{ room.host_team_league or 'Chưa có giải' }}</span></div>
+            </div>
+            <div class="room-frame-footer">
+                <div class="room-team-league-text room-team-league-footer">{% if room.host_team_league_logo_url %}<img class="room-league-logo" src="{{ room.host_team_league_logo_url }}" data-alt-srcs="{{ room.host_team_league_logo_alt_urls|default([])|join('|') }}" data-alt-index="0" alt="{{ room.host_team_league }}" loading="lazy" onerror="const a=(this.dataset.altSrcs||'').split('|').filter(Boolean);const i=Number(this.dataset.altIndex||0);if(i<a.length){this.dataset.altIndex=i+1;this.src=a[i];}else{this.remove();}">{% endif %}<span>{{ room.host_team_league or 'Chưa có giải' }}</span></div>
             </div>
         </section>
 
@@ -116,7 +118,7 @@
             <img class="room-rank-frame-bg muted" src="{{ url_for('static', filename='rank_frames/ga.png') }}" alt="Khung chờ người chơi" loading="lazy" aria-hidden="true">
             {% endif %}
             <div class="room-player-heading-plain">
-                {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm') }}
+                {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='md', extra_class='room-frame-avatar') }}
                 <div class="room-player-name">{{ room.guest_name }}</div>
                 {% if room.has_guest and room.guest_rank_info %}
                 <div class="room-player-rankline">
@@ -140,7 +142,9 @@
                     <div class="room-team-points-value">{{ room.guest_team_total_stats }}</div>
                 </div>
                 {% endif %}
-                <div class="room-team-league-text">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" data-alt-srcs="{{ room.guest_team_league_logo_alt_urls|default([])|join('|') }}" data-alt-index="0" alt="{{ room.guest_team_league }}" loading="lazy" onerror="const a=(this.dataset.altSrcs||'').split('|').filter(Boolean);const i=Number(this.dataset.altIndex||0);if(i<a.length){this.dataset.altIndex=i+1;this.src=a[i];}else{this.remove();}">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
+            </div>
+            <div class="room-frame-footer">
+                <div class="room-team-league-text room-team-league-footer">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" data-alt-srcs="{{ room.guest_team_league_logo_alt_urls|default([])|join('|') }}" data-alt-index="0" alt="{{ room.guest_team_league }}" loading="lazy" onerror="const a=(this.dataset.altSrcs||'').split('|').filter(Boolean);const i=Number(this.dataset.altIndex||0);if(i<a.length){this.dataset.altIndex=i+1;this.src=a[i];}else{this.remove();}">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
             </div>
         </section>
 
