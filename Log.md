@@ -49,3 +49,14 @@
 - Menu người dùng mới gồm: Quản lý tài khoản, Kho đồ (khung sắp phát triển), Điểm danh (khung trong hồ sơ), Lịch sử, Đăng xuất.
 - Không thay đổi database, không thêm route mới, không sửa logic thi đấu/rank/phòng đấu.
 - Chỉ cập nhật giao diện điều hướng và APP_VERSION.
+
+## V1.10.14_PROFILE_DAILY_CHECKIN_SAFE
+
+- Thêm hệ thống điểm danh thật trong Hồ sơ cá nhân -> tab Điểm danh.
+- Daily reward chốt: random 80–150 ZCOIN/ngày.
+- Tạm thời chưa phát quà mốc thưởng; các mốc chỉ hiển thị tiến trình để chờ Cửa Hàng/Kho đồ sau này.
+- Thêm ví ZCOIN thật trong Hồ sơ cá nhân -> tab ZCOIN.
+- Thêm lịch sử giao dịch ZCOIN gần đây.
+- Thêm popup nhận thưởng và hiệu ứng confetti/pháo hoa khi điểm danh thành công.
+- Có SQL install/check/rollback riêng trong docs.
+- Không thay đổi BXH, phòng đấu, random đội, lịch sử trận, admin, login/register hoặc logic tính rank.

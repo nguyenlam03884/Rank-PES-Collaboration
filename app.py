@@ -34,7 +34,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.13"
+APP_VERSION = "V1.10.14"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -49,6 +49,11 @@ DISPUTE_EVIDENCE_BUCKET = "dispute-evidence"
 DISPUTE_EVIDENCE_MAX_BYTES = 4 * 1024 * 1024
 DISPUTE_EVIDENCE_MAX_SIDE = 1600
 DISPUTE_EVIDENCE_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
+
+# V1.10.14 - Daily check-in reward economy.
+DAILY_CHECKIN_MIN_ZCOIN = 80
+DAILY_CHECKIN_MAX_ZCOIN = 150
+VN_TIMEZONE = timezone(timedelta(hours=7))
 
 ACHIEVEMENT_DEFINITIONS = [
     {"code": "first_match", "icon": "⚽", "name": "Bước chân đầu tiên", "description": "Hoàn thành trận đấu đầu tiên.", "metric": "total_matches", "threshold": 1, "priority": 10},
@@ -3985,6 +3990,137 @@ def update_display_name():
     return redirect(url_for("profile", user_id=user.get("id")))
 
 
+
+# =========================
+# ZCOIN / Daily check-in helpers
+# =========================
+def _profile_feature_setup_state():
+    return {
+        "setup_required": True,
+        "balance": 0,
+        "transactions": [],
+        "can_claim": False,
+        "claimed_today": False,
+        "streak": 0,
+        "total_checkins": 0,
+        "today_reward": None,
+        "today_key": datetime.now(VN_TIMEZONE).date().isoformat(),
+        "reward_min": DAILY_CHECKIN_MIN_ZCOIN,
+        "reward_max": DAILY_CHECKIN_MAX_ZCOIN,
+    }
+
+
+def get_profile_reward_state(user_id):
+    """Read ZCOIN/check-in state without breaking profile if SQL is not installed yet."""
+    state = _profile_feature_setup_state()
+    state["setup_required"] = False
+    today_key = datetime.now(VN_TIMEZONE).date().isoformat()
+    state["today_key"] = today_key
+
+    try:
+        user_row = get_user(user_id) or {}
+        state["balance"] = _safe_int(user_row.get("zcoin_balance"), 0)
+    except Exception as exc:
+        print(f"get_profile_reward_state balance warning: {exc}")
+        state["setup_required"] = True
+        return state
+
+    try:
+        tx_result = execute_query(
+            db.table("zcoin_transactions")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(12),
+            "list_zcoin_transactions",
+        )
+        state["transactions"] = tx_result.data or []
+    except Exception as exc:
+        print(f"list_zcoin_transactions warning: {exc}")
+        state["setup_required"] = True
+        return state
+
+    try:
+        today_result = execute_query(
+            db.table("daily_checkins")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("checkin_date", today_key)
+            .limit(1),
+            "get_today_checkin",
+        )
+        today_row = (today_result.data or [None])[0]
+        state["claimed_today"] = bool(today_row)
+        if today_row:
+            state["today_reward"] = _safe_int(today_row.get("reward_zcoin"), 0)
+            state["streak"] = _safe_int(today_row.get("streak_count"), 0)
+
+        latest_result = execute_query(
+            db.table("daily_checkins")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("checkin_date", desc=True)
+            .limit(1),
+            "get_latest_checkin",
+        )
+        latest_row = (latest_result.data or [None])[0]
+        if latest_row and not today_row:
+            state["streak"] = _safe_int(latest_row.get("streak_count"), 0)
+
+        all_result = execute_query(
+            db.table("daily_checkins")
+            .select("id")
+            .eq("user_id", user_id),
+            "count_daily_checkins",
+        )
+        state["total_checkins"] = len(all_result.data or [])
+        state["can_claim"] = not state["claimed_today"]
+    except Exception as exc:
+        print(f"get_profile_reward_state checkin warning: {exc}")
+        state["setup_required"] = True
+
+    return state
+
+
+@app.route("/profile/daily-checkin", methods=["POST"])
+@login_required
+def claim_daily_checkin_route():
+    user = current_user()
+    user_id = user.get("id")
+    try:
+        result = execute_query(
+            db.rpc("claim_daily_checkin", {"p_user_id": user_id}),
+            "claim_daily_checkin_rpc",
+        )
+        payload = result.data
+        if isinstance(payload, list):
+            payload = payload[0] if payload else {}
+        payload = payload or {}
+
+        if not payload.get("ok"):
+            return redirect(url_for("profile", user_id=user_id, daily_result="already") + "#checkin")
+
+        ttl_cache_delete(f"user:{user_id}", "players_raw")
+        cache_delete("_rz_current_user")
+        reward = _safe_int(payload.get("reward"), 0)
+        streak = _safe_int(payload.get("streak"), 0)
+        balance_after = _safe_int(payload.get("balance_after"), 0)
+        return redirect(
+            url_for(
+                "profile",
+                user_id=user_id,
+                daily_result="success",
+                reward=reward,
+                streak=streak,
+                balance=balance_after,
+            ) + "#checkin"
+        )
+    except Exception as exc:
+        print(f"claim_daily_checkin_route error: {exc}")
+        flash("Không thể điểm danh lúc này. Hãy kiểm tra SQL V1.10.14 đã chạy thành công chưa.", "danger")
+        return redirect(url_for("profile", user_id=user_id) + "#checkin")
+
+
 @app.route("/profile/<user_id>")
 @login_required
 def profile(user_id):
@@ -4054,6 +4190,14 @@ def profile(user_id):
         and user.get("is_online")
         and not activity
     )
+    is_own_profile = viewer.get("id") == user_id
+    reward_state = get_profile_reward_state(user_id) if is_own_profile else _profile_feature_setup_state()
+    daily_checkin_event = {
+        "status": request.args.get("daily_result", ""),
+        "reward": _safe_int(request.args.get("reward"), 0),
+        "streak": _safe_int(request.args.get("streak"), 0),
+        "balance": _safe_int(request.args.get("balance"), reward_state.get("balance", 0)),
+    }
 
     return render_template(
         "profile.html",
@@ -4063,6 +4207,8 @@ def profile(user_id):
         h2h=h2h,
         can_invite=can_invite,
         activity=activity,
+        reward_state=reward_state,
+        daily_checkin_event=daily_checkin_event,
     )
 
 
