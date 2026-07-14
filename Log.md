@@ -1,3 +1,13 @@
+
+## V1.10.13_USER_DROPDOWN_LOGOUT_ONLY_NO_SQL
+
+- Chuyển Đăng xuất vào menu xổ xuống của tên người dùng.
+- Gỡ nút Đăng xuất riêng khỏi sidebar để sidebar gọn hơn.
+- Không thay đổi database.
+- Không cần SQL.
+- File thay đổi: app.py, templates/base.html, static/style.css, Log.md, docs/update_v1_10_13_user_dropdown_logout_only_no_sql.txt.
+- Rollback: quay lại deployment/commit trước, không cần restore database.
+
 # Log
 
 ## V1.10.8
@@ -31,3 +41,11 @@
 - Không cần SQL.
 - Không thay đổi database.
 - Rollback: quay lại deployment/commit V1.10.10 trên Vercel/GitHub, không cần restore Supabase.
+
+
+## V1.10.12_USER_DROPDOWN_MENU_NO_SQL
+
+- Gom lối vào Hồ sơ cá nhân và Lịch sử khỏi sidebar vào menu xổ xuống ở tên người dùng trên topbar.
+- Menu người dùng mới gồm: Quản lý tài khoản, Kho đồ (khung sắp phát triển), Điểm danh (khung trong hồ sơ), Lịch sử, Đăng xuất.
+- Không thay đổi database, không thêm route mới, không sửa logic thi đấu/rank/phòng đấu.
+- Chỉ cập nhật giao diện điều hướng và APP_VERSION.
