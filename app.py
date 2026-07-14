@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from collections import Counter
+import unicodedata
 from threading import Lock
 
 from dotenv import load_dotenv
@@ -34,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.17"
+APP_VERSION = "V1.10.19"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -111,33 +112,83 @@ SMART_RANDOM_WEAKER_WEIGHT = 0.15
 WIN_STREAK_BONUSES = {3: 5, 5: 10, 8: 15, 10: 20}
 
 SUPABASE_PUBLIC_STORAGE_URL = "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/team-logos"
-LEAGUE_LOGO_MAP = {
-    "africa": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/africa.png",
-    "bundesliga": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/bundesliga.png",
-    "europe": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/europe.png",
-    "laliga ea sports": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/laliga-ea-sports.png",
-    "laliga-ea-sports": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/laliga-ea-sports.png",
-    "süper lig": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/super-lig.png",
-    "super lig": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/super-lig.png",
-    "super-lig": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/super-lig.png",
-    "serie bkt": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/serie-bkt.png",
-    "serie-bkt": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/serie-bkt.png",
-    "sky bet championship": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/sky-bet-championship.png",
-    "sky-bet-championship": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/sky-bet-championship.png",
-    "south america": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/south-america.png",
-    "south-america": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/south-america.png",
-    "serie a": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/serie-a.png",
-    "serie-a": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/serie-a.png",
-    "premier league": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/premier-league.png",
-    "premier-league": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/premier-league.png",
-    "ligue 1": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/ligue-1.png",
-    "ligue-1": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/ligue-1.png",
+
+def _league_logo_storage_url(filename):
+    return f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/{filename}"
+
+# V1.10.18 - League logo aliases/fallbacks.
+# Keep several filename candidates because storage filenames may differ between collaborators.
+LEAGUE_LOGO_FILE_CANDIDATES = {
+    "africa": ["africa.png"],
+    "bundesliga": ["bundesliga.png"],
+    "europe": ["europe.png"],
+    "laliga": ["laliga-ea-sports.png", "laliga.png", "la-liga.png", "la-liga-ea-sports.png"],
+    "super_lig": ["super-lig.png", "superlig.png", "süper-lig.png"],
+    "serie_bkt": ["serie-bkt.png", "serie-b.png", "serie-b-kt.png"],
+    "sky_bet_championship": ["sky-bet-championship.png", "championship.png", "efl-championship.png"],
+    "south_america": ["south-america.png", "southamerica.png"],
+    "serie_a": ["serie-a.png", "seriea.png"],
+    "premier_league": ["premier-league.png", "premierleague.png", "epl.png"],
+    "ligue_1": ["ligue-1.png", "ligue1.png", "ligue-1-mcdonalds.png", "ligue-1-uber-eats.png", "france.png"],
 }
 
+LEAGUE_LOGO_ALIASES = {
+    "africa": "africa",
+    "bundesliga": "bundesliga",
+    "germany": "bundesliga",
+    "german bundesliga": "bundesliga",
+    "europe": "europe",
+    "uefa": "europe",
+    "laliga": "laliga",
+    "la liga": "laliga",
+    "laliga ea sports": "laliga",
+    "la liga ea sports": "laliga",
+    "süper lig": "super_lig",
+    "super lig": "super_lig",
+    "turkish super lig": "super_lig",
+    "serie bkt": "serie_bkt",
+    "serie b": "serie_bkt",
+    "italy serie b": "serie_bkt",
+    "sky bet championship": "sky_bet_championship",
+    "championship": "sky_bet_championship",
+    "efl championship": "sky_bet_championship",
+    "south america": "south_america",
+    "copa libertadores": "south_america",
+    "serie a": "serie_a",
+    "italy serie a": "serie_a",
+    "premier league": "premier_league",
+    "english premier league": "premier_league",
+    "epl": "premier_league",
+    "ligue 1": "ligue_1",
+    "ligue1": "ligue_1",
+    "ligue 1 mcdonalds": "ligue_1",
+    "ligue 1 mcdonald s": "ligue_1",
+    "ligue 1 uber eats": "ligue_1",
+    "france ligue 1": "ligue_1",
+    "french ligue 1": "ligue_1",
+}
+
+def normalize_league_key(league_name):
+    raw = str(league_name or "").strip().lower().replace("_", " ").replace("-", " ")
+    raw = unicodedata.normalize("NFKD", raw)
+    raw = "".join(ch for ch in raw if not unicodedata.combining(ch))
+    raw = "".join(ch if ch.isalnum() or ch.isspace() else " " for ch in raw)
+    return " ".join(raw.split())
+
+def get_league_logo_urls(league_name):
+    key = normalize_league_key(league_name)
+    canonical = LEAGUE_LOGO_ALIASES.get(key)
+    if not canonical:
+        return []
+    return [_league_logo_storage_url(filename) for filename in LEAGUE_LOGO_FILE_CANDIDATES.get(canonical, [])]
+
 def get_league_logo_url(league_name):
-    raw = str(league_name or "").strip().lower().replace("_", " ")
-    raw = " ".join(raw.split())
-    return LEAGUE_LOGO_MAP.get(raw, "")
+    urls = get_league_logo_urls(league_name)
+    return urls[0] if urls else ""
+
+def get_league_logo_fallback_urls(league_name):
+    urls = get_league_logo_urls(league_name)
+    return urls[1:]
 
 DEFAULT_RANKS = [
     {"min": 0, "max": 499, "name": "Gà", "short_name": "Gà", "abbr": "G", "code": "CHICKEN", "icon": "🐔", "slug": "ga"},
@@ -657,6 +708,33 @@ FRIENDLY_MATCHES_SETTING_KEY = "friendly_matches_enabled"
 _friendly_matches_cache = {"value": None, "expires_at": 0.0}
 
 
+def _setting_to_bool(value, default=True) -> bool:
+    """Parse a system_settings value safely from bool/json/text/int."""
+    if value is None:
+        return bool(default)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, dict):
+        if "enabled" in value:
+            return _setting_to_bool(value.get("enabled"), default)
+        if "value" in value:
+            return _setting_to_bool(value.get("value"), default)
+        return bool(default)
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes", "y", "on", "enabled", "bật", "bat"}:
+            return True
+        if lowered in {"false", "0", "no", "n", "off", "disabled", "tắt", "tat"}:
+            return False
+        try:
+            return _setting_to_bool(json.loads(value), default)
+        except Exception:
+            return bool(default)
+    return bool(value)
+
+
 def friendly_matches_enabled(force=False) -> bool:
     """Global Admin toggle for friendly matches. Defaults to enabled."""
     now = time.time()
@@ -666,28 +744,17 @@ def friendly_matches_enabled(force=False) -> bool:
     if db is not None:
         try:
             result = execute_query(
-                db.table("system_settings").select("setting_value").eq("setting_key", FRIENDLY_MATCHES_SETTING_KEY).limit(1),
+                db.table("system_settings").select("setting_value,updated_at").eq("setting_key", FRIENDLY_MATCHES_SETTING_KEY).order("updated_at", desc=True).limit(1),
                 "load_friendly_matches_enabled",
                 attempts=2,
             )
             if result.data:
-                stored = result.data[0].get("setting_value")
-                if isinstance(stored, str):
-                    lowered = stored.strip().lower()
-                    if lowered in {"true", "false"}:
-                        enabled = lowered == "true"
-                    else:
-                        parsed = json.loads(stored)
-                        enabled = bool(parsed.get("enabled", parsed) if isinstance(parsed, dict) else parsed)
-                elif isinstance(stored, dict):
-                    enabled = bool(stored.get("enabled", True))
-                elif stored is not None:
-                    enabled = bool(stored)
+                enabled = _setting_to_bool(result.data[0].get("setting_value"), True)
             else:
                 execute_query(
                     db.table("system_settings").upsert({
                         "setting_key": FRIENDLY_MATCHES_SETTING_KEY,
-                        "setting_value": True,
+                        "setting_value": {"enabled": True},
                         "updated_at": now_iso(),
                     }, on_conflict="setting_key"),
                     "seed_friendly_matches_enabled",
@@ -695,23 +762,35 @@ def friendly_matches_enabled(force=False) -> bool:
                 )
         except Exception as exc:
             print(f"friendly_matches_enabled fallback warning: {exc}")
-    _friendly_matches_cache.update({"value": enabled, "expires_at": now + 20})
+    _friendly_matches_cache.update({"value": enabled, "expires_at": now + 5})
     return bool(enabled)
 
 
 def set_friendly_matches_enabled(enabled: bool):
     if db is None:
         raise RuntimeError("Chưa cấu hình Supabase.")
+    payload = {
+        "setting_key": FRIENDLY_MATCHES_SETTING_KEY,
+        "setting_value": {"enabled": bool(enabled)},
+        "updated_at": now_iso(),
+    }
+    try:
+        execute_query(
+            db.table("system_settings").update({
+                "setting_value": payload["setting_value"],
+                "updated_at": payload["updated_at"],
+            }).eq("setting_key", FRIENDLY_MATCHES_SETTING_KEY),
+            "update_friendly_matches_enabled",
+            attempts=3,
+        )
+    except Exception as exc:
+        print(f"update_friendly_matches_enabled warning: {exc}")
     execute_query(
-        db.table("system_settings").upsert({
-            "setting_key": FRIENDLY_MATCHES_SETTING_KEY,
-            "setting_value": bool(enabled),
-            "updated_at": now_iso(),
-        }, on_conflict="setting_key"),
+        db.table("system_settings").upsert(payload, on_conflict="setting_key"),
         "set_friendly_matches_enabled",
         attempts=3,
     )
-    _friendly_matches_cache.update({"value": bool(enabled), "expires_at": time.time() + 20})
+    _friendly_matches_cache.update({"value": bool(enabled), "expires_at": time.time() + 5})
 
 
 def normalize_invite_code(value: str) -> str:
@@ -2524,8 +2603,12 @@ def enrich_room(room):
     room["friendly_tier"] = room.get("friendly_tier") or "A"
     room["host_team_league"] = room.get("host_team_league") or ""
     room["guest_team_league"] = room.get("guest_team_league") or ""
-    room["host_team_league_logo_url"] = room.get("host_team_league_logo_url") or get_league_logo_url(room["host_team_league"])
-    room["guest_team_league_logo_url"] = room.get("guest_team_league_logo_url") or get_league_logo_url(room["guest_team_league"])
+    host_league_logo_urls = get_league_logo_urls(room["host_team_league"])
+    guest_league_logo_urls = get_league_logo_urls(room["guest_team_league"])
+    room["host_team_league_logo_url"] = host_league_logo_urls[0] if host_league_logo_urls else ""
+    room["guest_team_league_logo_url"] = guest_league_logo_urls[0] if guest_league_logo_urls else ""
+    room["host_team_league_logo_alt_urls"] = host_league_logo_urls[1:]
+    room["guest_team_league_logo_alt_urls"] = guest_league_logo_urls[1:]
     room["rematch_expired"] = room.get("note") == REMATCH_EXPIRED_NOTE
     room["dispute"] = None
     if room.get("status") == "disputed" and room.get("match_id"):
@@ -3671,7 +3754,8 @@ def admin_clear_announcement():
 @login_required
 @admin_required
 def admin_toggle_friendly_matches():
-    enabled = request.form.get("friendly_matches_enabled") == "1"
+    raw_value = (request.form.get("friendly_matches_enabled") or "0").strip().lower()
+    enabled = raw_value in {"1", "true", "on", "yes", "enable", "enabled"}
     set_friendly_matches_enabled(enabled)
     log_admin_action(
         "Cập nhật trận giao hữu",
@@ -4624,7 +4708,7 @@ def room_detail(room_id):
         flash("Bạn không thuộc phòng này.", "danger")
         return redirect(url_for("rooms"))
 
-    return render_template("room_detail.html", room=room, friendly_tiers=get_available_team_tiers(), friendly_matches_enabled=friendly_matches_enabled())
+    return render_template("room_detail.html", room=room, friendly_tiers=get_available_team_tiers(), friendly_matches_enabled=friendly_matches_enabled(force=True))
 
 
 @app.route("/room/<room_id>/leave", methods=["POST"])
@@ -5994,7 +6078,7 @@ def admin():
         pending_disputes=pending_disputes,
         can_create_test_account=has_admin_permission(current_user(), "create_test_account"),
         can_import_accounts_csv=has_admin_permission(current_user(), "import_accounts_csv"),
-        friendly_matches_enabled=friendly_matches_enabled(),
+        friendly_matches_enabled=friendly_matches_enabled(force=True),
     )
 
 

@@ -3714,3 +3714,99 @@ html[data-theme="light"] .rzp-zcoin-transaction,html[data-theme="light"] .rzp-ch
   .room-result-actions{grid-template-columns:1fr}
   .room-result-dispute-form{left:0;right:auto;width:min(360px,88vw)}
 }
+
+
+/* V1.10.18 - result input readability and league logo fallback polish */
+.room-extra-controls .room-control-title{
+  font-size:24px;
+  font-weight:1000;
+  letter-spacing:-.02em;
+  color:#f8fafc;
+}
+.room-extra-controls .room-score-title{
+  margin:16px 0 12px;
+  font-size:20px;
+  font-weight:1000;
+  color:#f8fafc;
+}
+.room-score-form{
+  max-width:720px;
+  padding:18px;
+  border:1px solid rgba(148,163,184,.16);
+  border-radius:18px;
+  background:linear-gradient(180deg,rgba(15,23,42,.72),rgba(7,17,29,.58));
+  box-shadow:0 16px 40px rgba(0,0,0,.22);
+}
+.room-score-form .two-col{
+  gap:16px;
+}
+.room-score-form label{
+  display:block;
+  margin-bottom:8px;
+  color:#dce7f7;
+  font-size:15px;
+  font-weight:1000;
+}
+.room-score-form input{
+  min-height:52px;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.28);
+  background:#07111d;
+  color:#fff;
+  text-align:center;
+  font-size:24px;
+  font-weight:1000;
+}
+.room-score-form input:focus{
+  border-color:#f4c552;
+  box-shadow:0 0 0 3px rgba(244,197,82,.14);
+}
+.room-score-form .btn{
+  min-height:52px;
+  font-size:15px;
+  font-weight:1000;
+}
+.room-league-logo{
+  border-radius:999px;
+  background:rgba(255,255,255,.05);
+}
+html[data-theme="light"] .room-score-form{
+  background:#f8fafc;
+  border-color:#dbe4ef;
+  box-shadow:none;
+}
+html[data-theme="light"] .room-score-form input{
+  background:#ffffff;
+  color:#0f172a;
+}
+html[data-theme="light"] .room-extra-controls .room-control-title,
+html[data-theme="light"] .room-extra-controls .room-score-title,
+html[data-theme="light"] .room-score-form label{
+  color:#0f172a;
+}
+@media(max-width:720px){
+  .room-extra-controls .room-control-title{font-size:21px}
+  .room-extra-controls .room-score-title{font-size:18px}
+  .room-score-form{padding:13px;max-width:none}
+  .room-score-form .two-col{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .room-score-form label{font-size:13px;text-align:center}
+  .room-score-form input{min-height:46px;font-size:22px}
+  .room-score-form .btn{min-height:46px;font-size:14px}
+}
+
+/* V1.10.19 - friendly match Admin toggle hardening */
+.admin-friendly-state-form{display:grid;gap:14px;margin-top:14px}
+.admin-friendly-state-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.035)}
+.admin-friendly-state-card strong{display:block;font-size:1.02rem;color:#f7fbff;margin-bottom:4px}
+.admin-friendly-state-card small{display:block;color:var(--muted);font-weight:800;line-height:1.45}
+.admin-friendly-state-card>span{min-width:86px;text-align:center;border-radius:999px;padding:8px 12px;font-weight:1000;letter-spacing:.06em}
+.admin-friendly-state-card.enabled{border-color:rgba(65,213,130,.45);background:linear-gradient(135deg,rgba(65,213,130,.12),rgba(255,255,255,.025))}
+.admin-friendly-state-card.enabled>span{color:#d9ffe8;background:rgba(65,213,130,.18);border:1px solid rgba(65,213,130,.42)}
+.admin-friendly-state-card.disabled{border-color:rgba(255,89,109,.45);background:linear-gradient(135deg,rgba(255,89,109,.12),rgba(255,255,255,.025))}
+.admin-friendly-state-card.disabled>span{color:#ffe0e5;background:rgba(255,89,109,.18);border:1px solid rgba(255,89,109,.42)}
+.admin-friendly-actions{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:12px}
+.admin-friendly-actions .btn{width:100%;min-height:46px;font-weight:1000}
+.room-mode-card.disabled,.friendly-disabled-card{opacity:.72;filter:grayscale(.2)}
+.room-mode-card.disabled h3,.friendly-disabled-card h3{color:#ffccd4}
+.room-mode-card.disabled .btn[disabled],.friendly-disabled-card .btn[disabled],.friendly-match-banner .btn[disabled]{cursor:not-allowed;opacity:.66}
+@media(max-width:760px){.admin-friendly-state-card{align-items:flex-start;flex-direction:column}.admin-friendly-actions{grid-template-columns:1fr}}

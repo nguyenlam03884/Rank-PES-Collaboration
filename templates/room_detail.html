@@ -22,14 +22,14 @@
                 </div>
             </div>
             <div class="room-card-club-area">
-                {% if room.host_team_logo_url %}<img class="room-club-logo-large" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
+                {% if room.host_team_logo_url %}<img class="room-club-logo-large" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy" onerror="this.onerror=null;const p=document.createElement('div');p.className='room-team-placeholder-shield';p.textContent='?';this.replaceWith(p);">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
                 <div class="room-team-name-lg">{{ room.host_team or 'CHƯA CHỌN ĐỘI' }}</div>
                 {% if room.host_team_total_stats %}
                 <div class="room-team-points-block">
                     <div class="room-team-points-value">{{ room.host_team_total_stats }}</div>
                 </div>
                 {% endif %}
-                <div class="room-team-league-text">{% if room.host_team_league_logo_url %}<img class="room-league-logo" src="{{ room.host_team_league_logo_url }}" alt="{{ room.host_team_league }}" loading="lazy">{% endif %}<span>{{ room.host_team_league or 'Chưa có giải' }}</span></div>
+                <div class="room-team-league-text">{% if room.host_team_league_logo_url %}<img class="room-league-logo" src="{{ room.host_team_league_logo_url }}" data-alt-srcs="{{ room.host_team_league_logo_alt_urls|default([])|join('|') }}" data-alt-index="0" alt="{{ room.host_team_league }}" loading="lazy" onerror="const a=(this.dataset.altSrcs||'').split('|').filter(Boolean);const i=Number(this.dataset.altIndex||0);if(i<a.length){this.dataset.altIndex=i+1;this.src=a[i];}else{this.remove();}">{% endif %}<span>{{ room.host_team_league or 'Chưa có giải' }}</span></div>
             </div>
         </section>
 
@@ -127,14 +127,14 @@
                 {% endif %}
             </div>
             <div class="room-card-club-area">
-                {% if room.guest_team_logo_url %}<img class="room-club-logo-large" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
+                {% if room.guest_team_logo_url %}<img class="room-club-logo-large" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team or 'CLB' }}" loading="lazy" onerror="this.onerror=null;const p=document.createElement('div');p.className='room-team-placeholder-shield';p.textContent='?';this.replaceWith(p);">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
                 <div class="room-team-name-lg">{{ room.guest_team or 'CHƯA CHỌN ĐỘI' }}</div>
                 {% if room.guest_team_total_stats %}
                 <div class="room-team-points-block">
                     <div class="room-team-points-value">{{ room.guest_team_total_stats }}</div>
                 </div>
                 {% endif %}
-                <div class="room-team-league-text">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" alt="{{ room.guest_team_league }}" loading="lazy">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
+                <div class="room-team-league-text">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" data-alt-srcs="{{ room.guest_team_league_logo_alt_urls|default([])|join('|') }}" data-alt-index="0" alt="{{ room.guest_team_league }}" loading="lazy" onerror="const a=(this.dataset.altSrcs||'').split('|').filter(Boolean);const i=Number(this.dataset.altIndex||0);if(i<a.length){this.dataset.altIndex=i+1;this.src=a[i];}else{this.remove();}">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
             </div>
         </section>
 
@@ -230,9 +230,13 @@
         <h3>🤝 Trận giao hữu Tier {{ room.friendly_tier }}</h3>
         <p>Không lưu lịch sử • Không cộng/trừ RP • Hai đội không trùng nhau.</p>
         {% if current_user.id == room.host_user_id or current_user.role == "admin" %}
+        {% if friendly_matches_enabled %}
         <form class="inline-form" method="post" action="{{ url_for('room_reroll_friendly', room_id=room.id) }}">
             <button class="btn gold" type="submit">🎲 Tự Random Tiếp</button>
         </form>
+        {% else %}
+        <button class="btn gray" type="button" disabled>⛔ Giao hữu đang tắt</button>
+        {% endif %}
         <form class="inline-form" method="post" action="{{ url_for('room_finish_friendly', room_id=room.id) }}">
             <button class="btn gray" type="submit">✅ Kết thúc giao hữu</button>
         </form>

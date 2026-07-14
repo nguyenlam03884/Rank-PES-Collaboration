@@ -1,3 +1,14 @@
+
+## V1.10.19_FRIENDLY_TOGGLE_HARD_LOCK_NO_SQL
+
+- Sửa triệt để nút bật/tắt trận Giao hữu trong Admin.
+- Đổi giao diện Admin từ công tắc dễ hiểu nhầm sang 2 nút rõ ràng: Bật giao hữu / Tắt giao hữu.
+- Room detail luôn đọc trạng thái Giao hữu mới nhất từ database, tránh cache làm user vẫn thấy card Giao hữu sau khi Admin tắt.
+- Backend tiếp tục hard-block request quay đội Giao hữu khi Admin đã tắt.
+- Khi Giao hữu đang tắt, card Giao hữu trong phòng đấu hiển thị trạng thái khóa; trận Giao hữu cũ chỉ còn cho kết thúc, không cho random tiếp.
+- Không cần SQL, không đổi logic Rank/ZCOIN/Điểm danh/BXH.
+- File thay đổi: app.py, templates/admin.html, templates/room_detail.html, static/style.css, README.md, Log.md, docs/update_v1_10_19_friendly_toggle_hard_lock_no_sql.txt.
+
 # Log
 
 ## V1.10.17_ROOM_CONFIRM_UI_HOTFIX_NO_SQL
@@ -86,3 +97,11 @@
 - Khi giao hữu bị tắt, phòng đấu chỉ cho quay trận Xếp hạng và không cho random tiếp giao hữu.
 - Không cần SQL, không đổi database schema.
 
+
+## V1.10.18_ROOM_SCORE_INPUT_LEAGUE_LOGO_HOTFIX_NO_SQL
+
+- Tăng độ rõ của khu nhập kết quả trong phòng đấu: tiêu đề, label, input và nút gửi kết quả to/đậm hơn.
+- Bổ sung alias/fallback logo giải đấu, đặc biệt cho Ligue 1 và các tên giải có biến thể dấu/khoảng trắng/gạch nối.
+- Thêm fallback khi ảnh đội hoặc ảnh giải bị lỗi URL, tránh hiển thị icon ảnh lỗi.
+- Không cần SQL.
+- File thay đổi: app.py, templates/room_detail.html, static/style.css, README.md, Log.md, docs/update_v1_10_18_room_score_input_league_logo_hotfix_no_sql.txt.

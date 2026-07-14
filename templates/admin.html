@@ -579,20 +579,21 @@
                 <h2>🤝 Trận giao hữu</h2>
                 <p class="small">Bật/tắt chế độ quay đội Giao hữu trong phòng đấu. Khi tắt, người chơi chỉ còn quay đội Xếp hạng.</p>
             </div>
-            <span class="badge {{ 'success' if friendly_matches_enabled else 'danger' }}">{{ 'Đang bật' if friendly_matches_enabled else 'Đang tắt' }}</span>
+            <span class="badge {{ 'success' if friendly_matches_enabled else 'danger' }}">{{ 'ĐANG BẬT' if friendly_matches_enabled else 'ĐANG TẮT' }}</span>
         </div>
-        <form method="post" action="{{ url_for('admin_toggle_friendly_matches') }}" class="admin-system-toggle-form" onsubmit="return confirm('Xác nhận thay đổi trạng thái trận giao hữu?');">
-            <label class="admin-permission-option admin-system-toggle-option">
-                <span class="admin-permission-copy">
-                    <strong>Cho phép trận giao hữu</strong>
-                    <small>Không lưu lịch sử, không tính RP; chỉ ảnh hưởng lựa chọn Giao hữu trong phòng đấu.</small>
-                </span>
-                <span class="admin-switch">
-                    <input type="checkbox" name="friendly_matches_enabled" value="1" {% if friendly_matches_enabled %}checked{% endif %}>
-                    <span class="admin-switch-track" aria-hidden="true"></span>
-                </span>
-            </label>
-            <button class="btn gold" type="submit">Lưu cài đặt giao hữu</button>
+        <form method="post" action="{{ url_for('admin_toggle_friendly_matches') }}" class="admin-friendly-state-form">
+            <div class="admin-friendly-state-card {{ 'enabled' if friendly_matches_enabled else 'disabled' }}">
+                <div>
+                    <strong>Trạng thái hiện tại: {{ 'Đang cho phép Giao hữu' if friendly_matches_enabled else 'Đã khóa Giao hữu' }}</strong>
+                    <small>{{ 'Người chơi có thể quay đội Giao hữu trong phòng đấu.' if friendly_matches_enabled else 'Card Giao hữu sẽ bị khóa và backend sẽ chặn mọi request quay Giao hữu mới.' }}</small>
+                </div>
+                <span>{{ 'BẬT' if friendly_matches_enabled else 'TẮT' }}</span>
+            </div>
+            <div class="admin-friendly-actions">
+                <button class="btn gold" type="submit" name="friendly_matches_enabled" value="1" onclick="return confirm('Bật lại chế độ trận giao hữu?');">✅ Bật giao hữu</button>
+                <button class="btn red" type="submit" name="friendly_matches_enabled" value="0" onclick="return confirm('Tắt trận giao hữu? Người chơi sẽ chỉ còn quay đội Xếp hạng.');">⛔ Tắt giao hữu</button>
+            </div>
+            <p class="small">Thay đổi này không lưu lịch sử, không tính RP và không ảnh hưởng các trận xếp hạng. Nếu đang có trận giao hữu cũ, chủ phòng vẫn nên kết thúc trận đó trước.</p>
         </form>
     </div>
 
