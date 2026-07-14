@@ -85,3 +85,20 @@ Rollback: rollback Vercel về bản trước, không cần restore Supabase.
 - Không đụng phòng đấu, BXH, lịch sử, Players, Admin.
 
 **Commit nên đặt khi upload GitHub:** `V1.10.20_TOPBAR_ZCOIN_BALANCE_NO_SQL`
+
+
+## V1.10.21_TOPBAR_ZCOIN_LOGO_NO_SQL
+
+**Mục tiêu:** thay icon ZCOIN dạng emoji trên topbar bằng logo ZCOIN riêng do dự án cung cấp.
+
+**Thay đổi:**
+- Thêm asset `static/zcoin-logo.png`.
+- Topbar ZCOIN sử dụng logo mới thay cho icon emoji.
+- CSS tối ưu kích thước logo trong desktop/mobile.
+
+**Không thay đổi:**
+- Không đụng SQL/database.
+- Không đụng logic điểm danh/ZCOIN.
+- Không đụng phòng đấu, BXH, lịch sử, Players, Admin.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.21_TOPBAR_ZCOIN_LOGO_NO_SQL`

@@ -106,7 +106,9 @@ function toggleTheme(){
                     </div>
                 </div>
                 <a class="topbar-zcoin-pill" href="{{ url_for('profile', user_id=current_user.id) }}#zcoin" title="Xem ví ZCOIN">
-                    <span class="topbar-zcoin-icon">🪙</span>
+                    <span class="topbar-zcoin-icon" aria-hidden="true">
+                        <img src="{{ url_for('static', filename='zcoin-logo.png') }}" alt="">
+                    </span>
                     <strong>{{ '{:,}'.format((current_user.zcoin_balance|default(0, true))|int).replace(',', '.') }}</strong>
                     <small>ZCOIN</small>
                 </a>

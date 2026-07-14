@@ -114,3 +114,12 @@
 - Không thay đổi database, điểm danh, phòng đấu, BXH, admin hoặc logic tính điểm.
 - Không cần SQL.
 - Commit khuyến nghị trên GitHub: `V1.10.20_TOPBAR_ZCOIN_BALANCE_NO_SQL`.
+
+
+## V1.10.21_TOPBAR_ZCOIN_LOGO_NO_SQL
+
+- Thay icon ZCOIN dạng emoji trên topbar bằng logo ZCOIN riêng của dự án.
+- Thêm file `static/zcoin-logo.png` đã được xử lý nền trong suốt để hiển thị gọn trên topbar.
+- Không thay đổi database, điểm danh, ví ZCOIN, phòng đấu, BXH hoặc logic tính điểm.
+- Không cần SQL.
+- Commit khuyến nghị trên GitHub: `V1.10.21_TOPBAR_ZCOIN_LOGO_NO_SQL`.
