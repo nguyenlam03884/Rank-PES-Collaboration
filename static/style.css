@@ -5277,3 +5277,47 @@ html[data-theme="light"] .profile-equipped-banner-pill{
   .inventory-head-actions .btn,
   .inventory-head-actions form{width:100%}
 }
+
+
+/* V1.10.41_PROFILE_BANNER_VISIBILITY_HOTFIX_NO_SQL
+   Làm banner hồ sơ đã trang bị sáng/rõ hơn, giảm lớp phủ tối quá mạnh. */
+.rzp-profile-hero.has-profile-banner{
+  min-height:250px;
+  border-color:rgba(245,190,60,.38);
+}
+.rzp-profile-hero.has-profile-banner::before{
+  opacity:1!important;
+  filter:brightness(1.18) contrast(1.08) saturate(1.12);
+  transform:scale(1.005);
+}
+.rzp-profile-hero.has-profile-banner::after{
+  background:
+    linear-gradient(90deg,rgba(3,7,18,.58),rgba(3,7,18,.18) 46%,rgba(3,7,18,.26)),
+    linear-gradient(180deg,rgba(3,7,18,.02),rgba(3,7,18,.36))!important;
+}
+.rzp-profile-hero.has-profile-banner .rzp-profile-title-block{
+  text-shadow:0 4px 18px rgba(0,0,0,.70);
+}
+.rzp-profile-hero.has-profile-banner .rzp-profile-rank-line span,
+.rzp-profile-hero.has-profile-banner .rzp-profile-rank-line strong,
+.rzp-profile-hero.has-profile-banner .rzp-profile-chips span{
+  background:rgba(8,15,28,.68);
+  backdrop-filter:blur(4px);
+}
+.rzp-profile-hero.has-profile-banner .profile-equipped-banner-pill{
+  background:rgba(15,23,42,.52);
+  backdrop-filter:blur(5px);
+}
+@media(max-width:720px){
+  .rzp-profile-hero.has-profile-banner{min-height:275px}
+  .rzp-profile-hero.has-profile-banner::after{
+    background:
+      linear-gradient(180deg,rgba(3,7,18,.18),rgba(3,7,18,.74)),
+      linear-gradient(90deg,rgba(3,7,18,.48),rgba(3,7,18,.16))!important;
+  }
+}
+html[data-theme="light"] .rzp-profile-hero.has-profile-banner::after{
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.56),rgba(255,255,255,.15) 46%,rgba(255,255,255,.20)),
+    linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.34))!important;
+}

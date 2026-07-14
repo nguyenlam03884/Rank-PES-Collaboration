@@ -1,3 +1,13 @@
+## V1.10.41_PROFILE_BANNER_VISIBILITY_HOTFIX_NO_SQL
+
+- Hotfix hiển thị banner hồ sơ sau khi trang bị: giảm lớp phủ tối quá mạnh khiến banner bị mờ/không thấy rõ.
+- Tăng độ sáng, tương phản và độ nổi của ảnh banner nền trong hồ sơ.
+- Giữ khả năng đọc chữ bằng chip/rank có nền mờ nhẹ thay vì phủ tối toàn bộ banner.
+- Cập nhật cache CSS lên `?v=1.10.41`.
+- Không cần SQL, không đổi database, không đụng Shop/Kho đồ/ZCOIN/phòng đấu.
+- Rollback: quay lại deployment V1.10.40 nếu cần.
+
+
 ## V1.10.40_INVENTORY_EQUIP_PROFILE_BANNER_NO_SQL
 
 - Mở chức năng trang bị banner hồ sơ đã mua trong Kho đồ.
