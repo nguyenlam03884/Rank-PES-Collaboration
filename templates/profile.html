@@ -5,8 +5,9 @@
 {% set is_own_profile = current_user.id == player.id %}
 {% set display_name_changes = player.display_name_change_count or 0 %}
 {% set display_name_remaining = [0, 2 - display_name_changes]|max %}
+{% set profile_banner = player.equipped_profile_banner %}
 
-<section class="rzp-profile-hero">
+<section class="rzp-profile-hero {% if profile_banner and profile_banner.image_path %}has-profile-banner{% endif %}" {% if profile_banner and profile_banner.image_path %}style="--profile-banner-image: url('{{ url_for('static', filename=profile_banner.image_path) }}');"{% endif %}>
     <div class="rzp-profile-hero-main">
         <div class="rzp-profile-avatar-wrap">
             {{ player_avatar(player, size='xxl') }}
@@ -39,6 +40,7 @@
         {% elif not is_own_profile and activity %}
         <span class="presence presence-{{ activity.code }}"><i></i>{{ activity.label }}</span>
         {% endif %}
+        {% if profile_banner and profile_banner.item_name %}<span class="profile-equipped-banner-pill">🎨 {{ profile_banner.item_name }}</span>{% endif %}
         {% if is_own_profile %}<a class="btn gray" href="{{ url_for('change_password') }}">🔐 Đổi mật khẩu</a>{% endif %}
     </div>
 </section>

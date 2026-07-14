@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.39"
+APP_VERSION = "V1.10.40"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4538,6 +4538,28 @@ def user_inventory_codes(user_id):
     return {row.get("item_code") for row in items if row.get("item_code")}, setup_required
 
 
+def get_equipped_profile_banner(user_id):
+    """Return the equipped profile banner for a user. Uses existing user_inventory.is_equipped column."""
+    if not user_id:
+        return None
+    try:
+        result = execute_query(
+            db.table("user_inventory")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("item_type", "profile_banner")
+            .eq("is_equipped", True)
+            .limit(1),
+            "get_equipped_profile_banner",
+            attempts=2,
+        )
+        rows = result.data or []
+        return rows[0] if rows else None
+    except Exception as exc:
+        print(f"get_equipped_profile_banner warning: {exc}")
+        return None
+
+
 def shop_shell_sections():
     """Shop tab structure. Featured/Decor now use real profile banner items."""
     return [
@@ -4700,6 +4722,7 @@ def profile(user_id):
         "streak": _safe_int(request.args.get("streak"), 0),
         "balance": _safe_int(request.args.get("balance"), reward_state.get("balance", 0)),
     }
+    user["equipped_profile_banner"] = get_equipped_profile_banner(user_id)
 
     return render_template(
         "profile.html",
@@ -4833,12 +4856,89 @@ def inventory():
     user = current_user()
     items, setup_required = list_user_inventory(user.get("id"))
     profile_banners = [item for item in items if item.get("item_type") == "profile_banner"]
+    equipped_profile_banner = next((item for item in profile_banners if item.get("is_equipped")), None)
     return render_template(
         "inventory.html",
         inventory_items=items,
         profile_banner_inventory=profile_banners,
+        equipped_profile_banner=equipped_profile_banner,
         inventory_setup_required=setup_required,
     )
+
+
+@app.route("/inventory/equip/<inventory_id>", methods=["POST"])
+@login_required
+def equip_inventory_item_route(inventory_id):
+    user = current_user()
+    user_id = user.get("id")
+    try:
+        result = execute_query(
+            db.table("user_inventory")
+            .select("*")
+            .eq("id", inventory_id)
+            .eq("user_id", user_id)
+            .limit(1),
+            "equip_inventory_fetch_item",
+            attempts=2,
+        )
+        rows = result.data or []
+        item = rows[0] if rows else None
+        if not item:
+            flash("Không tìm thấy vật phẩm trong Kho đồ của bạn.", "danger")
+            return redirect(url_for("inventory"))
+
+        if item.get("item_type") != "profile_banner":
+            flash("Vật phẩm này chưa hỗ trợ trang bị.", "warning")
+            return redirect(url_for("inventory"))
+
+        execute_query(
+            db.table("user_inventory")
+            .update({"is_equipped": False, "updated_at": now_iso()})
+            .eq("user_id", user_id)
+            .eq("item_type", "profile_banner"),
+            "equip_inventory_clear_profile_banners",
+            attempts=2,
+        )
+        execute_query(
+            db.table("user_inventory")
+            .update({"is_equipped": True, "updated_at": now_iso()})
+            .eq("id", inventory_id)
+            .eq("user_id", user_id),
+            "equip_inventory_set_profile_banner",
+            attempts=2,
+        )
+        ttl_cache_delete(f"user:{user_id}", "players_raw")
+        cache_delete("_rz_current_user")
+        flash(f"Đã trang bị {item.get('item_name') or 'banner hồ sơ'} vào hồ sơ.", "success")
+        return redirect(url_for("inventory"))
+    except Exception as exc:
+        print(f"equip_inventory_item_route error: {exc}")
+        flash("Không thể trang bị vật phẩm lúc này. Hãy kiểm tra bảng user_inventory đã có cột is_equipped.", "danger")
+        return redirect(url_for("inventory"))
+
+
+@app.route("/inventory/unequip/profile-banner", methods=["POST"])
+@login_required
+def unequip_profile_banner_route():
+    user = current_user()
+    user_id = user.get("id")
+    try:
+        execute_query(
+            db.table("user_inventory")
+            .update({"is_equipped": False, "updated_at": now_iso()})
+            .eq("user_id", user_id)
+            .eq("item_type", "profile_banner"),
+            "unequip_profile_banner",
+            attempts=2,
+        )
+        ttl_cache_delete(f"user:{user_id}", "players_raw")
+        cache_delete("_rz_current_user")
+        flash("Đã gỡ banner hồ sơ đang sử dụng.", "success")
+        return redirect(url_for("inventory"))
+    except Exception as exc:
+        print(f"unequip_profile_banner_route error: {exc}")
+        flash("Không thể gỡ banner lúc này.", "danger")
+        return redirect(url_for("inventory"))
 
 
 @app.route("/gift-code/redeem", methods=["POST"])

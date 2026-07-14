@@ -4,7 +4,7 @@
     <div>
         <span class="eyebrow">INVENTORY</span>
         <h1>🎒 Kho đồ</h1>
-        <p>Quản lý các vật phẩm bạn đã mua bằng ZCOIN. Giai đoạn này đã lưu quyền sở hữu; chức năng trang bị sẽ mở ở bản tiếp theo.</p>
+        <p>Quản lý các vật phẩm đã mua bằng ZCOIN. Banner hồ sơ hiện đã có thể trang bị trực tiếp vào hồ sơ cá nhân.</p>
     </div>
     <div class="shop-wallet-card inventory-wallet-card">
         <span>Số dư</span>
@@ -17,7 +17,7 @@
 <section class="panel inventory-empty-panel">
     <div class="inventory-empty-icon">⚠️</div>
     <h2>Kho đồ cần chạy SQL</h2>
-    <p>Hãy chạy file <strong>01_install_v1_10_36_shop_purchase_inventory.sql</strong> trong Supabase để bật chức năng mua và lưu vật phẩm.</p>
+    <p>Hãy chạy file <strong>01_install_v1_10_36_shop_purchase_inventory.sql</strong> trong Supabase để bật chức năng mua, lưu và trang bị vật phẩm.</p>
 </section>
 {% elif inventory_items %}
 <section class="panel inventory-live-panel">
@@ -25,9 +25,16 @@
         <div>
             <span class="eyebrow">Vật phẩm của bạn</span>
             <h2>🎒 {{ inventory_items|length }} vật phẩm đã sở hữu</h2>
-            <p>Vật phẩm mua từ Cửa Hàng sẽ được lưu tại đây. Hiện tại banner hồ sơ chưa trang bị trực tiếp lên profile để tránh ảnh hưởng giao diện đang ổn định.</p>
+            <p>Banner hồ sơ có thể bấm <strong>Trang bị</strong> để hiển thị ngay trên đầu trang hồ sơ cá nhân.</p>
         </div>
-        <a class="btn gold" href="{{ url_for('shop', tab='decor') }}">Mua thêm</a>
+        <div class="inventory-head-actions">
+            {% if equipped_profile_banner %}
+            <form method="post" action="{{ url_for('unequip_profile_banner_route') }}" onsubmit="return confirm('Gỡ banner hồ sơ đang sử dụng?');">
+                <button class="btn gray" type="submit">Gỡ banner</button>
+            </form>
+            {% endif %}
+            <a class="btn gold" href="{{ url_for('shop', tab='decor') }}">Mua thêm</a>
+        </div>
     </div>
 
     <div class="inventory-tabs-placeholder">
@@ -39,10 +46,10 @@
 
     <div class="inventory-item-grid">
         {% for item in inventory_items %}
-        <article class="inventory-item-card rarity-{{ item.metadata.rarity_slug if item.metadata and item.metadata.rarity_slug else 'common' }}">
+        <article class="inventory-item-card rarity-{{ item.metadata.rarity_slug if item.metadata and item.metadata.rarity_slug else 'common' }} {% if item.is_equipped %}is-equipped{% endif %}">
             <div class="inventory-item-preview" {% if item.image_path %}style="background-image:url('{{ url_for('static', filename=item.image_path) }}');"{% endif %}>
                 {% if item.icon_path %}<img src="{{ url_for('static', filename=item.icon_path) }}" alt="{{ item.item_name }}" loading="lazy">{% endif %}
-                <span>{{ item.rarity or 'Vật phẩm' }}</span>
+                <span>{{ 'Đang dùng' if item.is_equipped else (item.rarity or 'Vật phẩm') }}</span>
             </div>
             <div class="inventory-item-info">
                 <h3>{{ item.item_name or item.item_code }}</h3>
@@ -51,7 +58,17 @@
                     <span>{{ item.item_type or 'item' }}</span>
                     <strong>{{ item.acquired_from or 'shop' }}</strong>
                 </div>
+                {% if item.item_type == 'profile_banner' %}
+                    {% if item.is_equipped %}
+                    <button class="btn green" type="button" disabled>✓ Đang sử dụng</button>
+                    {% else %}
+                    <form method="post" action="{{ url_for('equip_inventory_item_route', inventory_id=item.id) }}">
+                        <button class="btn gold" type="submit">Trang bị</button>
+                    </form>
+                    {% endif %}
+                {% else %}
                 <button class="btn gray" type="button" disabled>Trang bị sắp mở</button>
+                {% endif %}
             </div>
         </article>
         {% endfor %}
@@ -68,7 +85,7 @@
         <article><strong>Khung Avatar</strong><small>Sắp mở</small></article>
         <article><strong>Màu Nickname</strong><small>Sắp mở</small></article>
         <article><strong>Danh hiệu</strong><small>Sắp mở</small></article>
-        <article><strong>Đang sử dụng</strong><small>Sắp mở</small></article>
+        <article><strong>Đang sử dụng</strong><small>Banner hồ sơ</small></article>
     </div>
     <a class="btn gold" href="{{ url_for('shop', tab='featured') }}">Đến Cửa Hàng</a>
 </section>

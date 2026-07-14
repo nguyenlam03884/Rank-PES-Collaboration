@@ -1,45 +1,23 @@
-## V1.10.39_ROOM_RESULT_CONFIRM_OWNER_UI_NO_SQL
+## V1.10.40_INVENTORY_EQUIP_PROFILE_BANNER_NO_SQL
 
-**Mục tiêu:** sửa lỗi chủ phòng/Admin sau khi nhập kết quả vẫn thấy nút `Xác Nhận` và `Không Đồng Ý` trong phòng đấu.
-
-**Thay đổi:**
-- `templates/room_detail.html` chỉ hiển thị nút xác nhận/tranh chấp cho người được mời khi họ không phải là người đã nhập kết quả.
-- Chủ phòng/người đã nhập kết quả chỉ thấy trạng thái chờ đối thủ xác nhận.
-- `app.py` thêm helper `can_review_room_result(user, room)` để chặn backend việc người nhập kết quả tự xác nhận/tranh chấp bằng request thủ công.
-- `APP_VERSION` cập nhật lên `V1.10.39`.
-
-**Không thay đổi:**
-- Không cần SQL.
-- Không thay đổi database.
-- Không đụng Shop, Gift Code, ZCOIN, Điểm danh, BXH, Admin panel, logic RP hoặc upload avatar.
-
-**Commit nên đặt khi upload GitHub:** `V1.10.39_ROOM_RESULT_CONFIRM_OWNER_UI_NO_SQL`
-
-
-## V1.10.38_RP_DELTA_GUARD_AVATAR_MOBILE_HOTFIX
-
-**Mục tiêu:** sửa chắc lỗi trận thua không bị trừ RP / lịch sử hiện `+0 điểm`, đồng thời sửa upload avatar trên điện thoại.
-
-**Nguyên nhân chính:** trong `app.py` có 2 hàm cùng tên `_safe_int`. Hàm thứ 2 dùng cho import/admin có `minimum=0` đã ghi đè hàm `_safe_int` chung, làm các delta âm như `-20` bị ép thành `0`. Vì vậy người thua có thể không bị trừ điểm.
+**Mục tiêu:** mở chức năng trang bị banner hồ sơ đã mua trong Kho đồ.
 
 **Thay đổi:**
-- Đổi hàm import/admin sang `_safe_int_bounded`, không còn ghi đè `_safe_int` dùng cho RP.
-- Delta âm khi thua được giữ đúng, ví dụ `-20`.
-- Thêm `enforce_ranked_delta_signs()` để trận có thắng/thua luôn lưu winner dương và loser âm.
-- Thêm guard hiển thị cho các trận cũ đã lưu sai `0`, để lịch sử không còn hiện thua `+0 điểm`.
-- Xóa cache liên quan sau khi xác nhận trận hoặc đổi avatar.
-- Tăng giới hạn avatar từ 2 MB lên 8 MB.
-- Cập nhật form đổi avatar để dùng tốt hơn trên điện thoại.
-- Cập nhật cache CSS lên `?v=1.10.38`.
+- Người chơi có thể vào `Kho đồ` và bấm `Trang bị` trên banner hồ sơ đã mua.
+- Chỉ một banner hồ sơ được sử dụng tại một thời điểm.
+- Có thể gỡ banner đang dùng bằng nút `Gỡ banner`.
+- Trang hồ sơ sẽ hiển thị banner đang dùng làm nền phần hero hồ sơ.
+- `APP_VERSION` cập nhật lên `V1.10.40`.
+- `templates/base.html` cập nhật cache CSS lên `?v=1.10.40`.
 
-**SQL tùy chọn để sửa dữ liệu cũ:**
-- `docs/01_repair_v1_10_38_rank_loss_zero_delta.sql`
-- `docs/02_check_v1_10_38_rank_loss_zero_delta.sql`
+**SQL:** không cần SQL mới nếu đã chạy V1.10.36, vì bảng `user_inventory` đã có sẵn cột `is_equipped`.
 
 **Không thay đổi:**
-- Không đụng Shop / Gift Code / ZCOIN / Điểm danh / phòng đấu giao hữu.
+- Không đổi logic mua Shop.
+- Không đổi giá ZCOIN.
+- Không đụng Gift Code, Điểm danh, BXH, Phòng đấu, Admin hoặc cơ chế cộng/trừ RP.
 
-**Commit nên đặt:** `V1.10.38_RP_DELTA_GUARD_AVATAR_MOBILE_HOTFIX`
+**Commit nên đặt khi upload GitHub:** `V1.10.40_INVENTORY_EQUIP_PROFILE_BANNER_NO_SQL`
 
 
 ## V1.10.37_SHOP_HIDE_MISSING_PRICE_BUTTON_NO_SQL

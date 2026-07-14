@@ -5189,3 +5189,91 @@ html[data-theme="light"] .inventory-item-info p{color:#475569}
     margin-bottom:6px;
   }
 }
+
+/* V1.10.40_INVENTORY_EQUIP_PROFILE_BANNER_NO_SQL
+   Mở trang bị banner hồ sơ đã mua trong Kho đồ. */
+.rzp-profile-hero{
+  position:relative;
+  overflow:hidden;
+}
+.rzp-profile-hero > *{
+  position:relative;
+  z-index:2;
+}
+.rzp-profile-hero.has-profile-banner{
+  min-height:230px;
+  align-items:flex-end;
+  border-color:rgba(245,190,60,.30);
+  background:linear-gradient(135deg,rgba(7,14,26,.95),rgba(10,18,32,.95));
+  box-shadow:0 26px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.rzp-profile-hero.has-profile-banner::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:var(--profile-banner-image);
+  background-size:cover;
+  background-position:center;
+  opacity:.92;
+  transform:scale(1.01);
+  z-index:0;
+}
+.rzp-profile-hero.has-profile-banner::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,rgba(3,7,18,.88),rgba(3,7,18,.58) 44%,rgba(3,7,18,.72)),linear-gradient(180deg,rgba(3,7,18,.14),rgba(3,7,18,.86));
+  z-index:1;
+}
+.rzp-profile-hero.has-profile-banner .rzp-profile-title-block .page-title,
+.rzp-profile-hero.has-profile-banner .eyebrow{
+  text-shadow:0 4px 18px rgba(0,0,0,.62);
+}
+.profile-equipped-banner-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:10px 13px;
+  border-radius:999px;
+  color:#ffe7a3;
+  font-weight:950;
+  background:rgba(15,23,42,.70);
+  border:1px solid rgba(250,204,21,.32);
+  box-shadow:0 10px 24px rgba(0,0,0,.22);
+  white-space:nowrap;
+}
+.inventory-head-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.inventory-head-actions form{margin:0}
+.inventory-item-card.is-equipped{
+  border-color:rgba(250,204,21,.50);
+  box-shadow:0 18px 45px rgba(0,0,0,.24),0 0 0 1px rgba(250,204,21,.15),0 0 35px rgba(250,204,21,.08);
+}
+.inventory-item-card.is-equipped .inventory-item-preview span{
+  background:rgba(34,197,94,.22);
+  border-color:rgba(74,222,128,.45);
+  color:#86efac;
+}
+.inventory-item-info form{margin:0}
+.inventory-item-info form .btn{width:100%}
+html[data-theme="light"] .rzp-profile-hero.has-profile-banner{
+  border-color:rgba(202,138,4,.30)!important;
+}
+html[data-theme="light"] .profile-equipped-banner-pill{
+  color:#7c4a03;
+  background:rgba(255,251,235,.92);
+  border-color:#facc15;
+}
+@media(max-width:720px){
+  .rzp-profile-hero.has-profile-banner{min-height:260px;justify-content:flex-end}
+  .rzp-profile-hero.has-profile-banner::after{background:linear-gradient(180deg,rgba(3,7,18,.40),rgba(3,7,18,.90))}
+  .profile-equipped-banner-pill{white-space:normal;max-width:100%}
+  .inventory-head-actions{width:100%;justify-content:flex-start}
+  .inventory-head-actions .btn,
+  .inventory-head-actions form{width:100%}
+}
