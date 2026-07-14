@@ -29,7 +29,7 @@
                     <div class="room-team-points-value">{{ room.host_team_total_stats }}</div>
                 </div>
                 {% endif %}
-                <div class="room-team-league-text">{{ room.host_team_league or 'Chưa có giải' }}</div>
+                <div class="room-team-league-text">{% if room.host_team_league_logo_url %}<img class="room-league-logo" src="{{ room.host_team_league_logo_url }}" alt="{{ room.host_team_league }}" loading="lazy">{% endif %}<span>{{ room.host_team_league or 'Chưa có giải' }}</span></div>
             </div>
         </section>
 
@@ -127,7 +127,7 @@
                     <div class="room-team-points-value">{{ room.guest_team_total_stats }}</div>
                 </div>
                 {% endif %}
-                <div class="room-team-league-text">{{ room.guest_team_league or 'Chưa có giải' }}</div>
+                <div class="room-team-league-text">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" alt="{{ room.guest_team_league }}" loading="lazy">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
             </div>
         </section>
 

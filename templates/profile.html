@@ -184,7 +184,7 @@
         {% if not is_own_profile %}
         <div class="rzp-placeholder-card"><div class="rzp-placeholder-icon">🔒</div><div><h3>Ví ZCOIN là thông tin cá nhân</h3><p>Chỉ chủ tài khoản mới xem được số dư và lịch sử giao dịch.</p></div></div>
         {% elif reward_state.setup_required %}
-        <div class="rzp-placeholder-card"><div class="rzp-placeholder-icon">⚙️</div><div><h3>Chưa kích hoạt dữ liệu ZCOIN</h3><p>Hãy chạy file SQL V1.10.14 trong Supabase để bật ví ZCOIN và điểm danh thật.</p></div></div>
+        <div class="rzp-placeholder-card"><div class="rzp-placeholder-icon">⚙️</div><div><h3>Chưa kích hoạt dữ liệu ZCOIN</h3><p>Hãy chạy file SQL V1.10.15 trong Supabase để bật ví ZCOIN và điểm danh thật.</p></div></div>
         {% else %}
         <div class="rzp-zcoin-grid">
             <article class="panel rzp-zcoin-balance-card">
@@ -219,7 +219,7 @@
         {% if not is_own_profile %}
         <div class="rzp-placeholder-card"><div class="rzp-placeholder-icon">🔒</div><div><h3>Điểm danh thuộc tài khoản cá nhân</h3><p>Chỉ chủ tài khoản mới có thể điểm danh và nhận ZCOIN.</p></div></div>
         {% elif reward_state.setup_required %}
-        <div class="rzp-placeholder-card rzp-checkin-preview"><div class="rzp-placeholder-icon">⚙️</div><div><h3>Chưa kích hoạt điểm danh</h3><p>Chạy SQL V1.10.14 để bật nút điểm danh, ví ZCOIN và lịch sử nhận thưởng.</p></div></div>
+        <div class="rzp-placeholder-card rzp-checkin-preview"><div class="rzp-placeholder-icon">⚙️</div><div><h3>Chưa kích hoạt điểm danh</h3><p>Chạy SQL V1.10.15 để bật nút điểm danh, ví ZCOIN và lịch sử nhận thưởng.</p></div></div>
         {% else %}
         <div class="rzp-checkin-live-grid" data-daily-checkin-event="{{ daily_checkin_event.status }}" data-daily-reward="{{ daily_checkin_event.reward }}" data-daily-streak="{{ daily_checkin_event.streak }}" data-daily-balance="{{ daily_checkin_event.balance }}">
             <article class="panel rzp-checkin-card">

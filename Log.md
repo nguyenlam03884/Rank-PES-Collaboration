@@ -1,3 +1,12 @@
+## V1.10.14
+
+- Cập nhật trực tiếp trên bản người dùng gửi `V1.10.13`.
+- Chỉ sử dụng 11 logo league do người dùng cung cấp, không dùng lại logo tự tạo trước đó.
+- Chuẩn hoá tất cả logo thành PNG 128x128, giữ đúng tỉ lệ, căn giữa và làm trong suốt phần nền ngoài khi có thể.
+- Hiển thị logo nhỏ 22x22 cạnh tên giải trong phòng đấu, phù hợp vì logo giải chỉ là thông tin phụ.
+- Thêm mapping Supabase cho Africa, Bundesliga, Europe, LaLiga EA Sports, Süper Lig, Serie BKT, Sky Bet Championship, South America, Serie A, Premier League và Ligue 1.
+- Không cần SQL.
+
 
 ## V1.10.13_USER_DROPDOWN_LOGOUT_ONLY_NO_SQL
 
@@ -50,13 +59,12 @@
 - Không thay đổi database, không thêm route mới, không sửa logic thi đấu/rank/phòng đấu.
 - Chỉ cập nhật giao diện điều hướng và APP_VERSION.
 
-## V1.10.14_PROFILE_DAILY_CHECKIN_SAFE
+## V1.10.15_MERGE_LEAGUE_LOGOS_DAILY_CHECKIN_SAFE
 
-- Thêm hệ thống điểm danh thật trong Hồ sơ cá nhân -> tab Điểm danh.
-- Daily reward chốt: random 80–150 ZCOIN/ngày.
-- Tạm thời chưa phát quà mốc thưởng; các mốc chỉ hiển thị tiến trình để chờ Cửa Hàng/Kho đồ sau này.
-- Thêm ví ZCOIN thật trong Hồ sơ cá nhân -> tab ZCOIN.
-- Thêm lịch sử giao dịch ZCOIN gần đây.
-- Thêm popup nhận thưởng và hiệu ứng confetti/pháo hoa khi điểm danh thành công.
-- Có SQL install/check/rollback riêng trong docs.
-- Không thay đổi BXH, phòng đấu, random đội, lịch sử trận, admin, login/register hoặc logic tính rank.
+- Gộp bản update mới của bạn bạn với hệ thống Điểm danh/ZCOIN đã chạy thành công.
+- Giữ phần logo giải đấu trong phòng đấu từ bản bạn bạn gửi.
+- Giữ ví ZCOIN, điểm danh hằng ngày 80–150 ZCOIN, popup nhận thưởng và confetti.
+- Nếu đã chạy SQL V1.10.14 và điểm danh hoạt động thì không cần chạy SQL thêm.
+- File thay đổi: app.py, templates/base.html, templates/profile.html, templates/room_detail.html, static/style.css, Log.md, docs/*.
+- Rollback: quay lại deployment trước; không cần restore database nếu chỉ lỗi code.
+

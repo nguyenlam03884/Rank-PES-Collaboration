@@ -34,7 +34,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.14"
+APP_VERSION = "V1.10.15"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -50,7 +50,7 @@ DISPUTE_EVIDENCE_MAX_BYTES = 4 * 1024 * 1024
 DISPUTE_EVIDENCE_MAX_SIDE = 1600
 DISPUTE_EVIDENCE_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 
-# V1.10.14 - Daily check-in reward economy.
+# V1.10.15 - Daily check-in reward economy merged with league logo update.
 DAILY_CHECKIN_MIN_ZCOIN = 80
 DAILY_CHECKIN_MAX_ZCOIN = 150
 VN_TIMEZONE = timezone(timedelta(hours=7))
@@ -109,6 +109,35 @@ SMART_RANDOM_CORRECT_WEIGHT = 0.70
 SMART_RANDOM_STRONGER_WEIGHT = 0.15
 SMART_RANDOM_WEAKER_WEIGHT = 0.15
 WIN_STREAK_BONUSES = {3: 5, 5: 10, 8: 15, 10: 20}
+
+SUPABASE_PUBLIC_STORAGE_URL = "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/team-logos"
+LEAGUE_LOGO_MAP = {
+    "africa": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/africa.png",
+    "bundesliga": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/bundesliga.png",
+    "europe": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/europe.png",
+    "laliga ea sports": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/laliga-ea-sports.png",
+    "laliga-ea-sports": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/laliga-ea-sports.png",
+    "süper lig": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/super-lig.png",
+    "super lig": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/super-lig.png",
+    "super-lig": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/super-lig.png",
+    "serie bkt": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/serie-bkt.png",
+    "serie-bkt": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/serie-bkt.png",
+    "sky bet championship": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/sky-bet-championship.png",
+    "sky-bet-championship": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/sky-bet-championship.png",
+    "south america": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/south-america.png",
+    "south-america": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/south-america.png",
+    "serie a": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/serie-a.png",
+    "serie-a": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/serie-a.png",
+    "premier league": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/premier-league.png",
+    "premier-league": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/premier-league.png",
+    "ligue 1": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/ligue-1.png",
+    "ligue-1": f"{SUPABASE_PUBLIC_STORAGE_URL}/league-logos/ligue-1.png",
+}
+
+def get_league_logo_url(league_name):
+    raw = str(league_name or "").strip().lower().replace("_", " ")
+    raw = " ".join(raw.split())
+    return LEAGUE_LOGO_MAP.get(raw, "")
 
 DEFAULT_RANKS = [
     {"min": 0, "max": 499, "name": "Gà", "short_name": "Gà", "abbr": "G", "code": "CHICKEN", "icon": "🐔", "slug": "ga"},
@@ -2409,6 +2438,7 @@ def enrich_room(room):
         room["host_team_overall"] = room.get("host_team_overall") or info.get("overall") or get_team_overall(room.get("host_team"))
         room["host_team_logo_url"] = room.get("host_team_logo_url") or info.get("logo_url")
         room["host_team_league"] = room.get("host_team_league") or info.get("league") or ""
+        room["host_team_league_logo_url"] = get_league_logo_url(room["host_team_league"])
         room["host_team_tier"] = info.get("tier") or get_team_tier(room.get("host_team"))
         room["host_team_total_stats"] = int(info.get("total_stats") or 0)
     else:
@@ -2418,6 +2448,7 @@ def enrich_room(room):
         room["guest_team_overall"] = room.get("guest_team_overall") or info.get("overall") or get_team_overall(room.get("guest_team"))
         room["guest_team_logo_url"] = room.get("guest_team_logo_url") or info.get("logo_url")
         room["guest_team_league"] = room.get("guest_team_league") or info.get("league") or ""
+        room["guest_team_league_logo_url"] = get_league_logo_url(room["guest_team_league"])
         room["guest_team_tier"] = info.get("tier") or get_team_tier(room.get("guest_team"))
         room["guest_team_total_stats"] = int(info.get("total_stats") or 0)
     else:
@@ -2432,6 +2463,8 @@ def enrich_room(room):
     room["friendly_tier"] = room.get("friendly_tier") or "A"
     room["host_team_league"] = room.get("host_team_league") or ""
     room["guest_team_league"] = room.get("guest_team_league") or ""
+    room["host_team_league_logo_url"] = room.get("host_team_league_logo_url") or get_league_logo_url(room["host_team_league"])
+    room["guest_team_league_logo_url"] = room.get("guest_team_league_logo_url") or get_league_logo_url(room["guest_team_league"])
     room["rematch_expired"] = room.get("note") == REMATCH_EXPIRED_NOTE
     room["dispute"] = None
     if room.get("status") == "disputed" and room.get("match_id"):
@@ -3990,7 +4023,6 @@ def update_display_name():
     return redirect(url_for("profile", user_id=user.get("id")))
 
 
-
 # =========================
 # ZCOIN / Daily check-in helpers
 # =========================
@@ -4117,7 +4149,7 @@ def claim_daily_checkin_route():
         )
     except Exception as exc:
         print(f"claim_daily_checkin_route error: {exc}")
-        flash("Không thể điểm danh lúc này. Hãy kiểm tra SQL V1.10.14 đã chạy thành công chưa.", "danger")
+        flash("Không thể điểm danh lúc này. Hãy kiểm tra SQL V1.10.15 đã chạy thành công chưa.", "danger")
         return redirect(url_for("profile", user_id=user_id) + "#checkin")
 
 
@@ -4190,6 +4222,7 @@ def profile(user_id):
         and user.get("is_online")
         and not activity
     )
+
     is_own_profile = viewer.get("id") == user_id
     reward_state = get_profile_reward_state(user_id) if is_own_profile else _profile_feature_setup_state()
     daily_checkin_event = {
