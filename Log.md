@@ -20,3 +20,14 @@
 - Cập nhật APP_VERSION thành V1.10.10 để dễ kiểm tra deploy.
 - File thay đổi: app.py, templates/profile.html, static/style.css, Log.md, docs/update_v1_10_10_profile_ui_repack_no_sql.txt.
 - Rollback: quay lại deployment/commit trước, không cần restore database.
+
+## V1.10.11_PROFILE_TABS_FORCE_NO_SQL
+
+- Repack riêng phần Hồ sơ cá nhân để bắt buộc cập nhật giao diện tab mới lên Production.
+- Chỉ tác động khu vực hồ sơ: `templates/profile.html` và CSS hồ sơ trong `static/style.css`.
+- `app.py` chỉ đổi `APP_VERSION` từ V1.10.10 sang V1.10.11 để dễ xác nhận deploy.
+- Thêm tab: Tổng quan, Thành tích, Lịch sử, ZCOIN, Điểm danh, Tài khoản.
+- Tab ZCOIN và Điểm danh chỉ là khung giao diện, chưa kết nối database thật.
+- Không cần SQL.
+- Không thay đổi database.
+- Rollback: quay lại deployment/commit V1.10.10 trên Vercel/GitHub, không cần restore Supabase.
