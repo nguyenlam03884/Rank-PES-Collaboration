@@ -1,3 +1,13 @@
+## V1.10.39_ROOM_RESULT_CONFIRM_OWNER_UI_NO_SQL
+
+- Sửa lỗi phòng đấu: chủ phòng/Admin sau khi nhập kết quả không còn thấy nút `Xác Nhận` và `Không Đồng Ý` nữa.
+- Người được mời vẫn là người duy nhất được xác nhận hoặc báo tranh chấp kết quả.
+- Nếu người đang xem chính là `submitted_by_id`, giao diện chỉ hiển thị trạng thái chờ đối thủ xác nhận.
+- Backend cũng được bảo vệ bằng helper `can_review_room_result(user, room)` để tránh người nhập kết quả tự xác nhận/tranh chấp qua request thủ công.
+- Không cần SQL, không đổi database, không đụng Shop/Gift Code/ZCOIN/Điểm danh/BXH/Admin panel/logic RP/avatar.
+- Rollback: quay lại deployment V1.10.38 nếu cần.
+
+
 ## V1.10.38_RP_DELTA_GUARD_AVATAR_MOBILE_HOTFIX
 
 - Sửa lỗi gốc khiến người thua không bị trừ RP: `_safe_int` bị định nghĩa trùng và phiên bản có `minimum=0` đã ép delta âm thành 0.

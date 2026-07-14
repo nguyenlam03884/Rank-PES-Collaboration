@@ -1,3 +1,21 @@
+## V1.10.39_ROOM_RESULT_CONFIRM_OWNER_UI_NO_SQL
+
+**Mục tiêu:** sửa lỗi chủ phòng/Admin sau khi nhập kết quả vẫn thấy nút `Xác Nhận` và `Không Đồng Ý` trong phòng đấu.
+
+**Thay đổi:**
+- `templates/room_detail.html` chỉ hiển thị nút xác nhận/tranh chấp cho người được mời khi họ không phải là người đã nhập kết quả.
+- Chủ phòng/người đã nhập kết quả chỉ thấy trạng thái chờ đối thủ xác nhận.
+- `app.py` thêm helper `can_review_room_result(user, room)` để chặn backend việc người nhập kết quả tự xác nhận/tranh chấp bằng request thủ công.
+- `APP_VERSION` cập nhật lên `V1.10.39`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng Shop, Gift Code, ZCOIN, Điểm danh, BXH, Admin panel, logic RP hoặc upload avatar.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.39_ROOM_RESULT_CONFIRM_OWNER_UI_NO_SQL`
+
+
 ## V1.10.38_RP_DELTA_GUARD_AVATAR_MOBILE_HOTFIX
 
 **Mục tiêu:** sửa chắc lỗi trận thua không bị trừ RP / lịch sử hiện `+0 điểm`, đồng thời sửa upload avatar trên điện thoại.

@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.38"
+APP_VERSION = "V1.10.39"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -688,6 +688,33 @@ def is_owner_user(user) -> bool:
             or (user.get("role") == "admin" and user.get("username") == "admin")
         )
     )
+
+
+def can_review_room_result(user, room) -> bool:
+    """Only the invited opponent can confirm/dispute a submitted room result.
+
+    Admin accounts are powerful elsewhere, but inside a player room an admin who is
+    also the host/submitter must not be allowed to confirm their own submitted
+    score. A non-participant admin may still help only as a moderation fallback.
+    """
+    if not user or not room or room.get("status") != "waiting_result_confirm":
+        return False
+    current_id = str(user.get("id") or "")
+    submitted_by_id = str(room.get("submitted_by_id") or "")
+    host_id = str(room.get("host_user_id") or "")
+    guest_id = str(room.get("guest_user_id") or "")
+
+    if not current_id:
+        return False
+    if submitted_by_id and current_id == submitted_by_id:
+        return False
+    if current_id == guest_id:
+        return True
+    if is_admin_user(user) and current_id not in {host_id, guest_id}:
+        return True
+    return False
+
+
 
 
 ADMIN_PERMISSION_FIELDS = {
@@ -5819,8 +5846,8 @@ def room_confirm_result(room_id):
         flash("Không tìm thấy phòng.", "danger")
         return redirect(url_for("rooms"))
 
-    if user["id"] != room["guest_user_id"] and not is_admin_user(user):
-        flash("Chỉ người được mời mới được xác nhận kết quả.", "danger")
+    if not can_review_room_result(user, room):
+        flash("Chỉ người được mời mới được xác nhận kết quả. Người đã nhập kết quả không thể tự xác nhận.", "danger")
         return redirect(url_for("room_detail", room_id=room_id))
 
     if room["status"] != "waiting_result_confirm":
@@ -5867,8 +5894,8 @@ def room_dispute_result(room_id):
         flash("Không tìm thấy phòng.", "danger")
         return redirect(url_for("rooms"))
 
-    if user["id"] != room["guest_user_id"]:
-        flash("Chỉ người được mời mới được báo tranh chấp.", "danger")
+    if not can_review_room_result(user, room):
+        flash("Chỉ người được mời mới được báo tranh chấp. Người đã nhập kết quả không thể tự tranh chấp/xác nhận kết quả của chính mình.", "danger")
         return redirect(url_for("room_detail", room_id=room_id))
 
     if room["status"] != "waiting_result_confirm":

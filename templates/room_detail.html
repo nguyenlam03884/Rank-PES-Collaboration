@@ -48,7 +48,12 @@
                 {% if room.status == 'waiting_result_confirm' %}
                     <div class="room-result-review" aria-label="Tỷ số đang chờ xác nhận">
                         <div class="room-result-score">{{ room.host_score if room.host_score is not none else 0 }} <span>-</span> {{ room.guest_score if room.guest_score is not none else 0 }}</div>
-                        {% if current_user.id == room.guest_user_id or current_user.role == 'admin' %}
+                        {% set _viewer_id = current_user.id|string %}
+                        {% set _guest_id = room.guest_user_id|string %}
+                        {% set _submitted_by = room.submitted_by_id|string %}
+                        {% set _host_id = room.host_user_id|string %}
+                        {% set _can_review_result = (_viewer_id == _guest_id and _viewer_id != _submitted_by) %}
+                        {% if _can_review_result %}
                         <div class="room-result-actions">
                             <form method="post" action="{{ url_for('room_confirm_result', room_id=room.id) }}">
                                 <button class="room-result-btn confirm" type="submit">✓ Xác Nhận</button>
@@ -74,7 +79,7 @@
                             </details>
                         </div>
                         {% else %}
-                        <div class="room-result-waiting">Đang chờ sân khách xác nhận</div>
+                        <div class="room-result-waiting">{% if _viewer_id == _submitted_by %}Đã gửi kết quả. Đang chờ đối thủ xác nhận{% else %}Đang chờ sân khách xác nhận{% endif %}</div>
                         {% endif %}
                     </div>
                 {% elif room.status in ['playing', 'friendly_playing'] %}
