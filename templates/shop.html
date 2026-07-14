@@ -55,18 +55,18 @@
         </div>
 
         {% for section in sections %}
-        <section id="{{ section.key }}" class="panel shop-section-card">
+        <section id="{{ section['key'] }}" class="panel shop-section-card">
             <div class="shop-section-head">
                 <div>
-                    <span class="eyebrow">{{ section.subtitle }}</span>
-                    <h2>{{ section.icon }} {{ section.title }}</h2>
+                    <span class="eyebrow">{{ section['subtitle'] }}</span>
+                    <h2>{{ section['icon'] }} {{ section['title'] }}</h2>
                 </div>
                 <span class="badge pending">Sắp phát triển</span>
             </div>
             <div class="shop-shell-grid">
-                {% for item in section.items %}
+                {% for item in section['items'] %}
                 <article class="shop-shell-item">
-                    <div class="shop-shell-icon">{{ section.icon }}</div>
+                    <div class="shop-shell-icon">{{ section['icon'] }}</div>
                     <strong>{{ item }}</strong>
                     <small>Khung chờ vật phẩm</small>
                     <button class="btn gray" type="button" disabled>Sắp mở</button>

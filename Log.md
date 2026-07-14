@@ -146,3 +146,13 @@
 - Không thay đổi database, điểm danh, ví ZCOIN, phòng đấu, BXH hoặc logic tính điểm.
 - Không cần SQL.
 - Commit khuyến nghị trên GitHub: `V1.10.21_TOPBAR_ZCOIN_LOGO_NO_SQL`.
+
+
+## V1.10.24_SHOP_TEMPLATE_ITEMS_HOTFIX_NO_SQL
+
+- Sửa lỗi 500 khi mở `/shop`: Jinja hiểu `section.items` là method dictionary `.items()` thay vì danh sách vật phẩm khung.
+- Đổi template Shop sang cú pháp truy cập key rõ ràng: `section['items']`, `section['key']`, `section['icon']`, `section['title']`, `section['subtitle']`.
+- Không thay đổi database, Gift Code, ZCOIN, Điểm danh, Admin, phòng đấu, BXH hoặc logic mua/bán.
+- Không cần SQL.
+- Rollback: quay lại deployment V1.10.23 nếu cần, không restore Supabase.
+- Commit khuyến nghị trên GitHub: `V1.10.24_SHOP_TEMPLATE_ITEMS_HOTFIX_NO_SQL`.

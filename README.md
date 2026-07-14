@@ -1,4 +1,23 @@
 
+
+## V1.10.24_SHOP_TEMPLATE_ITEMS_HOTFIX_NO_SQL
+
+**Mục tiêu:** sửa lỗi 500 khi người dùng click vào Cửa Hàng sau bản V1.10.23.
+
+**Nguyên nhân:** trong `templates/shop.html`, biến `section.items` bị Jinja hiểu là method `.items()` của dictionary, không phải danh sách item khung, dẫn đến lỗi `TypeError: 'builtin_function_or_method' object is not iterable`.
+
+**Thay đổi:**
+- Sửa `templates/shop.html` để dùng cú pháp key rõ ràng: `section['items']`.
+- Cập nhật các key liên quan trong Shop: `key`, `icon`, `title`, `subtitle`.
+- Cập nhật `APP_VERSION` lên `V1.10.24`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng Gift Code backend, ZCOIN, Điểm danh, BXH, phòng đấu, Admin sửa kết quả hoặc bật/tắt giao hữu.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.24_SHOP_TEMPLATE_ITEMS_HOTFIX_NO_SQL`
+
 ## V1.10.23_SHOP_SHELL_GIFT_CODE_SAFE
 
 **Mục tiêu:** mở khung Cửa Hàng/Kho đồ trước và thêm Gift Code thật để Admin tặng ZCOIN cho người chơi.
