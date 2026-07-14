@@ -41,7 +41,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.38"
+APP_VERSION = "V1.10.39"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2014,6 +2014,16 @@ def decorate_match_for_view(match, viewer_id=None):
         my_score = item.get("score1") if as_player1 else item.get("score2")
         opponent_score = item.get("score2") if as_player1 else item.get("score1")
         item["my_delta"] = int((item.get("delta1") if as_player1 else item.get("delta2")) or 0)
+        # Defensive legacy display: old confirmed rows could store +RP for the
+        # winner but 0 for the loser. Show the correct sign immediately; the
+        # V1.10.39 SQL migration also synchronizes the database and BXH points.
+        if item.get("status") == "confirmed" and my_score is not None and opponent_score is not None:
+            if my_score < opponent_score and item["my_delta"] >= 0:
+                item["my_delta"] = BASE_LOSS_POINTS
+            elif my_score > opponent_score and item["my_delta"] <= 0:
+                item["my_delta"] = BASE_WIN_POINTS
+            elif my_score == opponent_score:
+                item["my_delta"] = 0
         item["opponent_id"] = item.get("player2_id") if as_player1 else item.get("player1_id")
         item["opponent_name"] = item.get("player2_name") if as_player1 else item.get("player1_name")
         item["my_avatar_url"] = item.get("player1_avatar_url") if as_player1 else item.get("player2_avatar_url")
@@ -6048,9 +6058,24 @@ def apply_match_result(match):
     if match.get("score1") is None or match.get("score2") is None:
         raise ValueError("Trận chưa có tỉ số.")
 
-    # Idempotency: a confirmed match with stored deltas was already applied.
+    # Idempotency: only a confirmed match whose stored deltas match the score
+    # is considered fully applied. Legacy rows such as +22/0 or 0/0 must not
+    # silently pass as valid, because that leaves the loser without an RP deduction.
     if match.get("status") == "confirmed" and match.get("delta1") is not None and match.get("delta2") is not None:
-        return _safe_int(match.get("delta1")), _safe_int(match.get("delta2"))
+        stored_delta1 = _safe_int(match.get("delta1"))
+        stored_delta2 = _safe_int(match.get("delta2"))
+        stored_score1 = _safe_int(match.get("score1"), -1)
+        stored_score2 = _safe_int(match.get("score2"), -1)
+        deltas_are_valid = (
+            (stored_score1 == stored_score2 and stored_delta1 == 0 and stored_delta2 == 0)
+            or (stored_score1 > stored_score2 and stored_delta1 > 0 and stored_delta2 < 0)
+            or (stored_score2 > stored_score1 and stored_delta2 > 0 and stored_delta1 < 0)
+        )
+        if deltas_are_valid:
+            return stored_delta1, stored_delta2
+        raise ValueError(
+            "Dữ liệu RP của trận cũ chưa đồng bộ. Hãy chạy file SQL sửa lịch sử của V1.10.39 trước."
+        )
     if match.get("status") == "processing_result":
         raise ValueError("Kết quả đang được xử lý. Không cần nhấn xác nhận lần nữa.")
 

@@ -1,4 +1,4 @@
-## V1.10.38_RP_AVATAR_MOBILE_FIX_NO_SQL
+## V1.10.39_RP_AVATAR_MOBILE_FIX_NO_SQL
 
 **Mục tiêu:** rà soát cơ chế cộng/trừ RP và sửa tải ảnh đại diện trên điện thoại.
 
@@ -8,7 +8,7 @@
 - Thêm hoàn tác chính xác dữ liệu hai người chơi nếu một bước cập nhật trận bị lỗi, tránh cộng/trừ một phía hoặc áp dụng hai lần khi thử lại.
 - Avatar trên điện thoại hỗ trợ JPG, PNG, WEBP, HEIC/HEIF và tăng giới hạn ảnh đầu vào từ 2 MB lên 12 MB.
 - Nút tải avatar có trạng thái chọn file/đang tải rõ ràng trên màn hình nhỏ.
-- `APP_VERSION` cập nhật lên `V1.10.38`.
+- `APP_VERSION` cập nhật lên `V1.10.39`.
 
 **Lưu ý về ảnh lịch sử:**
 - Dòng `+0 điểm` ở một trận thua cũ có thể là bản ghi cũ đã xác nhận nhưng không lưu `delta`. Bản update này sửa các trận mới; không tự sửa dữ liệu lịch sử để tránh cộng/trừ lại sai.
@@ -18,7 +18,7 @@
 - Không thay đổi schema hoặc xóa dữ liệu.
 - Không thay đổi luật RP cơ bản, BXH, phòng đấu, Shop, ZCOIN hoặc Gift Code.
 
-**Commit nên đặt khi upload GitHub:** `V1.10.38_RP_AVATAR_MOBILE_FIX_NO_SQL`
+**Commit nên đặt khi upload GitHub:** `V1.10.39_RP_AVATAR_MOBILE_FIX_NO_SQL`
 
 
 ## V1.10.37_SHOP_HIDE_MISSING_PRICE_BUTTON_NO_SQL

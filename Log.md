@@ -1,3 +1,11 @@
+# V1.10.39 - Repair Historical RP
+
+- Sửa lịch sử confirmed có delta sai dấu hoặc bằng 0.
+- Đồng bộ phần RP còn thiếu vào bảng users bằng SQL idempotent.
+- Chặn confirmed match có delta không hợp lệ bị xem là đã tính điểm.
+- Thêm fallback hiển thị đúng dấu trước khi SQL được chạy.
+- Bắt buộc chạy SQL: `docs/update_v1_10_39_repair_historical_rp.sql`.
+
 ## V1.10.37_SHOP_HIDE_MISSING_PRICE_BUTTON_NO_SQL
 
 - Chỉnh giao diện Cửa Hàng theo yêu cầu: không còn hiển thị `Thiếu xxx` trên nút mua vật phẩm.
