@@ -1,3 +1,15 @@
+# Log
+
+## V1.10.17_ROOM_CONFIRM_UI_HOTFIX_NO_SQL
+
+- Hotfix giao diện phòng đấu khi trạng thái đang chờ xác nhận kết quả.
+- Sửa lỗi tỷ số đã nhập như `1 - 0` bị hiển thị nhỏ, lệch và dính vào hai nút `Xác Nhận` / `Không Đồng Ý`.
+- Khôi phục layout tỷ số lớn ở giữa phòng đấu, hai nút xác nhận/tranh chấp nằm cùng hàng, cân đối như giao diện trước.
+- Không thay đổi logic xác nhận kết quả, không thay đổi tính điểm, không đổi database.
+- Không cần SQL.
+- File thay đổi: `app.py`, `static/style.css`, `Log.md`, `README.md`, `docs/update_v1_10_17_room_confirm_ui_hotfix_no_sql.txt`.
+- Rollback: quay lại deployment/commit V1.10.16 trên Vercel/GitHub, không cần restore Supabase.
+
 ## V1.10.14
 
 - Cập nhật trực tiếp trên bản người dùng gửi `V1.10.13`.
