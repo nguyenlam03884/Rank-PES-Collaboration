@@ -35,7 +35,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.34"
+APP_VERSION = "V1.10.35"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -4361,7 +4361,7 @@ PROFILE_BANNER_SHOP_ITEMS = [
         "name": "Phòng Thay Đồ Elite",
         "rarity": "Thường",
         "rarity_slug": "common",
-        "price": 350,
+        "price": 300,
         "file": "shop/profile_banners/profile_banner_locker_room.png",
         "icon": "shop/profile_banner_icons/profile_banner_locker_room_icon.png",
         "desc": "Không gian phòng thay đồ cao cấp, sạch sẽ và chuyên nghiệp cho hồ sơ của bạn.",
@@ -4371,7 +4371,7 @@ PROFILE_BANNER_SHOP_ITEMS = [
         "name": "Bậc Thầy Chiến Thuật",
         "rarity": "Hiếm",
         "rarity_slug": "rare",
-        "price": 750,
+        "price": 700,
         "file": "shop/profile_banners/profile_banner_tactical_master.png",
         "icon": "shop/profile_banner_icons/profile_banner_tactical_master_icon.png",
         "desc": "Bản đồ chiến thuật số với cảm hứng huấn luyện đỉnh cao trên sân cỏ hiện đại.",
@@ -4381,7 +4381,7 @@ PROFILE_BANNER_SHOP_ITEMS = [
         "name": "Sân Đấu Neon",
         "rarity": "Sử Thi",
         "rarity_slug": "epic",
-        "price": 1500,
+        "price": 1400,
         "file": "shop/profile_banners/profile_banner_neon_derby.png",
         "icon": "shop/profile_banner_icons/profile_banner_neon_derby_icon.png",
         "desc": "Bầu không khí derby rực sáng với ánh tím xanh nổi bật và cảm giác cực cháy.",
@@ -4391,7 +4391,7 @@ PROFILE_BANNER_SHOP_ITEMS = [
         "name": "Hành Lang Vinh Quang",
         "rarity": "Huyền Thoại",
         "rarity_slug": "legendary",
-        "price": 2800,
+        "price": 2600,
         "file": "shop/profile_banners/profile_banner_trophy_gallery.png",
         "icon": "shop/profile_banner_icons/profile_banner_trophy_gallery_icon.png",
         "desc": "Phòng trưng bày danh hiệu sang trọng dành cho những người chơi thích chất vương giả.",
@@ -4401,7 +4401,7 @@ PROFILE_BANNER_SHOP_ITEMS = [
         "name": "Đăng Quang Hoàng Kim",
         "rarity": "Tuyệt Phẩm",
         "rarity_slug": "masterpiece",
-        "price": 5200,
+        "price": 4500,
         "file": "shop/profile_banners/profile_banner_coronation.png",
         "icon": "shop/profile_banner_icons/profile_banner_coronation_icon.png",
         "desc": "Khoảnh khắc đăng quang trên bục vàng, nổi bật như một nhà vô địch thực thụ.",

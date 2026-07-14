@@ -1,3 +1,14 @@
+## V1.10.35_SHOP_PRICE_ROOM_HEADER_BALANCE_NO_SQL
+
+- Chốt lại giá ZCOIN cho 5 banner hồ sơ trong Cửa Hàng theo mức cân bằng với điểm danh 80–150 ZCOIN/ngày.
+- Giá mới: 300 / 700 / 1.400 / 2.600 / 4.500 ZCOIN.
+- Hạ cụm avatar, tên người chơi, tên rank và trạng thái sẵn sàng trong khung phòng đấu xuống nhẹ để không che phần đỉnh khung rank.
+- Cập nhật cache CSS trong `templates/base.html` lên `?v=1.10.35`.
+- Không cần SQL, không đổi database, không mở mua thật/kho đồ/trang bị thật.
+- File thay đổi: `app.py`, `templates/base.html`, `static/style.css`, `README.md`, `Log.md`, `docs/update_v1_10_35_shop_price_room_header_balance_no_sql.txt`.
+- Rollback: quay lại deployment V1.10.34 nếu cần.
+
+
 ## V1.10.34_SHOP_PREVIEW_MODAL_HIDDEN_HOTFIX_NO_SQL
 
 - Hotfix lỗi vào Cửa Hàng thì popup xem trước vật phẩm tự hiện dù người dùng chưa bấm `Xem trước`.

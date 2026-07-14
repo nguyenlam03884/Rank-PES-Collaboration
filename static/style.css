@@ -4877,3 +4877,57 @@ html[data-theme="light"] .shop-preview-owner{
 .shop-preview-backdrop:not([hidden]){
   display:grid!important;
 }
+
+
+/* V1.10.35_SHOP_PRICE_ROOM_HEADER_BALANCE_NO_SQL
+   Chốt giá banner Shop và hạ cụm avatar/tên/rank trong khung phòng đấu xuống để không che đỉnh khung. */
+.room-team-card .room-player-heading-plain{
+  padding-top:34px;
+  min-height:154px;
+}
+.room-team-card .room-frame-avatar{
+  transform:translateY(0);
+}
+.room-team-card .room-player-name{
+  margin-top:2px;
+}
+.room-team-card .room-player-rankline{
+  margin-top:1px;
+}
+.room-team-card .room-ready-status{
+  margin-top:5px;
+}
+.room-team-card .room-card-club-area{
+  padding-top:10px;
+}
+
+@media(max-width:1320px){
+  .room-team-card .room-player-heading-plain{
+    padding-top:30px;
+    min-height:146px;
+  }
+  .room-team-card .room-card-club-area{
+    padding-top:10px;
+  }
+}
+@media(max-width:1120px){
+  .room-team-card .room-player-heading-plain{
+    padding-top:26px;
+    min-height:132px;
+  }
+}
+@media(max-width:640px){
+  .room-team-card .room-player-heading-plain{
+    padding-top:18px;
+    min-height:116px;
+  }
+  .room-team-card .room-player-name{
+    margin-top:1px;
+  }
+  .room-team-card .room-ready-status{
+    margin-top:4px;
+  }
+  .room-team-card .room-card-club-area{
+    padding-top:6px;
+  }
+}

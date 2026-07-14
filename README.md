@@ -1,3 +1,27 @@
+## V1.10.35_SHOP_PRICE_ROOM_HEADER_BALANCE_NO_SQL
+
+**Mục tiêu:** chốt lại giá ZCOIN cho 5 banner hồ sơ trong Cửa Hàng và căn lại cụm avatar/tên/rank trong khung phòng đấu để không che đỉnh khung rank.
+
+**Thay đổi:**
+- Giá banner hồ sơ được điều chỉnh theo mức đã chốt:
+  - Phòng Thay Đồ Elite: 300 ZCOIN.
+  - Bậc Thầy Chiến Thuật: 700 ZCOIN.
+  - Sân Đấu Neon: 1.400 ZCOIN.
+  - Hành Lang Vinh Quang: 2.600 ZCOIN.
+  - Đăng Quang Hoàng Kim: 4.500 ZCOIN.
+- Cụm avatar / tên người chơi / tên rank trong phòng đấu được hạ xuống một chút để cân đối hơn với khung rank.
+- `templates/base.html` cập nhật cache CSS lên `?v=1.10.35`.
+- `APP_VERSION` cập nhật lên `V1.10.35`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Chưa mở mua thật / lưu kho / trang bị thật.
+- Không đụng Gift Code, Điểm danh, BXH, Admin, phòng đấu logic hoặc logic tính điểm.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.35_SHOP_PRICE_ROOM_HEADER_BALANCE_NO_SQL`
+
+
 ## V1.10.34_SHOP_PREVIEW_MODAL_HIDDEN_HOTFIX_NO_SQL
 
 **Mục tiêu:** sửa lỗi popup xem trước vật phẩm trong Cửa Hàng tự hiện ngay khi vào trang và không đóng được.
