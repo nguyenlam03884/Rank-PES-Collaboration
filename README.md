@@ -1,3 +1,26 @@
+## V1.10.38_RP_AVATAR_MOBILE_FIX_NO_SQL
+
+**Mục tiêu:** rà soát cơ chế cộng/trừ RP và sửa tải ảnh đại diện trên điện thoại.
+
+**Thay đổi:**
+- Giữ đúng quy tắc hiện tại: thắng được cộng RP, thua bị trừ `-20 RP`, hòa `0 RP`; hệ số chủ phòng `0.95` chỉ giảm phần RP dương, không biến điểm thua thành `0`.
+- Thêm kiểm tra dấu delta trước khi cập nhật dữ liệu, chặn mọi trường hợp người thắng không được cộng hoặc người thua không bị trừ.
+- Thêm hoàn tác chính xác dữ liệu hai người chơi nếu một bước cập nhật trận bị lỗi, tránh cộng/trừ một phía hoặc áp dụng hai lần khi thử lại.
+- Avatar trên điện thoại hỗ trợ JPG, PNG, WEBP, HEIC/HEIF và tăng giới hạn ảnh đầu vào từ 2 MB lên 12 MB.
+- Nút tải avatar có trạng thái chọn file/đang tải rõ ràng trên màn hình nhỏ.
+- `APP_VERSION` cập nhật lên `V1.10.38`.
+
+**Lưu ý về ảnh lịch sử:**
+- Dòng `+0 điểm` ở một trận thua cũ có thể là bản ghi cũ đã xác nhận nhưng không lưu `delta`. Bản update này sửa các trận mới; không tự sửa dữ liệu lịch sử để tránh cộng/trừ lại sai.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi schema hoặc xóa dữ liệu.
+- Không thay đổi luật RP cơ bản, BXH, phòng đấu, Shop, ZCOIN hoặc Gift Code.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.38_RP_AVATAR_MOBILE_FIX_NO_SQL`
+
+
 ## V1.10.37_SHOP_HIDE_MISSING_PRICE_BUTTON_NO_SQL
 
 **Mục tiêu:** chỉnh giao diện Shop để không hiện dòng `Thiếu xxx` trên nút mua khi người chơi chưa đủ ZCOIN.

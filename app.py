@@ -16,6 +16,12 @@ from threading import Lock
 
 from dotenv import load_dotenv
 from PIL import Image, ImageOps, UnidentifiedImageError
+
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    register_heif_opener = None
 from flask import (
     Flask,
     jsonify,
@@ -35,7 +41,7 @@ from supabase import create_client
 load_dotenv()
 
 APP_NAME = "PES 2026"
-APP_VERSION = "V1.10.37"
+APP_VERSION = "V1.10.38"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -43,9 +49,9 @@ ONLINE_TIMEOUT_SECONDS = 90
 CHAT_COOLDOWN_SECONDS = 5
 CHAT_MAX_LENGTH = 200
 AVATAR_BUCKET = "avatars"
-AVATAR_MAX_BYTES = 2 * 1024 * 1024
+AVATAR_MAX_BYTES = 12 * 1024 * 1024
 AVATAR_OUTPUT_SIZE = 512
-AVATAR_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
+AVATAR_ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "HEIF", "HEIC"}
 DISPUTE_EVIDENCE_BUCKET = "dispute-evidence"
 DISPUTE_EVIDENCE_MAX_BYTES = 4 * 1024 * 1024
 DISPUTE_EVIDENCE_MAX_SIDE = 1600
@@ -395,7 +401,7 @@ def prepare_avatar_bytes(file_storage):
 
     raw = file_storage.read(AVATAR_MAX_BYTES + 1)
     if len(raw) > AVATAR_MAX_BYTES:
-        raise ValueError("Ảnh đại diện không được vượt quá 2 MB.")
+        raise ValueError("Ảnh đại diện không được vượt quá 12 MB.")
     if not raw:
         raise ValueError("File ảnh đang trống.")
 
@@ -405,7 +411,7 @@ def prepare_avatar_bytes(file_storage):
             width, height = probe.size
             probe.verify()
         if image_format not in AVATAR_ALLOWED_FORMATS:
-            raise ValueError("Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.")
+            raise ValueError("Chỉ chấp nhận ảnh JPG, PNG, WEBP hoặc HEIC/HEIF.")
         if width < 80 or height < 80:
             raise ValueError("Ảnh quá nhỏ. Vui lòng chọn ảnh từ 80×80 pixel trở lên.")
         if width * height > 25_000_000:
@@ -6091,6 +6097,17 @@ def apply_match_result(match):
         )
         delta1, delta2 = _safe_int(delta1), _safe_int(delta2)
 
+        # Guard against any accidental sign regression in ranked scoring.
+        if score1 == score2:
+            if delta1 != 0 or delta2 != 0:
+                raise ValueError("Sai quy tắc RP: trận hòa phải có delta bằng 0 cho cả hai người chơi.")
+        elif score1 > score2:
+            if delta1 <= 0 or delta2 >= 0:
+                raise ValueError("Sai quy tắc RP: người thắng phải được cộng và người thua phải bị trừ điểm.")
+        else:
+            if delta2 <= 0 or delta1 >= 0:
+                raise ValueError("Sai quy tắc RP: người thắng phải được cộng và người thua phải bị trừ điểm.")
+
         # The 0.95 coefficient belongs to the actual room host, not implicitly player1.
         host_user_id = match.get("host_user_id")
         if not host_user_id:
@@ -6108,8 +6125,21 @@ def apply_match_result(match):
         elif str(host_user_id or "") == str(player2_id):
             delta2 = _safe_int(apply_host_xp_factor(delta2, match.get("host_xp_factor", HOST_XP_FACTOR)))
 
+        player1_snapshot = {key: player1.get(key) for key in (
+            "rank_points", "total_matches", "wins", "draws", "losses",
+            "goals_for", "goals_against", "streak"
+        )}
+        player2_snapshot = {key: player2.get(key) for key in (
+            "rank_points", "total_matches", "wins", "draws", "losses",
+            "goals_for", "goals_against", "streak"
+        )}
+        player1_updated = False
+        player2_updated = False
+
         update_player_after_match(player1, delta1, score1, score2)
+        player1_updated = True
         update_player_after_match(player2, delta2, score2, score1)
+        player2_updated = True
 
         execute_query(
             db.table("matches").update({
@@ -6123,6 +6153,24 @@ def apply_match_result(match):
         )
     except Exception as exc:
         print(f"apply_match_result ERROR match={match.get('id')} status={original_status}: {type(exc).__name__}: {exc}")
+        # If a later database write fails, restore exact pre-match player values so
+        # retrying cannot double-apply RP or statistics to only one participant.
+        try:
+            if locals().get("player1_updated"):
+                execute_query(
+                    db.table("users").update(player1_snapshot).eq("id", player1_id),
+                    "rollback_player1_after_result_error",
+                    attempts=2,
+                )
+            if locals().get("player2_updated"):
+                execute_query(
+                    db.table("users").update(player2_snapshot).eq("id", player2_id),
+                    "rollback_player2_after_result_error",
+                    attempts=2,
+                )
+            ttl_cache_delete("players_raw", "achievement_map")
+        except Exception as rollback_exc:
+            print(f"apply_match_result ROLLBACK ERROR match={match.get('id')}: {type(rollback_exc).__name__}: {rollback_exc}")
         try:
             execute_query(
                 db.table("matches").update({"status": original_status, "updated_at": now_iso()})
