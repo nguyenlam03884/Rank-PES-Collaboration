@@ -4413,3 +4413,110 @@ html[data-theme="light"] .topbar-zcoin-icon{background:#fff3bf;border-color:#efc
     display:none!important;
   }
 }
+
+/* V1.10.30_TOPBAR_ANNOUNCEMENT_FIT_HOTFIX_NO_SQL
+   Đưa thanh thông báo về đúng luồng topbar trên desktop, không còn absolute đè/lấn cụm icon bên phải. */
+@media (min-width:981px){
+  .player-topbar{
+    display:flex!important;
+    align-items:center!important;
+    gap:14px!important;
+    overflow:visible!important;
+  }
+  .player-topbar .topbar-copy{
+    flex:0 1 410px!important;
+    min-width:230px!important;
+    max-width:460px!important;
+  }
+  .player-topbar .topbar-actions{
+    flex:0 0 auto!important;
+    margin-left:0!important;
+    min-width:0!important;
+    position:relative!important;
+    z-index:5!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount{
+    position:relative!important;
+    left:auto!important;
+    top:auto!important;
+    right:auto!important;
+    transform:none!important;
+    flex:0 1 520px!important;
+    width:clamp(340px,30vw,520px)!important;
+    min-width:300px!important;
+    max-width:520px!important;
+    margin:0 10px 0 auto!important;
+    z-index:3!important;
+    overflow:hidden!important;
+    pointer-events:none!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement{
+    min-height:38px!important;
+    border-radius:12px!important;
+    grid-template-columns:104px minmax(0,1fr)!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement-label,
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement-marquee,
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement-track{
+    height:38px!important;
+    line-height:38px!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement-label{
+    font-size:9px!important;
+    padding:0 8px!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement-marquee{
+    font-size:10px!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement-track > span{
+    line-height:38px!important;
+    padding:0 42px 0 14px!important;
+  }
+}
+@media (min-width:981px) and (max-width:1420px){
+  .player-topbar{
+    gap:10px!important;
+    padding-left:20px!important;
+    padding-right:20px!important;
+  }
+  .player-topbar .topbar-copy{
+    flex-basis:330px!important;
+    min-width:205px!important;
+  }
+  .player-topbar .topbar-copy small{
+    max-width:330px!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount{
+    width:clamp(300px,26vw,420px)!important;
+    min-width:280px!important;
+    max-width:420px!important;
+    margin-right:8px!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement{
+    grid-template-columns:92px minmax(0,1fr)!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement-label{
+    font-size:8px!important;
+    padding:0 6px!important;
+  }
+}
+@media (min-width:981px) and (max-width:1200px){
+  .player-topbar .topbar-copy{
+    flex-basis:260px!important;
+    min-width:190px!important;
+  }
+  .player-topbar .topbar-actions{
+    gap:8px!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount{
+    width:300px!important;
+    min-width:260px!important;
+    max-width:300px!important;
+  }
+  #adminAnnouncementMount.topbar-announcement-mount .admin-announcement{
+    grid-template-columns:82px minmax(0,1fr)!important;
+  }
+}

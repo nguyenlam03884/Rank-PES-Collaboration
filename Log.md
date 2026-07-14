@@ -1,3 +1,13 @@
+## V1.10.30_TOPBAR_ANNOUNCEMENT_FIT_HOTFIX_NO_SQL
+
+- Hotfix thanh thông báo trên topbar bị dài/lấn sát cụm icon bên phải.
+- Đưa announcement mount trên desktop về layout flex bình thường, không còn absolute center dễ đè lên icon.
+- Giới hạn chiều rộng thanh thông báo và thu gọn label/marquee theo breakpoint.
+- Cập nhật cache CSS lên `?v=1.10.30` để trình duyệt nhận style mới.
+- Không cần SQL, không đổi database, không đụng Shop/Gift Code/ZCOIN/Điểm danh/BXH/Admin/Phòng đấu.
+- Rollback: quay lại deployment V1.10.29 nếu cần.
+
+
 ## V1.10.29_MOBILE_LAYOUT_SIDEBAR_SPACE_HOTFIX_NO_SQL
 
 - Hotfix lỗi mobile: mở app trên điện thoại bị trống một khoảng lớn phía trên, topbar/dashboard bị đẩy xuống dưới.

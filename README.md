@@ -1,3 +1,22 @@
+## V1.10.30_TOPBAR_ANNOUNCEMENT_FIT_HOTFIX_NO_SQL
+
+**Mục tiêu:** sửa thanh thông báo trên topbar bị dài và lấn vào cụm icon bên phải.
+
+**Thay đổi:**
+- Thanh thông báo trên desktop không còn dùng `absolute center`, tránh che icon/ZCOIN/profile.
+- Giới hạn chiều rộng thông báo theo khoảng trống còn lại giữa tiêu đề trang và cụm action bên phải.
+- Thu gọn nhãn/thông điệp ở màn hình nhỏ để topbar sạch hơn.
+- `templates/base.html` cập nhật cache CSS lên `?v=1.10.30`.
+- `APP_VERSION` cập nhật lên `V1.10.30`.
+
+**Không thay đổi:**
+- Không cần SQL.
+- Không thay đổi database.
+- Không đụng Shop, Gift Code, ZCOIN, Điểm danh, BXH, Admin hoặc logic phòng đấu.
+
+**Commit nên đặt khi upload GitHub:** `V1.10.30_TOPBAR_ANNOUNCEMENT_FIT_HOTFIX_NO_SQL`
+
+
 ## V1.10.29_MOBILE_LAYOUT_SIDEBAR_SPACE_HOTFIX_NO_SQL
 
 **Mục tiêu:** sửa lỗi mobile bị khoảng trống lớn phía trên khiến Dashboard/topbar bị đẩy xuống dưới.
