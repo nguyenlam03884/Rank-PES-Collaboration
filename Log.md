@@ -1,3 +1,13 @@
+## V1.10.28_ROOM_RANK_FRAME_CARD_BACKGROUND_CLEANUP_NO_SQL
+
+- Hotfix giao diện phòng đấu: bỏ hẳn nền xanh/đỏ phía sau 2 ô người chơi.
+- Chỉ giữ khung rank làm lớp hiển thị chính để giao diện sạch hơn và chuyên nghiệp hơn.
+- Tắt border, box-shadow ngoài và overlay nền của `room-team-card`.
+- Tăng nhẹ độ nổi của ảnh khung rank sau khi bỏ nền màu.
+- Không cần SQL, không đổi database, không đụng Shop/Gift Code/ZCOIN/Điểm danh/BXH/Admin.
+- Rollback: quay lại deployment V1.10.27 nếu cần.
+
+
 ## V1.10.27_ROOM_RANK_FRAME_LAYOUT_HOTFIX_NO_SQL
 
 - Hotfix lại layout khung rank trong phòng đấu sau bản V1.10.26.

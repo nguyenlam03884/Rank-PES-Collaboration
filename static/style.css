@@ -4292,3 +4292,34 @@ html[data-theme="light"] .topbar-zcoin-icon{background:#fff3bf;border-color:#efc
   .room-team-card .room-team-league-footer{font-size:12px;gap:6px}
   .room-team-card .room-team-league-footer .room-league-logo{width:17px;height:17px}
 }
+
+
+/* V1.10.28_ROOM_RANK_FRAME_CARD_BACKGROUND_CLEANUP_NO_SQL
+   Bỏ nền xanh/đỏ và viền ngoài của 2 ô người chơi; chỉ giữ khung rank làm chủ đạo. */
+.room-team-card,
+.room-team-card.home,
+.room-team-card.away{
+  background:transparent!important;
+  border:none!important;
+  box-shadow:none!important;
+}
+.room-team-card::after{
+  display:none!important;
+  content:none!important;
+  background:none!important;
+}
+.room-team-card .room-rank-frame-bg{
+  opacity:.9;
+  filter:drop-shadow(0 20px 34px rgba(0,0,0,.44));
+}
+.room-team-card .room-rank-frame-bg.muted{
+  opacity:.45;
+  filter:grayscale(.25) drop-shadow(0 16px 28px rgba(0,0,0,.34));
+}
+.room-team-card.home,
+.room-team-card.away{
+  outline:none!important;
+}
+@media(max-width:640px){
+  .room-team-card .room-rank-frame-bg{opacity:.78}
+}
